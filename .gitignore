@@ -27,6 +27,15 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# bolt
+.bolt
+
+# vs code theme
+.vscode
+
+# env files
+.env
+
 # vercel
 .vercel
 
