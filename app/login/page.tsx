@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -17,8 +17,10 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loginSuccess } from '@/store/slices/authSlice';
+import { loginUser } from '@/services/authService';
+import { addNotification, setGlobalLoading } from '@/store/slices/uiSlice';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -32,8 +34,11 @@ const formSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const isLoading = useAppSelector(state => state.ui.globalLoading);
+  const notifications = useAppSelector(state => state.ui.notifications);
+  
+  // Check for error notifications
+  const errorNotification = notifications.find(n => n.type === 'error');
   
   const form = useForm<z.infer<typeof formSchema>>({    
     resolver: zodResolver(formSchema),
@@ -45,49 +50,35 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      setIsLoading(true);
-      setError(null);
+      dispatch(setGlobalLoading(true));
       
-      const response = await fetch('http://localhost:3005/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
-      });
+      // Use the auth service for login
+      const userData = await loginUser(values);
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'فشل في تسجيل الدخول');
-      }
-
-      const userData = await response.json();
-      if (userData.refreshToken) {
-        localStorage.setItem('refreshToken', userData.refreshToken);
-        // Store all user data in localStorage
-        if (userData.user && userData.user.id) {
-          localStorage.setItem('userId', userData.user.id.toString());
-        }
-        if (userData.user && userData.user.name) {
-          localStorage.setItem('userName', userData.user.name);
-        }
-        if (userData.user && userData.user.email) {
-          localStorage.setItem('userEmail', userData.user.email);
-        }
-        if (userData.user && userData.user.role) {
-          localStorage.setItem('userRole', userData.user.role);
-        }
-        // Store the entire user object as JSON string for easy access
-        localStorage.setItem('userData', JSON.stringify(userData));
-      }
+      // Update Redux state
+      dispatch(loginSuccess(userData.user));
       
-      dispatch(loginSuccess(userData));
+      // Show success notification
+      dispatch(addNotification({
+        type: 'success',
+        message: 'تم تسجيل الدخول بنجاح!',
+        duration: 3000
+      }));
+      
+      // Redirect to home page
       router.push('/');
       
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.');
-      setIsLoading(false);
+      
+      // Show error notification
+      dispatch(addNotification({
+        type: 'error',
+        message: err.message || 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.',
+        duration: 5000
+      }));
+      
+      dispatch(setGlobalLoading(false));
     }
   }
 
@@ -161,8 +152,8 @@ export default function LoginPage() {
               {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
             </Button>
 
-            {error && (
-              <p className="text-red-500 text-sm text-center">{error}</p>
+            {errorNotification && (
+              <p className="text-red-500 text-sm text-center">{errorNotification.message}</p>
             )}
 
             <p className="text-center text-sm text-gray-400 mt-4">

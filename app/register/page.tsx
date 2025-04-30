@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -22,6 +22,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { registerUser } from '@/services/authService';
+import { addNotification, setGlobalLoading } from '@/store/slices/uiSlice';
+import Image from 'next/image';
 
 const formSchema = z.object({
   firstName: z.string().min(2, {
@@ -49,9 +54,25 @@ const formSchema = z.object({
 });
 
 export default function RegisterPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const isLoading = useAppSelector(state => state.ui.globalLoading);
+  const notifications = useAppSelector(state => state.ui.notifications);
+  
+  // Check for success or error notifications
+  const errorNotification = notifications.find(n => n.type === 'error');
+  const successNotification = notifications.find(n => n.type === 'success');
+  
+  // Redirect to login page after successful registration
+  useEffect(() => {
+    if (successNotification) {
+      const timer = setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [successNotification, router]);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,10 +89,9 @@ export default function RegisterPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      setIsLoading(true);
-      setError(null);
+      dispatch(setGlobalLoading(true));
       
-      // تجهيز البيانات للإرسال
+      // Prepare data for submission
       const name = `${values.firstName} ${values.lastName}`;
       const requestData = {
         name,
@@ -81,27 +101,27 @@ export default function RegisterPage() {
         password: values.password
       };
       
-      // إرسال البيانات إلى الخادم
-      const response = await fetch('http://localhost:3005/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
+      // Register user using centralized auth service
+      await registerUser(requestData);
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'فشل في تسجيل الحساب');
-      }
-      
-      setSuccess(true);
-      setIsLoading(false);
+      // Show success notification
+      dispatch(addNotification({
+        type: 'success',
+        message: 'تم إنشاء الحساب بنجاح! سيتم توجيهك إلى صفحة تسجيل الدخول...',
+        duration: 5000
+      }));
       
     } catch (err: any) {
-      console.error('Form error:', err);
-      setError(err.message || 'حدث خطأ أثناء معالجة النموذج. يرجى المحاولة مرة أخرى.');
-      setIsLoading(false);
+      console.error('Registration error:', err);
+      
+      // Show error notification
+      dispatch(addNotification({
+        type: 'error',
+        message: err.message || 'حدث خطأ أثناء إنشاء الحساب. يرجى المحاولة مرة أخرى.',
+        duration: 5000
+      }));
+    } finally {
+      dispatch(setGlobalLoading(false));
     }
   }
 
@@ -293,15 +313,15 @@ export default function RegisterPage() {
               )}
             />
 
-            {error && (
+            {errorNotification && (
               <div className="p-3 rounded-md bg-red-500/10 border border-red-500/50 text-red-500 text-right">
-                {error}
+                {errorNotification.message}
               </div>
             )}
             
-            {success && (
+            {successNotification && (
               <div className="p-3 rounded-md bg-green-500/10 border border-green-500/50 text-green-500 text-right">
-                تم إنشاء الحساب بنجاح!
+                {successNotification.message}
               </div>
             )}
             
@@ -328,12 +348,16 @@ export default function RegisterPage() {
       <div className="w-full md:w-1/2 hidden md:block">
         <div className="relative h-[500px] w-full">
           <div className="absolute inset-0 flex items-center justify-center">
-            <img
+            <Image
               src="/student.svg"
               alt="Student"
+              width={400}
+              height={400}
               className="max-h-full max-w-full object-contain"
               onError={(e) => {
-                e.currentTarget.src = 'https://img.freepik.com/free-vector/hand-drawn-flat-design-stack-books-illustration_23-2149341898.jpg?w=740&t=st=1713984369~exp=1713984969~hmac=2a7d4c4f5d9a9a9f9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a';
+                // TypeScript doesn't allow direct assignment to src, using dataset as a workaround
+                const imgElement = e.currentTarget as HTMLImageElement;
+                imgElement.src = 'https://img.freepik.com/free-vector/hand-drawn-flat-design-stack-books-illustration_23-2149341898.jpg?w=740';
               }}
             />
           </div>

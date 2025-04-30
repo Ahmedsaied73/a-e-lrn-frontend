@@ -5,6 +5,8 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ReduxProvider } from '@/store/provider';
+import { NotificationToast } from '@/components/notification-toast';
+import { LoadingIndicator } from '@/components/loading-indicator';
 
 const cairo = Cairo({ subsets: ['arabic'] });
 
@@ -29,6 +31,8 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Navbar />
+            <NotificationToast />
+            <LoadingIndicator />
             <main className="flex-grow pt-20">
               {children}
             </main>
