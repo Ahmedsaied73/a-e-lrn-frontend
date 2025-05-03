@@ -8,8 +8,9 @@ This is an educational platform for Mr. Lotfy Zahran, a mathematics teacher. The
 
 - **User Authentication**: Secure login and registration system
 - **Course Management**: Browse and enroll in available courses
-- **Video Lectures**: Access high-quality educational videos
-- **Exam System**: Practice with exams and assessments
+- **Video Lectures**: Access high-quality educational videos with completion tracking
+- **Exam System**: Comprehensive quiz system with immediate feedback and detailed results
+- **Progress Tracking**: View exam history, scores, and performance analytics
 - **User Dashboard**: Track progress and manage enrolled courses
 - **Responsive Design**: Optimized for both desktop and mobile devices
 
@@ -50,9 +51,13 @@ This is an educational platform for Mr. Lotfy Zahran, a mathematics teacher. The
 ```
 /app                  # Next.js app router pages
   /course             # Course-related pages
+    /[id]/video      # Video player and quiz pages
   /login              # Authentication pages
   /register           # User registration
   /me                 # User dashboard
+    /user            # User-specific pages
+      /exam-results  # Individual exam results
+      /all-exam-results # Complete exam history
 /components           # Reusable UI components
   /ui                 # Shadcn UI components
 /store                # Redux store configuration
@@ -68,6 +73,7 @@ The application uses Redux Toolkit for state management with the following slice
 - **Auth Slice**: Manages user authentication state
 - **Course Slice**: Handles course data and enrollment status
 - **UI Slice**: Manages UI-related state like theme and notifications
+- **Quiz Slice**: Handles quiz data, submission, and results tracking
 
 ## API Integration
 

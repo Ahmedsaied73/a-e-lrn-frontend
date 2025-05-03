@@ -1,12 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { CheckCircle, XCircle } from "lucide-react";
+import { AppDispatch } from "@/store/store";
+import { completeVideo, fetchQuizzesByCourse, selectQuizzes, selectVideoCompleted, setVideoCompleted } from "@/store/slices/quizSlice";
+import { addNotification } from "@/store/slices/uiSlice";
 
 export default function VideoPage({ params }: { params: { id: string; video: string } }) {
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  
   const [videoData, setVideoData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [completingVideo, setCompletingVideo] = useState(false);
+  
+  // Get quiz state from Redux store
+  const quizzes = useSelector(selectQuizzes);
+  const videoCompleted = useSelector(selectVideoCompleted);
 
   useEffect(() => {
     const fetchVideoData = async () => {
@@ -25,6 +42,9 @@ export default function VideoPage({ params }: { params: { id: string; video: str
         if (response.ok) {
           const data = await response.json();
           setVideoData(data);
+          
+          // Fetch available quizzes for this course
+          dispatch(fetchQuizzesByCourse(params.id));
         } else {
           setError("حدث خطأ أثناء تحميل الفيديو");
         }
@@ -35,7 +55,36 @@ export default function VideoPage({ params }: { params: { id: string; video: str
       }
     };
     fetchVideoData();
-  }, [params.video]);
+    
+    // Reset video completion status when component mounts
+    dispatch(setVideoCompleted(false));
+  }, [params.video, params.id, dispatch]);
+  
+  // Handle video completion
+  const handleCompleteVideo = async () => {
+    try {
+      setCompletingVideo(true);
+      await dispatch(completeVideo({ videoId: params.video })).unwrap();
+      // Find quiz for this video
+      const videoQuiz = quizzes.find(quiz => quiz.videoId === Number(params.video));
+      if (videoQuiz) {
+        // Navigate to the quiz page
+        router.push(`/course/${params.id}/video/${params.video}/quiz/${videoQuiz.id}`);
+      } else {
+        dispatch(addNotification({
+          type: 'info',
+          message: 'لا يوجد اختبار متاح لهذا الفيديو'
+        }));
+      }
+    } catch (err) {
+      dispatch(addNotification({
+        type: 'error',
+        message: 'حدث خطأ أثناء تسجيل اكتمال الفيديو'
+      }));
+    } finally {
+      setCompletingVideo(false);
+    }
+  };
 
   if (isLoading) return <div className="flex justify-center items-center min-h-[300px] text-lg text-primary-foreground">جاري التحميل...</div>;
   if (error) return <div className="flex justify-center items-center min-h-[300px] text-lg text-destructive">خطأ: {error}</div>;
@@ -91,7 +140,9 @@ export default function VideoPage({ params }: { params: { id: string; video: str
           <CardTitle className="text-2xl font-bold text-primary-foreground">مشاهدة الفيديو</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div>{videoElement}</div>
+          <div>
+            {videoElement}
+          </div>
           <div className="space-y-2">
             <h3 className="text-xl font-semibold text-primary-foreground">{videoData.title || "عنوان الفيديو غير متوفر"}</h3>
             <div className="flex flex-col sm:flex-row gap-2 text-sm text-muted-foreground">
@@ -99,6 +150,29 @@ export default function VideoPage({ params }: { params: { id: string; video: str
               <span>عدد المشاهدات: {videoData.views || "غير متوفر"}</span>
             </div>
             <p className="text-base text-card-foreground leading-relaxed">{videoData.description || "وصف الفيديو غير متوفر"}</p>
+            
+            {/* Video Completion Button */}
+            <div className="mt-6 flex justify-center">
+              <Button
+                onClick={handleCompleteVideo}
+                disabled={completingVideo || videoCompleted}
+                className="bg-[#61B846] hover:bg-[#61B846]/90 text-white px-8 py-6 text-lg rounded-lg transition-all"
+              >
+                {completingVideo ? (
+                  <>
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] ml-2"></span>
+                    جاري التحميل...
+                  </>
+                ) : videoCompleted ? (
+                  <>
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    تم إكمال الفيديو
+                  </>
+                ) : (
+                  'أكملت الفيديو؟'
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

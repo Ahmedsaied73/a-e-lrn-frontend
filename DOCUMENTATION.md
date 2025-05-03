@@ -26,6 +26,11 @@ The Redux store is configured in `store/store.ts` with the following slices:
 - **Auth Slice**: Manages authentication state (user data, login status)
 - **Course Slice**: Handles course-related state (available courses, enrollment status)
 - **UI Slice**: Manages UI-related state (theme, notifications, loading states)
+- **Quiz Slice**: Manages quiz-related state (quiz data, submissions, results)
+  - Quiz attempt tracking
+  - Video completion status
+  - Quiz results and history
+  - Performance analytics
 
 #### Redux Best Practices
 
@@ -77,6 +82,27 @@ API calls follow these patterns:
 4. **Image Optimization**: Next.js Image component for optimized images
 
 ## Best Practices
+
+### Quiz System Architecture
+
+1. **Quiz Flow**:
+   - Video completion tracking
+   - Quiz availability based on video completion
+   - Real-time answer submission
+   - Immediate feedback and scoring
+   - Detailed results view
+
+2. **Results Management**:
+   - Individual quiz results storage
+   - Performance analytics
+   - Historical data tracking
+   - Score aggregation
+
+3. **Components**:
+   - QuizResultsDialog: Displays quiz completion feedback
+   - Video completion tracking
+   - Quiz submission interface
+   - Results visualization
 
 ### Code Organization
 
