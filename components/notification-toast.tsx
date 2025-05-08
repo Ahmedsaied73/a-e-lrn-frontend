@@ -46,3 +46,5 @@ export function NotificationToast() {
 
   return <Toaster position="top-right" />;
 }
+
+export { Toaster };

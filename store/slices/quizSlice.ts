@@ -48,13 +48,28 @@ export interface QuizResult {
   }[];
 }
 
+export interface QuizStatus {
+  quizId: number;
+  title: string;
+  taken: boolean;
+  status: 'PASSED' | 'FAILED' | null;
+  score: number | null;
+  passingScore: number;
+  passed: boolean;
+  submittedAt: string | null;
+  correctAnswers?: number;
+  totalQuestions?: number;
+}
+
 export interface QuizState {
   quizzes: Quiz[];
   currentQuiz: Quiz | null;
   quizResults: QuizResult | null;
+  quizStatuses: Record<number, QuizStatus>;
   loading: boolean;
   error: string | null;
   videoCompleted: boolean;
+  videoProgressMap: Record<string, { completed: boolean; watchedAt: string | null }>;
   selectedAnswers: Record<number, number>;
   submitting: boolean;
   submitSuccess: boolean;
@@ -64,9 +79,11 @@ const initialState: QuizState = {
   quizzes: [],
   currentQuiz: null,
   quizResults: null,
+  quizStatuses: {},
   loading: false,
   error: null,
   videoCompleted: false,
+  videoProgressMap: {},
   selectedAnswers: {},
   submitting: false,
   submitSuccess: false,
@@ -181,7 +198,9 @@ export const submitQuizAnswers = createAsyncThunk(
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit quiz answers');
+        // Create an error message that includes the status code
+        const errorMessage = `STATUS_${response.status}: Failed to submit quiz answers`;
+        return rejectWithValue(errorMessage);
       }
 
       const data = await response.json();
@@ -209,6 +228,60 @@ export const fetchQuizResults = createAsyncThunk(
 
       if (!response.ok) {
         throw new Error('Failed to fetch quiz results');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
+    }
+  }
+);
+
+export const fetchQuizStatus = createAsyncThunk(
+  'quiz/fetchQuizStatus',
+  async (quizId: number, { rejectWithValue }) => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        return rejectWithValue('Not authenticated');
+      }
+
+      const response = await fetch(`http://localhost:3005/quizzes/${quizId}/status`, {
+        headers: {
+          'Authorization': `Bearer ${refreshToken}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch quiz status');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
+    }
+  }
+);
+
+export const fetchVideoProgress = createAsyncThunk(
+  'quiz/fetchVideoProgress',
+  async (videoId: string | number, { rejectWithValue }) => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        return rejectWithValue('Not authenticated');
+      }
+
+      const response = await fetch(`http://localhost:3005/progress/${videoId}`, {
+        headers: {
+          'Authorization': `Bearer ${refreshToken}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch video progress');
       }
 
       const data = await response.json();
@@ -309,6 +382,16 @@ export const quizSlice = createSlice({
       .addCase(fetchQuizResults.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      // fetchQuizStatus
+      .addCase(fetchQuizStatus.fulfilled, (state, action) => {
+        const quizStatus = action.payload;
+        state.quizStatuses[quizStatus.quizId] = quizStatus;
+      })
+      // fetchVideoProgress
+      .addCase(fetchVideoProgress.fulfilled, (state, action) => {
+        const { videoId, completed, watchedAt } = action.payload;
+        state.videoProgressMap[videoId] = { completed, watchedAt };
       });
   },
 });
@@ -322,5 +405,12 @@ export const selectCurrentQuiz = (state: RootState) => state.quiz.currentQuiz;
 export const selectQuizResults = (state: RootState) => state.quiz.quizResults;
 export const selectVideoCompleted = (state: RootState) => state.quiz.videoCompleted;
 export const selectSelectedAnswers = (state: RootState) => state.quiz.selectedAnswers;
+
+// New selectors
+export const selectQuizStatus = (quizId: number) => (state: RootState) => 
+  state.quiz.quizStatuses[quizId] || null;
+
+export const selectVideoProgress = (videoId: string | number) => (state: RootState) => 
+  state.quiz.videoProgressMap[videoId] || { completed: false, watchedAt: null };
 
 export default quizSlice.reducer;

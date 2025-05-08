@@ -39,19 +39,20 @@ export function Navbar() {
   }
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       const refreshToken = localStorage.getItem('refreshToken');
       setIsAuthenticated(!!refreshToken);
       if (refreshToken) {
-        fetchData(refreshToken).then((data) => {
-          if (data) {
-            setUser({
-              name: data.name,
-              email: data.email
-            });
-            console.log(data);
-          }
-        });
+        const data = await fetchData(refreshToken);
+        if (data) {
+          setUser({
+            name: data.name,
+            email: data.email
+          });
+          console.log(data);
+          // Refresh the page or update state here
+          router.refresh();
+        }
       }
     };
 

@@ -87,7 +87,15 @@ export default function QuizPage() {
       await dispatch(submitQuizAnswers({ quizId, answers })).unwrap();
       setShowResults(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال الإجابات');
+      // Check if the error message includes status code
+      const errorMsg = typeof err === 'string' ? err : err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال الإجابات';
+      
+      if (errorMsg.startsWith('STATUS_400:')) {
+        // 400 Bad Request - Quiz already completed
+        setError('لقد أجتزت هذا الاختبار بالفعل');
+      } else {
+        setError(errorMsg);
+      }
     } finally {
       setIsSubmitting(false);
     }

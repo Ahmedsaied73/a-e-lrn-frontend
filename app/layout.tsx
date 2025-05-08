@@ -5,7 +5,7 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ReduxProvider } from '@/store/provider';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from '@/components/notification-toast';
 
 const cairo = Cairo({ subsets: ['arabic'] });
 
