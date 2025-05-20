@@ -15,11 +15,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { checkAuthResponse } from "@/utils/auth-utils";
 export function Navbar() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [notificationCount, setNotificationCount] = useState(2); // عدد الإشعارات كمثال
+  const [notificationCount, setNotificationCount] = useState(2); // Number of notifications example
 
   const fetchData = async (refreshToken: string) => {
     try {
@@ -30,11 +31,18 @@ export function Navbar() {
           'Authorization': `Bearer ${refreshToken}`,
         },
       });
+      
+      // Use helper function to check response status
+      if (checkAuthResponse(response)) {
+        return null;
+      }
+      
       const data = await response.json();
       return data;
     }
     catch (error) {
       console.error('Error fetching user data:', error);
+      return null;
     }
   }
 
@@ -49,9 +57,12 @@ export function Navbar() {
             name: data.name,
             email: data.email
           });
-          console.log(data);
           // Refresh the page or update state here
           router.refresh();
+        } else {
+          // If data couldn't be retrieved, there might be an authentication issue
+          // Already handled in the fetchData function
+          setIsAuthenticated(false);
         }
       }
     };
@@ -69,13 +80,12 @@ export function Navbar() {
     
     setIsAuthenticated(false);
     setUser(null);
-    router.push("/");
   };
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#0A0F1C]/80 backdrop-blur">
       <div className="container mx-auto flex items-center justify-between py-4">
-        {/* القائمة الرئيسية */}
+        {/* Main Menu */}
         <div className="flex items-center gap-8">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 relative">
@@ -91,7 +101,7 @@ export function Navbar() {
           <span className="text-2xl font-bold text-white">MR. Lotfy Zahran</span>
           </div>
           
-          {/* روابط التنقل - تظهر فقط للمستخدمين المسجلين */}
+          {/* Navigation links - only shown for logged in users */}
           {/* {isAuthenticated && (
             <div className="hidden md:flex items-center gap-6 mr-8">
 
@@ -108,7 +118,7 @@ export function Navbar() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              {/* زر الإشعارات */}
+              {/* Notifications button */}
               <div className="relative">
                 <Button variant="ghost" size="icon" className="text-white hover:bg-[#1f2937]">
                   <Bell className="h-5 w-5" />
@@ -120,7 +130,7 @@ export function Navbar() {
                 </Button>
               </div>
               
-              {/* قائمة المستخدم */}
+              {/* User menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">

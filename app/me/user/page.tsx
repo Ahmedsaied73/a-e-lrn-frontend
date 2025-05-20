@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { User, Lock, BookOpen, CreditCard, Clock, Video, CheckCircle } from 'lucide-react';
+import { checkAuthResponse } from '@/utils/auth-utils';
 
 export default function UserProfilePage() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -23,6 +24,12 @@ export default function UserProfilePage() {
           'Authorization': `Bearer ${refreshToken}`,
         },
       });
+      
+      // Use helper function to check response status
+      if (checkAuthResponse(response)) {
+        return null;
+      }
+      
       const data = await response.json();
       return data;
     }
@@ -40,6 +47,10 @@ export default function UserProfilePage() {
         if (userData) {
           setUser(userData);
         }
+      } else {
+        // If there is no token, redirect user to login page
+        window.location.href = '/login';
+        return;
       }
       setIsLoading(false);
     };

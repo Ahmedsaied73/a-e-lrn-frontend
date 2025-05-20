@@ -5,7 +5,8 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ReduxProvider } from '@/store/provider';
-import { Toaster } from '@/components/notification-toast';
+import { AuthErrorHandler } from '@/components/auth-error-handler';
+import { Toaster } from '@/components/ui/toaster';
 
 const cairo = Cairo({ subsets: ['arabic'] });
 
@@ -29,6 +30,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <AuthErrorHandler />
             <Navbar />
             <main className="flex-grow pt-20">
               {children}

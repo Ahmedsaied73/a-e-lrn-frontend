@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 
-// تعريف نوع المستخدم
+// Define user type
 export interface User {
   id: number;
   email: string;
@@ -9,7 +9,7 @@ export interface User {
   role: string;
 }
 
-// تعريف حالة المصادقة
+// Define authentication state
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -17,7 +17,7 @@ export interface AuthState {
   error: string | null;
 }
 
-// الحالة الأولية
+// Initial state
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
@@ -25,31 +25,31 @@ const initialState: AuthState = {
   error: null,
 };
 
-// إنشاء شريحة المصادقة
+// Create auth slice
 export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // بدء عملية تسجيل الدخول
+    // Start login process
     loginStart: (state) => {
       state.loading = true;
       state.error = null;
     },
-    // نجاح تسجيل الدخول
+    // Login success
     loginSuccess: (state, action: PayloadAction<User>) => {
       state.loading = false;
       state.isAuthenticated = true;
       state.user = action.payload;
       state.error = null;
     },
-    // فشل تسجيل الدخول
+    // Login failure
     loginFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.isAuthenticated = false;
       state.user = null;
       state.error = action.payload;
     },
-    // تسجيل الخروج
+    // Logout
     logout: (state) => {
       state.isAuthenticated = false;
       state.user = null;
@@ -58,10 +58,10 @@ export const authSlice = createSlice({
   },
 });
 
-// تصدير الإجراءات
+// Export actions
 export const { loginStart, loginSuccess, loginFailure, logout } = authSlice.actions;
 
-// اختيار الحالة من RootState
+// Select state from RootState
 export const selectAuth = (state: RootState) => state.auth;
 export const selectUser = (state: RootState) => state.auth.user;
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;

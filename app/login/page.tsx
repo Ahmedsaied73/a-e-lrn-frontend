@@ -47,6 +47,21 @@ export default function LoginPage() {
       password: '',
     },
   });
+  
+  // Check for error message stored in localStorage
+  useEffect(() => {
+    const authError = localStorage.getItem('authError');
+    if (authError) {
+      // Add error notification
+      dispatch(addNotification({
+        type: 'error',
+        message: authError,
+        duration: 5000
+      }));
+      // Clear error message after displaying it
+      localStorage.removeItem('authError');
+    }
+  }, [dispatch]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
