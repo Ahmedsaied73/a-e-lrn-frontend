@@ -3,6 +3,7 @@ import authReducer from './slices/authSlice';
 import courseReducer from './slices/courseSlice';
 import uiReducer from './slices/uiSlice';
 import quizReducer from './slices/quizSlice';
+import assignmentReducer from './slices/assignmentSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     courses: courseReducer,
     ui: uiReducer,
     quiz: quizReducer,
+    assignment: assignmentReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

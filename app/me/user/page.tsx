@@ -140,10 +140,12 @@ export default function UserProfilePage() {
                 نتائج الامتحانات
               </Button>
             </Link>
-            <Button variant="outline" className="w-full justify-start text-white border-[#1f2937] bg-[#111827] hover:bg-[#1f2937]">
-              <CheckCircle className="mr-2 h-4 w-4" />
-              نتائج الواجب
-            </Button>
+            <Link href="/me/user/assignments" className="w-full">
+              <Button variant="outline" className="w-full justify-start text-white border-[#1f2937] bg-[#111827] hover:bg-[#1f2937]">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                نتائج الواجب
+              </Button>
+            </Link>
           </div>
         </div>
 

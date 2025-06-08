@@ -11,6 +11,7 @@ import { CheckCircle, XCircle, Play, Pause, Volume2, VolumeX, Settings, Maximize
 import { AppDispatch } from "@/store/store";
 import { completeVideo, fetchQuizzesByCourse, selectQuizzes, selectVideoCompleted, setVideoCompleted } from "@/store/slices/quizSlice";
 import { addNotification } from "@/store/slices/uiSlice";
+import { fetchAssignmentsByVideo, selectAssignments } from "@/store/slices/assignmentSlice";
 
 export default function VideoPage({ params }: { params: { id: string; video: string } }) {
   const router = useRouter();
@@ -43,6 +44,9 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   // Get quiz state from Redux store
   const quizzes = useSelector(selectQuizzes);
   const videoCompleted = useSelector(selectVideoCompleted);
+  
+  // Get assignments state from Redux store
+  const assignments = useSelector(selectAssignments);
 
   // Format time in MM:SS format
   const formatTime = (seconds: number) => {
@@ -188,6 +192,10 @@ export default function VideoPage({ params }: { params: { id: string; video: str
           
           // Fetch available quizzes for this course
           dispatch(fetchQuizzesByCourse(params.id));
+          
+          // Fetch available assignments for this video
+          dispatch(fetchAssignmentsByVideo(params.video));
+          
           // if the user didn't complete the previous video, redirect to the first video
         }else if (response.status === 403) {
           setError("كمل الفيديو اللي قبل ده الاول");
@@ -340,6 +348,60 @@ export default function VideoPage({ params }: { params: { id: string; video: str
             <div className="border-t border-gray-700 my-4 pt-4">
               <p className="text-base text-gray-300 leading-relaxed">{videoData.description || "وصف الفيديو غير متوفر"}</p>
             </div>
+            
+            {/* Video Assignments Section */}
+            {assignments && assignments.length > 0 && (
+              <div className="border-t border-gray-700 my-4 pt-4">
+                <h4 className="text-lg font-semibold text-white mb-3">الواجبات المتاحة</h4>
+                <div className="space-y-3">
+                  {assignments.map((assignment) => (
+                    <div key={assignment.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-700 bg-gray-800/50 hover:bg-gray-800 transition-colors">
+                      <div className="flex-1">
+                        <h5 className="font-medium text-white">{assignment.title}</h5>
+                        <p className="text-sm text-gray-400 mt-1">{assignment.description}</p>
+                        <div className="flex items-center mt-2 text-xs text-gray-400">
+                          <span>نوع الواجب: {assignment.isMCQ ? "اختيار من متعدد" : "واجب عادي"}</span>
+                          <span className="mx-2">•</span>
+                          <span className={`${new Date(assignment.dueDate) < new Date() ? 'text-red-400' : 'text-green-400'}`}>
+                            تاريخ التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        {assignment.hasSubmitted ? (
+                          assignment.submission ? (
+                            <div className="flex flex-col items-end">
+                              <span className="text-[#61B846] flex items-center">
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                تم التسليم
+                              </span>
+                              {assignment.submission.status === "GRADED" && (
+                                <span className="text-sm mt-1">
+                                  الدرجة: {assignment.submission.grade}/{assignment.passingScore}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-yellow-500 flex items-center">
+                              <span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-1"></span>
+                              قيد المراجعة
+                            </span>
+                          )
+                        ) : (
+                          <Button
+                            onClick={() => router.push(`/course/${params.id}/video/${params.video}/assignment/${assignment.id}`)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm rounded transition-colors"
+                            disabled={!apiCompletionStatus}
+                          >
+                            بدء الواجب
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {/* Video Completion Button */}
             <div className="mt-6 flex justify-center">

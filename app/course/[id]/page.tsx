@@ -15,6 +15,11 @@ import {
   selectVideoProgress,
   selectQuizStatus
 } from '@/store/slices/quizSlice';
+import {
+  fetchAssignmentsByVideo,
+  fetchAssignmentStatus,
+  selectAssignments
+} from '@/store/slices/assignmentSlice';
 
 export default function Page({ params }: { params: { id: string } }) {
   const dispatch = useAppDispatch();
@@ -32,6 +37,10 @@ export default function Page({ params }: { params: { id: string } }) {
   // Get all video progress and quiz statuses
   const videoProgressMap = useAppSelector(state => state.quiz.videoProgressMap);
   const quizStatusMap = useAppSelector(state => state.quiz.quizStatuses);
+  
+  // Get assignments from Redux store
+  const assignments = useAppSelector(selectAssignments);
+  const assignmentStatusMap = useAppSelector(state => state.assignment.assignmentStatuses);
 
   // Function to toggle a specific video dropdown
   const toggleVideo = (videoId: string) => {
@@ -76,8 +85,14 @@ export default function Page({ params }: { params: { id: string } }) {
     const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
     return quizzes.find(quiz => quiz.videoId === videoIdNum) || null;
   }, [quizzes]);
+  
+  // Helper function to find assignments for a specific video
+  const findAssignmentsForVideo = useCallback((videoId: number | string) => {
+    const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
+    return assignments.filter(assignment => assignment.videoId === videoIdNum);
+  }, [assignments]);
 
-  // Check video progress and quiz status when needed
+  // Check video progress, quiz status, and assignment status when needed
   const checkVideoAndQuizStatus = useCallback(async (videoId: string | number) => {
     // Fetch video progress
     dispatch(fetchVideoProgress(videoId));
@@ -88,7 +103,19 @@ export default function Page({ params }: { params: { id: string } }) {
       // Fetch quiz status
       dispatch(fetchQuizStatus(quiz.id));
     }
-  }, [dispatch, findQuizForVideo]);
+    
+    // Find assignments for this video and fetch their status
+    const videoAssignments = findAssignmentsForVideo(videoId);
+    if (videoAssignments.length > 0) {
+      // Fetch assignments for this video
+      dispatch(fetchAssignmentsByVideo(videoId));
+      
+      // Fetch status for each assignment
+      videoAssignments.forEach(assignment => {
+        dispatch(fetchAssignmentStatus(assignment.id));
+      });
+    }
+  }, [dispatch, findQuizForVideo, findAssignmentsForVideo]);
 
   // Helper function to get video progress
   const getVideoProgress = (videoId: string | number) => {
@@ -98,6 +125,11 @@ export default function Page({ params }: { params: { id: string } }) {
   // Helper function to get quiz status
   const getQuizStatus = (quizId: number) => {
     return quizStatusMap[quizId] || null;
+  };
+  
+  // Helper function to get assignment status
+  const getAssignmentStatus = (assignmentId: number) => {
+    return assignmentStatusMap[assignmentId] || null;
   };
 
   useEffect(() => {
@@ -148,6 +180,11 @@ export default function Page({ params }: { params: { id: string } }) {
             initialOpenState[video.id] = false;
           });
           setOpenVideoIds(initialOpenState);
+          
+          // Fetch assignments for all videos in the course immediately after getting course data
+          data.videos.forEach((video: any) => {
+            dispatch(fetchAssignmentsByVideo(video.id));
+          });
         }
         
         // Check if user is already enrolled in this course
@@ -364,6 +401,109 @@ export default function Page({ params }: { params: { id: string } }) {
                                 )}
                               </div>
                             )}
+                            
+                            {/* Assignment Cards - if there are assignments for this video */}
+                            {findAssignmentsForVideo(video.id).map(assignment => {
+                              const assignmentStatus = getAssignmentStatus(assignment.id);
+                              const isPastDue = new Date(assignment.dueDate) < new Date();
+                              const isSubmitted = assignment.hasSubmitted;
+                              const isGraded = assignment.submission?.status === "GRADED";
+                              
+                              return (
+                                <div 
+                                  key={assignment.id}
+                                  className={`flex items-center justify-between p-3 rounded-lg border-l-4 mt-2
+                                    ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
+                                      ? "bg-green-50 dark:bg-green-900/20 border-green-500"
+                                      : isGraded
+                                      ? "bg-red-50 dark:bg-red-900/20 border-red-500"
+                                      : isSubmitted
+                                      ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500"
+                                      : isPastDue
+                                      ? "bg-gray-50 dark:bg-gray-700 border-red-400"
+                                      : "bg-gray-50 dark:bg-gray-700 border-blue-400"}`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore ? (
+                                      <CheckCircle size={16} className="text-green-600" />
+                                    ) : isGraded ? (
+                                      <Clock size={16} className="text-red-500" />
+                                    ) : isSubmitted ? (
+                                      <Clock size={16} className="text-yellow-500" />
+                                    ) : isPastDue ? (
+                                      <Clock size={16} className="text-red-400" />
+                                    ) : (
+                                      <Clock size={16} className="text-blue-400" />
+                                    )}
+                                    <span className="font-medium">{assignment.title}</span>
+                                    
+                                    {isGraded && assignment.submission && (
+                                      <span className={`text-xs ${assignment.submission.grade >= assignment.passingScore ? "text-green-500" : "text-red-500"}`}>
+                                        {assignment.submission.grade >= assignment.passingScore
+                                          ? `نجاح - ${assignment.submission.grade}/${assignment.passingScore}`
+                                          : `رسوب - ${assignment.submission.grade}/${assignment.passingScore}`}
+                                      </span>
+                                    )}
+                                    
+                                    {!isGraded && isSubmitted && (
+                                      <span className="text-xs text-yellow-500">
+                                        قيد المراجعة
+                                      </span>
+                                    )}
+                                    
+                                    {!isSubmitted && isPastDue && (
+                                      <span className="text-xs text-red-500">
+                                        انتهى موعد التسليم
+                                      </span>
+                                    )}
+                                    
+                                    {!isSubmitted && !isPastDue && (
+                                      <span className="text-xs text-blue-500">
+                                        موعد التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
+                                      </span>
+                                    )}
+                                  </div>
+                                  
+                                  {isEnrolled && videoProgress.completed && (
+                                    <Link
+                                      href={`/course/${params.id}/video/${video.id}/assignment/${assignment.id}`}
+                                      className={`hover:underline text-sm flex items-center gap-1
+                                        ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
+                                          ? "text-green-600"
+                                          : isGraded
+                                          ? "text-red-500"
+                                          : isSubmitted
+                                          ? "text-yellow-500"
+                                          : isPastDue
+                                          ? "text-red-400"
+                                          : "text-blue-500"}`}
+                                    >
+                                      {isGraded ? (
+                                        <>
+                                          <Check size={16} />
+                                          عرض النتيجة
+                                        </>
+                                      ) : isSubmitted ? (
+                                        <>
+                                          <Clock size={16} />
+                                          عرض التسليم
+                                        </>
+                                      ) : isPastDue ? (
+                                        <>
+                                          <Clock size={16} />
+                                          متأخر
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Clock size={16} />
+                                          بدء الواجب
+                                        </>
+                                      )}
+                                    </Link>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}

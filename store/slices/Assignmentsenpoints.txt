@@ -1,0 +1,191 @@
+get the vid assigments : localhost:3005/assignments/video/[the vid id] the res:{
+    "assignments": [
+        {
+            "id": 4,
+            "title": "JavaScript Arrays Quiz",
+            "description": "Test your knowledge of JavaScript arrays",
+            "videoId": 1,
+            "dueDate": "2023-07-15T23:59:59.000Z",
+            "isMCQ": true,
+            "passingScore": 70,
+            "createdAt": "2025-05-07T05:38:21.941Z",
+            "updatedAt": "2025-05-07T05:38:21.941Z",
+            "hasSubmitted": false,
+            "submission": null
+        },
+        {
+            "id": 3,
+            "title": "JavaScript DOM Manipulation",
+            "description": "Create a web page that demonstrates DOM manipulation techniques",
+            "videoId": 1,
+            "dueDate": "2023-07-15T23:59:59.000Z",
+            "isMCQ": false,
+            "passingScore": 70,
+            "createdAt": "2025-05-07T05:37:58.516Z",
+            "updatedAt": "2025-05-07T05:37:58.516Z",
+            "hasSubmitted": false,
+            "submission": null
+        },
+        {
+            "id": 2,
+            "title": "JavaScript Arrays Quiz",
+            "description": "Test your knowledge of JavaScript arrays",
+            "videoId": 1,
+            "dueDate": "2027-07-15T23:59:59.000Z",
+            "isMCQ": true,
+            "passingScore": 70,
+            "createdAt": "2025-05-06T11:03:03.399Z",
+            "updatedAt": "2025-05-06T11:03:03.399Z",
+            "hasSubmitted": true,
+            "submission": {
+                "id": 1,
+                "status": "GRADED",
+                "grade": 92,
+                "submittedAt": "2025-05-07T06:17:18.431Z"
+            }
+        },
+        {
+            "id": 1,
+            "title": "JavaScript Arrays Implementation",
+            "description": "Create a program that demonstrates array manipulation in JavaScript",
+            "videoId": 1,
+            "dueDate": "2023-07-15T23:59:59.000Z",
+            "isMCQ": false,
+            "passingScore": 70,
+            "createdAt": "2025-05-06T09:35:36.679Z",
+            "updatedAt": "2025-05-06T09:35:36.679Z",
+            "hasSubmitted": false,
+            "submission": null
+        }
+    ]
+}
+-----------------------------------------------------------------------
+checking if the user has been submitted the assigments : localhost:3005/assignments/[the assigments id]/status the res:{
+    "assignmentId": 4,
+    "title": "JavaScript Arrays Quiz",
+    "submitted": false,
+    "status": "NOT_SUBMITTED",
+    "message": "User has not submitted this assignment yet",
+    "dueDate": "2023-07-15T23:59:59.000Z",
+    "isPastDue": true
+}
+----------------------------------------------------------------------
+Get Assignments Submissions: localhost:3005/assignments/[the assigments id]/submissions the res:**Purpose:** Get all assignment submissions for the authenticated user
+
+**Response:**
+
+```json
+[
+  {
+    "id": 3,
+    "assignmentId": 1,
+    "assignmentTitle": "JavaScript DOM Manipulation",
+    "courseId": 1,
+    "courseTitle": "Introduction to JavaScript",
+    "status": "graded",
+    "submittedAt": "2023-06-10T14:30:00Z",
+    "gradedAt": "2023-06-12T09:45:00Z",
+    "grade": 92,
+    "totalPoints": 100,
+    "feedback": "Excellent work! Your DOM manipulation techniques were well implemented and clearly documented. For future assignments, consider adding error handling to your JavaScript functions."
+  },
+  {
+    "id": 5,
+    "assignmentId": 2,
+    "assignmentTitle": "Build a Calculator",
+    "courseId": 1,
+    "courseTitle": "Introduction to JavaScript",
+    "status": "submitted",
+    "submittedAt": "2023-06-20T16:15:00Z",
+    "gradedAt": null,
+    "grade": null,
+    "totalPoints": 150,
+    "feedback": null
+  }
+]
+------------------------------------------------------------------------
+submit the assignment:localhost:3005/assignments/submit the req body:{
+  "assignmentId": 2,
+  "answers": [
+    {
+      "questionId": 1,
+      "selectedOption": 0
+    },
+    {
+      "questionId": 2,
+      "selectedOption": 1
+    }
+  ]
+} the res:```
+POST /assignments/submit
+```
+
+**Authentication Required:** Yes
+
+**Purpose:** Submit completed assignment (works for both regular and MCQ assignments)
+
+**Request Body for Regular Assignment:**
+
+```json
+{
+  "assignmentId": 1,
+  "content": "Here is my solution to the DOM manipulation assignment...",
+  "fileUrl": "/uploads/assignments/user1/assignment1/dom-manipulation.zip"
+}
+```
+
+**Request Body for MCQ Assignment:**
+
+```json
+{
+  "assignmentId": 2,
+  "answers": [
+    {
+      "questionId": 1,
+      "selectedOption": 2
+    },
+    {
+      "questionId": 2,
+      "selectedOption": 1
+    }
+  ]
+}
+```
+
+**Response for Regular Assignment:**
+
+```json
+{
+  "message": "Assignment submitted successfully",
+  "submission": {
+    "id": 3,
+    "userId": 1,
+    "assignmentId": 1,
+    "content": "Here is my solution to the DOM manipulation assignment...",
+    "fileUrl": "/uploads/assignments/user1/assignment1/dom-manipulation.zip",
+    "status": "PENDING",
+    "submittedAt": "2023-06-10T14:30:00Z"
+  }
+}
+```
+
+**Response for MCQ Assignment:**
+
+```json
+{
+  "message": "MCQ assignment passed",
+  "submission": {
+    "id": 4,
+    "userId": 1,
+    "assignmentId": 2,
+    "mcqScore": 85.5,
+    "status": "GRADED",
+    "grade": 85.5,
+    "submittedAt": "2023-06-10T14:30:00Z",
+    "gradedAt": "2023-06-10T14:30:00Z"
+  },
+  "mcqScore": 85.5,
+  "passed": true,
+  "passingScore": 70.0
+}
+-----------------------------------------------------------------------

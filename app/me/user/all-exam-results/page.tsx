@@ -70,6 +70,18 @@ export default function AllExamResultsPage() {
           }
         });
 
+        // Handle 404 specifically for "No quiz results found" message
+        if (response.status === 404) {
+          const data = await response.json();
+          if (data.message === "No quiz results found") {
+            // Set empty results but don't set an error
+            setResults([]);
+            setFilteredResults([]);
+            setIsLoading(false);
+            return;
+          }
+        }
+        
         if (!response.ok) {
           throw new Error('فشل في جلب نتائج الاختبارات');
         }
@@ -151,6 +163,36 @@ export default function AllExamResultsPage() {
     );
   }
 
+  // Check if there are no results but no error (meaning the API returned successfully with no results)
+  if (results.length === 0 && !error) {
+    return (
+      <div className="container mx-auto py-10 px-4">
+        <div className="flex flex-col items-center justify-center mb-8">
+          <div className="bg-blue-500 rounded-full p-3 mb-2">
+            <CheckCircle className="text-white h-6 w-6" />
+          </div>
+          <h1 className="text-2xl font-bold text-white text-center">نتائج جميع الاختبارات</h1>
+        </div>
+        
+        <Card className="bg-[#111827] border-[#1f2937] text-white">
+          <CardHeader>
+            <CardTitle className="text-center">لا توجد نتائج اختبارات</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <div className="flex justify-center mb-6">
+              <BookOpen className="h-16 w-16 text-blue-400 opacity-70" />
+            </div>
+            <p className="text-lg mb-4">لم تقم بإجراء أي اختبارات بعد</p>
+            <p className="text-gray-400 mb-6">عندما تقوم بإجراء اختبارات في الكورسات، ستظهر نتائجك هنا</p>
+            <Link href="/me/user">
+              <Button className="mt-4 bg-blue-600 hover:bg-blue-700">العودة لملف المستخدم</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   return (
     <div className="container mx-auto py-10 px-4">
       <div className="flex flex-col items-center justify-center mb-8">
