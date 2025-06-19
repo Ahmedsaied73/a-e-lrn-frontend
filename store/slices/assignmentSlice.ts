@@ -104,6 +104,41 @@ export const fetchAssignmentsByVideo = createAsyncThunk(
   }
 );
 
+// New async thunk fetchAssignmentsByCourse
+export const fetchAssignmentsByCourse = createAsyncThunk(
+  'assignment/fetchAssignmentsByCourse',
+  async ({ courseId, videoIds }: { courseId: string, videoIds: (string | number)[] }, { rejectWithValue }) => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        return rejectWithValue('Not authenticated');
+      }
+
+      let allAssignments: Assignment[] = [];
+      for (const videoId of videoIds) {
+        const response = await fetch(`http://localhost:3005/assignments/video/${videoId}`, {
+          headers: {
+            'Authorization': `Bearer ${refreshToken}`
+          }
+        });
+
+        if (!response.ok) {
+          // If any fetch fails, reject the whole operation
+          return rejectWithValue(`Failed to fetch assignments for video ID: ${videoId}`);
+        }
+
+        const data = await response.json();
+        if (data.assignments) {
+          allAssignments = allAssignments.concat(data.assignments);
+        }
+      }
+      return allAssignments;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred while fetching assignments by course');
+    }
+  }
+);
+
 export const fetchAssignmentById = createAsyncThunk(
   'assignment/fetchAssignmentById',
   async (assignmentId: number, { rejectWithValue }) => {
@@ -263,6 +298,19 @@ export const assignmentSlice = createSlice({
         state.assignments = action.payload;
       })
       .addCase(fetchAssignmentsByVideo.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // fetchAssignmentsByCourse
+      .addCase(fetchAssignmentsByCourse.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAssignmentsByCourse.fulfilled, (state, action: PayloadAction<Assignment[]>) => {
+        state.loading = false;
+        state.assignments = action.payload;
+      })
+      .addCase(fetchAssignmentsByCourse.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
