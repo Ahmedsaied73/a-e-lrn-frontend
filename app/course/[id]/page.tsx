@@ -18,7 +18,8 @@ import {
 import {
   fetchAssignmentsByVideo,
   fetchAssignmentStatus,
-  selectAssignments
+  selectAssignments,
+  fetchAssignmentsByCourse // Added import
 } from '@/store/slices/assignmentSlice';
 
 export default function Page({ params }: { params: { id: string } }) {
@@ -107,10 +108,8 @@ export default function Page({ params }: { params: { id: string } }) {
     // Find assignments for this video and fetch their status
     const videoAssignments = findAssignmentsForVideo(videoId);
     if (videoAssignments.length > 0) {
-      // Fetch assignments for this video
-      dispatch(fetchAssignmentsByVideo(videoId));
-      
       // Fetch status for each assignment
+      // dispatch(fetchAssignmentsByVideo(videoId)); // Removed redundant dispatch
       videoAssignments.forEach(assignment => {
         dispatch(fetchAssignmentStatus(assignment.id));
       });
@@ -181,10 +180,8 @@ export default function Page({ params }: { params: { id: string } }) {
           });
           setOpenVideoIds(initialOpenState);
           
-          // Fetch assignments for all videos in the course immediately after getting course data
-          data.videos.forEach((video: any) => {
-            dispatch(fetchAssignmentsByVideo(video.id));
-          });
+          // Fetch all assignments for the course
+          dispatch(fetchAssignmentsByCourse({ courseId: params.id, videoIds: data.videos.map((video: any) => video.id) }));
         }
         
         // Check if user is already enrolled in this course
