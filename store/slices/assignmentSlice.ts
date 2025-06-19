@@ -27,6 +27,7 @@ export interface Assignment {
     submittedAt: string;
   } | null;
   questions?: AssignmentQuestion[];
+  AssignmentQuestion?: AssignmentQuestion[];
 }
 
 export interface AssignmentResult {
