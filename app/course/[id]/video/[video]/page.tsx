@@ -84,14 +84,20 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     checkVideoCompletion();
   }, [params.video, dispatch]);
 
-  // Handle video completion
+  // State for quiz confirmation dialog
+  const [showQuizConfirmation, setShowQuizConfirmation] = useState(false);
+  const [pendingQuiz, setPendingQuiz] = useState<any>(null);
+
+  // Handle video completion with quiz confirmation
   const handleCompleteVideo = useCallback(async () => {
     // If already completed via API check, don't submit again
     if (apiCompletionStatus) {
       // Just navigate to quiz if available
       const videoQuiz = quizzes.find(quiz => quiz.videoId === Number(params.video));
       if (videoQuiz) {
-        router.push(`/course/${params.id}/video/${params.video}/quiz/${videoQuiz.id}`);
+        // Show confirmation dialog instead of direct navigation
+        setPendingQuiz(videoQuiz);
+        setShowQuizConfirmation(true);
       } else {
         dispatch(addNotification({
           type: 'info',
@@ -111,8 +117,9 @@ export default function VideoPage({ params }: { params: { id: string; video: str
       // Find quiz for this video
       const videoQuiz = quizzes.find(quiz => quiz.videoId === Number(params.video));
       if (videoQuiz) {
-        // Navigate to the quiz page
-        router.push(`/course/${params.id}/video/${params.video}/quiz/${videoQuiz.id}`);
+        // Show confirmation dialog instead of direct navigation
+        setPendingQuiz(videoQuiz);
+        setShowQuizConfirmation(true);
       } else {
         dispatch(addNotification({
           type: 'info',
@@ -128,6 +135,25 @@ export default function VideoPage({ params }: { params: { id: string; video: str
       setCompletingVideo(false);
     }
   }, [apiCompletionStatus, quizzes, params.video, params.id, router, dispatch]);
+
+  // Handle quiz confirmation - take now
+  const handleTakeQuizNow = () => {
+    if (pendingQuiz) {
+      router.push(`/course/${params.id}/video/${params.video}/quiz/${pendingQuiz.id}`);
+    }
+    setShowQuizConfirmation(false);
+    setPendingQuiz(null);
+  };
+
+  // Handle quiz confirmation - take later
+  const handleTakeQuizLater = () => {
+    dispatch(addNotification({
+      type: 'success',
+      message: 'تم حفظ تقدمك. يمكنك أخذ الاختبار لاحقاً من صفحة الكورس'
+    }));
+    setShowQuizConfirmation(false);
+    setPendingQuiz(null);
+  };
 
   // Start progress simulation
   useEffect(() => {
@@ -428,6 +454,35 @@ export default function VideoPage({ params }: { params: { id: string; video: str
           </div>
         </CardContent>
       </Card>
+
+      {/* Quiz Confirmation Dialog */}
+      {showQuizConfirmation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+              اختبار متاح!
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-center">
+              يوجد اختبار متاح لهذا الفيديو. هل تريد أخذ الاختبار الآن أم لاحقاً؟
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={handleTakeQuizNow}
+                className="bg-[#61B846] hover:bg-[#61B846]/90 text-white px-6 py-2 rounded-lg transition-colors"
+              >
+                أخذ الاختبار الآن
+              </Button>
+              <Button
+                onClick={handleTakeQuizLater}
+                variant="outline"
+                className="border-gray-300 text-gray-700 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 px-6 py-2 rounded-lg transition-colors"
+              >
+                لاحقاً
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

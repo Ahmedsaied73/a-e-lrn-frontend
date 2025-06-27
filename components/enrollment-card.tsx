@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface EnrollmentCardProps {
   courseId: string;
@@ -26,6 +27,7 @@ export function EnrollmentCard({
   questionsCount,
   className,
 }: EnrollmentCardProps) {
+  const router = useRouter();
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
   const [enrolled, setEnrolled] = useState(isEnrolled);
 
@@ -63,30 +65,14 @@ export function EnrollmentCard({
       return;
     }
 
-    setEnrollmentLoading(true);
-    try {
-      if (enrolled) {
-        // User is already enrolled, show a message
-        toast.success('أنت مشترك بالفعل في هذا الكورس');
-      } else {
-        // Enroll the user
-        const response = await enrollUserInCourse(userId, courseId);
-        
-        if (response.ok) {
-          setEnrolled(true);
-          toast.success('تم الاشتراك في الكورس بنجاح');
-          // Refresh the page to show the video section
-          window.location.reload();
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          toast.error(errorData.message || 'حدث خطأ أثناء الاشتراك في الكورس');
-        }
-      }
-    } catch (error) {
-      toast.error('حدث خطأ أثناء الاشتراك في الكورس');
-    } finally {
-      setEnrollmentLoading(false);
+    if (enrolled) {
+      // User is already enrolled, show a message
+      toast.success('أنت مشترك بالفعل في هذا الكورس');
+      return;
     }
+
+    // Redirect to invoice page for subscription
+    router.push(`/course/${courseId}/subscribe/invoice`);
   };
 
   /**
@@ -139,7 +125,7 @@ export function EnrollmentCard({
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
             <p className="text-gray-600 dark:text-gray-400 text-sm">المحتوى</p>
-            <p className="text-xl font-bold">{courseDuration} ساعة</p>
+            <p className="text-xl font-bold">{courseDuration}</p>
           </div>
           <div className="text-center">
             <p className="text-gray-600 dark:text-gray-400 text-sm">إجمالي الأسئلة</p>

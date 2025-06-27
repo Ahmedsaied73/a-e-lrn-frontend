@@ -31,6 +31,8 @@ export default function Page({ params }: { params: { id: string } }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
   const [openVideoIds, setOpenVideoIds] = useState<Record<string, boolean>>({});
+  const [courseDuration, setCourseDuration] = useState<string>('0');
+  const [totalQuestions, setTotalQuestions] = useState<number>(0);
   
   // Get quizzes from Redux store
   const quizzes = useAppSelector(selectQuizzes);
@@ -92,6 +94,39 @@ export default function Page({ params }: { params: { id: string } }) {
     const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
     return assignments.filter(assignment => assignment.videoId === videoIdNum);
   }, [assignments]);
+
+  // Helper function to format duration from seconds
+  const formatDuration = useCallback((totalSeconds: number) => {
+    if (totalSeconds === 0) return '0 دقيقة';
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    if (totalMinutes < 60) {
+      return `${totalMinutes} دقيقة`;
+    } else {
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      if (minutes === 0) {
+        return `${hours} ساعة`;
+      } else {
+        return `${hours} ساعة و ${minutes} دقيقة`;
+      }
+    }
+  }, []);
+
+  // Helper function to calculate total course duration and questions
+  const calculateCourseStats = useCallback((courseData: any, quizzes: any[]) => {
+    // Calculate total duration from all videos in seconds
+    const totalDurationInSeconds = courseData?.videos?.reduce((total: number, video: any) => {
+      return total + (video.duration || 0);
+    }, 0) || 0;
+
+    // Calculate total questions from all quizzes
+    const totalQuestionsCount = quizzes.reduce((total, quiz) => {
+      return total + (quiz.questionCount || 0);
+    }, 0);
+    
+    setCourseDuration(formatDuration(totalDurationInSeconds));
+    setTotalQuestions(totalQuestionsCount);
+  }, [formatDuration]);
 
   // Check video progress, quiz status, and assignment status when needed
   const checkVideoAndQuizStatus = useCallback(async (videoId: string | number) => {
@@ -225,6 +260,13 @@ export default function Page({ params }: { params: { id: string } }) {
       });
     }
   }, [courseData, isEnrolled, checkVideoAndQuizStatus]);
+
+  // Calculate course statistics when course data and quizzes are loaded
+  useEffect(() => {
+    if (courseData && quizzes.length >= 0) {
+      calculateCourseStats(courseData, quizzes);
+    }
+  }, [courseData, quizzes, calculateCourseStats]);
 
   if (isLoading) return <div className="text-center p-8">جاري التحميل...</div>;
   if (error) return <div className="text-center p-8 text-red-500">خطأ: {error}</div>;
@@ -522,10 +564,10 @@ export default function Page({ params }: { params: { id: string } }) {
             courseId={params.id}
             userId={userId}
             isEnrolled={isEnrolled}
-            courseTitle={courseData.title || "كورس الأزهر المكثف المجاني"}
+            courseTitle={courseData.title}
             coursePrice={courseData.price || "مجاني"}
-            courseDuration={courseData.duration || "10"}
-            questionsCount={courseData.questions_count || "50"}
+            courseDuration={courseDuration}
+            questionsCount={totalQuestions.toString()}
             className="sticky top-24"
           />
         </div>
