@@ -2,9 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --primary: 97, 184, 70;
-  --secondary: 245, 101, 57;
+@layer base {
+  :root {
+    /* Ocean Breeze — light theme */
+    --background: 245, 247, 250; /* F5F7FA */
+    --foreground: 15, 23, 42; /* slate-900 */
+
+    --card: 255, 255, 255;
+    --card-foreground: 15, 23, 42;
+
+    --popover: 255, 255, 255;
+    --popover-foreground: 15, 23, 42;
+
+    --primary: 32, 123, 255; /* 207BFF */
+    --primary-foreground: 255, 255, 255;
+
+    --secondary: 78, 165, 255; /* 4EA5FF */
+    --secondary-foreground: 255, 255, 255;
+
+    --muted: 241, 245, 249; /* slate-100 */
+    --muted-foreground: 100, 116, 139; /* slate-500 */
+
+    --accent: 230, 240, 255; /* soft blue tint */
+    --accent-foreground: 32, 123, 255;
+
+    --destructive: 239, 68, 68;
+    --destructive-foreground: 255, 255, 255;
+
+    --success: 34, 197, 94;
+    --success-foreground: 255, 255, 255;
+
+    --border: 226, 232, 240; /* slate-200 */
+    --input: 226, 232, 240;
+    --ring: 32, 123, 255;
+
+    --radius: 0.9rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 .primary-gradient {
@@ -14,9 +56,19 @@
 .primary-text-gradient {
   background: linear-gradient(90deg, rgb(var(--primary)) 0%, rgb(var(--secondary)) 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.geometric-background {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+/* Soft ambient wash used behind hero / feature sections */
+.ocean-wash {
+  background:
+    radial-gradient(60rem 40rem at 85% -10%, rgba(78, 165, 255, 0.18), transparent 60%),
+    radial-gradient(50rem 40rem at 0% 10%, rgba(32, 123, 255, 0.12), transparent 55%);
+}
+
+/* Subtle dotted texture for light surfaces */
+.dotted-grid {
+  background-image: radial-gradient(rgba(32, 123, 255, 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
