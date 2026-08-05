@@ -1,7 +1,7 @@
 # E-LRN Frontend — Execution Planning
 
-**Branch:** `feature/phase-0-1-foundation-auth`
-**API Reference:** `H:\e-learning-platform\API_DOCUMENTATION.md`
+**Branch:** `feature/phase-2-3-service-redux-layer`
+**API Reference:** `C:\Users\os\Desktop\e-learning-platform\API_DOCUMENTATION.md`
 **Implementation Plan:** [implementation_plan.md](./implementation_plan.md)
 
 ---
@@ -14,7 +14,9 @@
 - Add server-side route protection via Next.js `middleware.ts`
 - Handle HTTP 429 rate-limiting with Arabic user-facing messages
 - Fix grade enum values: `FIRST_SECONDARY | SECOND_SECONDARY | THIRD_SECONDARY`
-- Fix new endpoint changes: `/enroll/status` (was `/enroll/api/enrollment-status`), `/progress/mark` (was `/progress/complete`)
+- Fix new endpoint changes:
+  - `/enroll/status` (was `/enroll/api/enrollment-status`), body now `{ courseId }` only
+  - `/progress/mark` (was `/progress/complete`), body now `{ videoId, completed: true }`
 - Enable Next.js image optimization (remove `unoptimized: true`)
 - Provide backend documentation for future HttpOnly cookie migration
 
@@ -46,6 +48,23 @@
 | P1-8 | Create `docs/AUTH_BACKEND_MIGRATION.md` — backend spec for HttpOnly cookie migration | `docs/AUTH_BACKEND_MIGRATION.md` | ✅ Done |
 | P1-9 | Update `utils/auth-utils.ts` — align with new error structure | `utils/auth-utils.ts` | ✅ Done |
 
+### Phase 2 — Service Layer
+
+| # | Task | File(s) | Status |
+|---|---|---|---|
+| P2-1 | Rewrite `services/courseService.ts` — use `apiClient`, new endpoints, pagination support | `services/courseService.ts` | ✅ Done |
+| P2-2 | Create `services/quizService.ts` — extract all quiz API calls | `services/quizService.ts` | ✅ Done |
+| P2-3 | Create `services/assignmentService.ts` — extract all assignment API calls | `services/assignmentService.ts` | ✅ Done |
+| P2-4 | Create `services/userService.ts` — `getCurrentUser()` via apiClient | `services/userService.ts` | ✅ Done |
+
+### Phase 3 — Redux Slices Cleanup
+
+| # | Task | File(s) | Status |
+|---|---|---|---|
+| P3-1 | Update `store/slices/courseSlice.ts` — thunks call `courseService`, remove inline fetch | `store/slices/courseSlice.ts` | ✅ Done |
+| P3-2 | Update `store/slices/quizSlice.ts` — thunks call `quizService`, fix endpoints, remove localStorage | `store/slices/quizSlice.ts` | ✅ Done |
+| P3-3 | Update `store/slices/assignmentSlice.ts` — thunks call `assignmentService`, remove N+1 loop, remove localStorage | `store/slices/assignmentSlice.ts` | ✅ Done |
+
 ---
 
 ## Commit Log
@@ -55,3 +74,5 @@
 | initial | `chore: create PLANNING.md and feature branch` |
 | P0 complete | `feat(foundation): add API client, typed errors, shared types, env config` |
 | P1 complete | `feat(auth): rewrite auth layer with in-memory tokens and route middleware` |
+| branch | `chore: create feature/phase-2-3-service-redux-layer branch` |
+| P2 & P3 complete | `feat(service-redux): complete Phase 2 service layer and Phase 3 Redux slices cleanup` |

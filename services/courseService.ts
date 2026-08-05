@@ -1,110 +1,130 @@
 /**
- * Course Service
- * Centralizes all course-related API calls
+ * Course Service — services/courseService.ts
+ *
+ * Single source of truth for all course and enrollment API calls.
+ * Uses apiClient from lib/api-client.ts (in-memory token, envelope parsing).
  */
 
-interface EnrollmentCheckData {
-  userId: string;
-  courseId: string;
+import { apiClient } from '@/lib/api-client';
+import { PaginationMeta } from '@/types/api';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface CourseListItem {
+  id: number;
+  title: string;
+  description?: string;
+  price?: number;
+  thumbnail?: string;
+  grade?: string;
 }
 
-const API_URL = 'http://localhost:3005';
+export interface CourseDetail extends CourseListItem {
+  duration?: string;
+  files_count?: number;
+  videos_count?: number;
+  exams_count?: number;
+  questions_count?: number | string;
+  videos?: Array<{
+    id: number;
+    title: string;
+    url?: string;
+    thumbnail?: string;
+    duration?: number;
+    description?: string;
+  }>;
+}
 
-/**
- * Fetch all available courses
- */
-export const fetchAllCourses = async () => {
-  const refreshToken = localStorage.getItem('refreshToken');
-  
-  if (!refreshToken) {
-    throw new Error('Not authenticated');
-  }
+export interface CoursesPage {
+  data: CourseListItem[];
+  meta: PaginationMeta;
+}
 
-  const response = await fetch(`${API_URL}/courses`, {
-    headers: {
-      'Authorization': `Bearer ${refreshToken}`
+export interface EnrollmentResult {
+  courseId: number | string;
+  enrolled: boolean;
+  isPaid?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Response shapes — backend may return flat or wrapped
+// ---------------------------------------------------------------------------
+
+/** Safely extracts an array from either `{ success, data }` or a flat array/object. */
+function extractData<T>(raw: unknown): T {
+  if (raw !== null && typeof raw === 'object') {
+    const obj = raw as Record<string, unknown>;
+    if ('success' in obj && 'data' in obj) {
+      return obj.data as T;
     }
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch courses');
   }
+  return raw as T;
+}
 
-  return await response.json();
-};
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 /**
- * Fetch a specific course by ID
+ * Fetch all courses with optional pagination.
+ * Response: `{ success, data: CourseListItem[], meta }` (new envelope)
  */
-export const fetchCourseById = async (courseId: string) => {
-  const refreshToken = localStorage.getItem('refreshToken');
-  
-  if (!refreshToken) {
-    throw new Error('Not authenticated');
+export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage> {
+  // apiClient.get already unwraps { success, data } if present,
+  // but for paginated list we need the meta too — raw fetch here.
+  const raw = await apiClient.get<{ success: boolean; data: CourseListItem[]; meta: PaginationMeta } | CourseListItem[]>(
+    `/courses?page=${page}&limit=${limit}`,
+  );
+
+  if (raw !== null && typeof raw === 'object' && !Array.isArray(raw) && 'data' in (raw as object)) {
+    const envelope = raw as { data: CourseListItem[]; meta: PaginationMeta };
+    return { data: envelope.data, meta: envelope.meta };
   }
 
-  const response = await fetch(`${API_URL}/courses/${courseId}`, {
-    headers: {
-      'Authorization': `Bearer ${refreshToken}`
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch course data');
-  }
-
-  return await response.json();
-};
+  // Flat array fallback
+  const arr = Array.isArray(raw) ? (raw as CourseListItem[]) : [];
+  return {
+    data: arr,
+    meta: { total: arr.length, page, limit, totalPages: 1 },
+  };
+}
 
 /**
- * Check if a user is enrolled in a specific course
+ * Fetch a single course by its ID.
  */
-export const checkEnrollmentStatus = async ({ userId, courseId }: EnrollmentCheckData) => {
-  const refreshToken = localStorage.getItem('refreshToken');
-  
-  if (!refreshToken) {
-    throw new Error('Not authenticated');
-  }
-
-  const response = await fetch(`${API_URL}/enroll/api/enrollment-status`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${refreshToken}`
-    },
-    body: JSON.stringify({ userId, courseId })
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to check enrollment status');
-  }
-
-  const data = await response.json();
-  return { courseId, enrolled: !!data.enrolled };
-};
+export async function fetchCourseById(courseId: string | number): Promise<CourseDetail> {
+  const raw = await apiClient.get<unknown>(`/courses/${courseId}`);
+  return extractData<CourseDetail>(raw);
+}
 
 /**
- * Enroll a user in a course
+ * Check whether the authenticated user is enrolled in a course.
+ * New API: POST /enroll/status  { courseId }
  */
-export const enrollInCourse = async ({ userId, courseId }: EnrollmentCheckData) => {
-  const refreshToken = localStorage.getItem('refreshToken');
-  
-  if (!refreshToken) {
-    throw new Error('Not authenticated');
-  }
+export async function checkEnrollmentStatus(
+  courseId: string | number,
+): Promise<EnrollmentResult> {
+  const raw = await apiClient.post<unknown>('/enroll/status', { courseId });
+  const data = extractData<{ enrolled?: boolean; isPaid?: boolean }>(raw);
+  return {
+    courseId,
+    enrolled: !!data.enrolled,
+    isPaid: data.isPaid,
+  };
+}
 
-  const response = await fetch(`${API_URL}/enroll`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${refreshToken}`
-    },
-    body: JSON.stringify({ userId, courseId })
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to enroll in course');
-  }
-
-  return await response.json();
-};
+/**
+ * Enroll the authenticated user in a course.
+ * POST /enroll/  { courseId }
+ */
+export async function enrollInCourse(courseId: string | number): Promise<EnrollmentResult> {
+  const raw = await apiClient.post<unknown>('/enroll/', { courseId });
+  const data = extractData<{ enrollment?: { isPaid?: boolean } }>(raw);
+  return {
+    courseId,
+    enrolled: true,
+    isPaid: data.enrollment?.isPaid ?? false,
+  };
+}
