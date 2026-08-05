@@ -10,9 +10,9 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in by looking for refreshToken in localStorage
-    const refreshToken = localStorage.getItem('refreshToken');
-    setIsLoggedIn(!!refreshToken);
+    // Check if user is logged in by looking for isLoggedIn cookie
+    const hasAuthCookie = document.cookie.includes('isLoggedIn=true');
+    setIsLoggedIn(hasAuthCookie);
   }, []);
 
   return (

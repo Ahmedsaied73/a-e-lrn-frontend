@@ -1,41 +1,44 @@
-/**
- * Helper functions for authentication handling
- */
 import { store } from '@/store/store';
 import { logout } from '@/store/slices/authSlice';
 import { addNotification } from '@/store/slices/uiSlice';
+import { clearAccessToken } from '@/lib/api-client';
 
 /**
  * Handle 401 authentication error (Unauthorized)
  * Clears user data and redirects to login page
  */
 export const handleAuthError = () => {
-  // Clear user data from local storage
+  // Clear token in memory
+  clearAccessToken();
+  
+  // Clear cookie
+  if (typeof document !== 'undefined') {
+    document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  }
+  
+  // Clear old local storage items just in case
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('userId');
   localStorage.removeItem('userName');
   localStorage.removeItem('userEmail');
   localStorage.removeItem('userRole');
   localStorage.removeItem('userData');
+  localStorage.removeItem('isLoggedIn');
   
-  // Update Redux state
   try {
-    // Logout from Redux
     store.dispatch(logout());
-    
-    // Add error notification
     store.dispatch(addNotification({
       type: 'error',
       message: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.',
       duration: 5000
     }));
   } catch (error) {
-    // In case of error, use alternative method
-    localStorage.setItem('authError', 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.');
+    // Ignore error if store isn't available
   }
   
-  // Redirect user to login page
-  window.location.href = '/login';
+  if (typeof window !== 'undefined') {
+    window.location.replace('/login');
+  }
 };
 
 /**

@@ -9,47 +9,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { User, Lock, BookOpen, CreditCard, Clock, Video, CheckCircle } from 'lucide-react';
 import { checkAuthResponse } from '@/utils/auth-utils';
+import { getCurrentUser } from '@/services/authService';
 
 export default function UserProfilePage() {
   const [activeTab, setActiveTab] = useState('profile');
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = async (refreshToken: string) => {
-    try {
-      const response = await fetch('http://localhost:3005/user/me', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${refreshToken}`,
-        },
-      });
-      
-      // Use helper function to check response status
-      if (checkAuthResponse(response)) {
-        return null;
-      }
-      
-      const data = await response.json();
-      return data;
-    }
-    catch (error) {
-      console.error('Error fetching user data:', error);
-      return null;
-    }
-  }
-  
   useEffect(() => {
     const loadUserData = async () => {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        const userData = await fetchData(refreshToken);
-        if (userData) {
-          setUser(userData);
+      const hasAuthCookie = document.cookie.includes('isLoggedIn=true');
+      if (hasAuthCookie) {
+        try {
+          const userData = await getCurrentUser();
+          if (userData) {
+            setUser(userData);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          // 401 errors are handled automatically by apiClient and auth-utils
         }
       } else {
         // If there is no token, redirect user to login page
-        window.location.href = '/login';
+        window.location.replace('/login');
         return;
       }
       setIsLoading(false);

@@ -3,6 +3,9 @@
  * Centralizes all authentication-related API calls
  */
 
+import { apiClient, setAccessToken, clearAccessToken } from '@/lib/api-client';
+import { User } from '@/types/api';
+
 interface LoginCredentials {
   email: string;
   password: string;
@@ -16,104 +19,70 @@ interface RegisterData {
   password: string;
 }
 
-const API_URL = 'http://localhost:3005';
+interface AuthResponse {
+  message: string;
+  token: string;
+}
 
 /**
  * Login user with email and password
  */
-export const loginUser = async (credentials: LoginCredentials) => {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'فشل في تسجيل الدخول');
-  }
-
-  const userData = await response.json();
+export const loginUser = async (credentials: LoginCredentials): Promise<{ user: User }> => {
+  const response = await apiClient.post<AuthResponse>('/auth/login', credentials, { authenticated: false });
   
-  // Store auth data in localStorage
-  if (userData.refreshToken) {
-    localStorage.setItem('refreshToken', userData.refreshToken);
-    
-    if (userData.user && userData.user.id) {
-      localStorage.setItem('userId', userData.user.id.toString());
+  if (response.token) {
+    setAccessToken(response.token);
+    // Store non-sensitive flag for middleware
+    if (typeof document !== 'undefined') {
+      document.cookie = "isLoggedIn=true; path=/; max-age=604800; SameSite=Strict";
     }
-    if (userData.user && userData.user.name) {
-      localStorage.setItem('userName', userData.user.name);
-    }
-    if (userData.user && userData.user.email) {
-      localStorage.setItem('userEmail', userData.user.email);
-    }
-    if (userData.user && userData.user.role) {
-      localStorage.setItem('userRole', userData.user.role);
-    }
-    
-    // Store the entire user object as JSON string
-    localStorage.setItem('userData', JSON.stringify(userData));
   }
 
-  return userData;
+  // Fetch current user immediately to populate Redux
+  const user = await getCurrentUser();
+  return { user };
 };
 
 /**
  * Register a new user
  */
-export const registerUser = async (userData: RegisterData) => {
-  const response = await fetch(`${API_URL}/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(userData),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'فشل في تسجيل الحساب');
+export const registerUser = async (userData: RegisterData): Promise<{ user: User }> => {
+  const response = await apiClient.post<AuthResponse>('/auth/register', userData, { authenticated: false });
+  
+  if (response.token) {
+    setAccessToken(response.token);
+    if (typeof document !== 'undefined') {
+      document.cookie = "isLoggedIn=true; path=/; max-age=604800; SameSite=Strict";
+    }
   }
 
-  return await response.json();
+  const user = await getCurrentUser();
+  return { user };
 };
 
 /**
  * Logout user - clear all stored data
  */
-export const logoutUser = () => {
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('userId');
-  localStorage.removeItem('userName');
-  localStorage.removeItem('userEmail');
-  localStorage.removeItem('userRole');
-  localStorage.removeItem('userData');
+export const logoutUser = async (): Promise<void> => {
+  try {
+    await apiClient.post('/auth/logout', {});
+  } catch (err) {
+    // Ignore errors on logout
+  } finally {
+    clearAccessToken();
+    if (typeof document !== 'undefined') {
+      document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    }
+    // Also clean up any lingering local storage for safety
+    localStorage.removeItem('userData');
+    localStorage.removeItem('refreshToken');
+  }
 };
 
 /**
  * Get current user data from API
  */
-export const getCurrentUser = async () => {
-  const refreshToken = localStorage.getItem('refreshToken');
-  
-  if (!refreshToken) {
-    throw new Error('Not authenticated');
-  }
-
-  const response = await fetch(`${API_URL}/user/me`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${refreshToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch user data');
-  }
-
-  return await response.json();
+export const getCurrentUser = async (): Promise<User> => {
+  // Returns { success: true, data: User } -> apiClient unwraps it
+  return await apiClient.get<User>('/user/me');
 };
