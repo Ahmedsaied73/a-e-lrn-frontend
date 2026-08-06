@@ -22,6 +22,8 @@ import {
   fetchAssignmentsByCourse // Added import
 } from '@/store/slices/assignmentSlice';
 
+import { fetchCourseById, checkEnrollmentStatus } from '@/services/courseService';
+
 export default function Page({ params }: { params: { id: string } }) {
   const dispatch = useAppDispatch();
   const [courseData, setCourseData] = useState<any>(null);
@@ -143,8 +145,6 @@ export default function Page({ params }: { params: { id: string } }) {
     // Find assignments for this video and fetch their status
     const videoAssignments = findAssignmentsForVideo(videoId);
     if (videoAssignments.length > 0) {
-      // Fetch status for each assignment
-      // dispatch(fetchAssignmentsByVideo(videoId)); // Removed redundant dispatch
       videoAssignments.forEach(assignment => {
         dispatch(fetchAssignmentStatus(assignment.id));
       });
@@ -167,44 +167,10 @@ export default function Page({ params }: { params: { id: string } }) {
   };
 
   useEffect(() => {
-    // Get userId from localStorage, either directly or from the stored userData object
-    const userDataStr = localStorage.getItem('userData');
-    let userId = localStorage.getItem('userId');
-    
-    // If userData exists as JSON string, try to extract userId from it
-    if (userDataStr && !userId) {
+    const loadCourseAndEnrollment = async () => {
       try {
-        const userData = JSON.parse(userDataStr);
-        if (userData.id) {
-          userId = userData.id.toString();
-        }
-      } catch (error) {
-        console.error('Error parsing userData from localStorage:', error);
-      }
-    }
-    
-    setUserId(userId);
-
-    const fetchCourseData = async () => {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        setError('Not authenticated');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(`http://localhost:3005/courses/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${refreshToken}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch course data');
-        }
-
-        const data = await response.json();
+        setIsLoading(true);
+        const data = await fetchCourseById(params.id);
         setCourseData(data);
         
         // Initialize all videos as closed
@@ -219,24 +185,12 @@ export default function Page({ params }: { params: { id: string } }) {
           dispatch(fetchAssignmentsByCourse({ courseId: params.id, videoIds: data.videos.map((video: any) => video.id) }));
         }
         
-        // Check if user is already enrolled in this course
-        if (userId) {
-          try {
-            const enrollmentResponse = await fetch('http://localhost:3005/enroll/api/enrollment-status', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${refreshToken}`
-              },
-              body: JSON.stringify({ userId, courseId: params.id })
-            });
-            if (enrollmentResponse.ok) {
-              const enrollmentData = await enrollmentResponse.json();
-              setIsEnrolled(!!enrollmentData.enrolled);
-            }
-          } catch (enrollErr) {
-            console.error('Error checking enrollment status:', enrollErr);
-          }
+        // Check if user is enrolled in this course
+        try {
+          const status = await checkEnrollmentStatus(params.id);
+          setIsEnrolled(status.enrolled);
+        } catch (enrollErr) {
+          console.error('Error checking enrollment status:', enrollErr);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
@@ -245,7 +199,7 @@ export default function Page({ params }: { params: { id: string } }) {
       }
     };
 
-    fetchCourseData();
+    loadCourseAndEnrollment();
     
     // Fetch quizzes for this course
     dispatch(fetchQuizzesByCourse(params.id));

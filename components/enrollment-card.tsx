@@ -6,9 +6,11 @@ import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { checkEnrollmentStatus, enrollInCourse } from '@/services/courseService';
+
 interface EnrollmentCardProps {
   courseId: string;
-  userId: string | null;
+  userId?: string | null;
   isEnrolled: boolean;
   courseTitle: string;
   coursePrice: string | number;
@@ -32,41 +34,23 @@ export function EnrollmentCard({
   const [enrolled, setEnrolled] = useState(isEnrolled);
 
   useEffect(() => {
-    const checkEnrollmentStatus = async () => {
-      if (!userId || !courseId) return;
+    const fetchStatus = async () => {
+      if (!courseId) return;
       try {
-        const response = await fetch('http://localhost:3005/enroll/api/enrollment-status', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`
-          },
-          body: JSON.stringify({ userId, courseId })
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (typeof data.enrolled === 'boolean') {
-            setEnrolled(data.enrolled);
-          }
-        }
+        const result = await checkEnrollmentStatus(courseId);
+        setEnrolled(result.enrolled);
       } catch (error) {
         console.error('Error checking enrollment status:', error);
       }
     };
-    checkEnrollmentStatus();
-  }, [userId, courseId]);
+    fetchStatus();
+  }, [courseId]);
 
   /**
    * Handles the enrollment process when the user clicks the enrollment button
    */
   const handleEnrollment = async () => {
-    if (!userId) {
-      toast.error('يرجى تسجيل الدخول أولاً');
-      return;
-    }
-
     if (enrolled) {
-      // User is already enrolled, show a message
       toast.success('أنت مشترك بالفعل في هذا الكورس');
       return;
     }
@@ -76,24 +60,10 @@ export function EnrollmentCard({
   };
 
   /**
-   * Enrolls a user in a course by sending a request to the enrollment API
-   * @param userId - The ID of the user to enroll
-   * @param courseId - The ID of the course to enroll in
-   * @returns The response from the enrollment API
+   * Enrolls a user in a course using centralized courseService
    */
-  const enrollUserInCourse = async (userId: string, courseId: string) => {
-    return await fetch('http://localhost:3005/enroll/api/enroll', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`
-      },
-      body: JSON.stringify({
-        userId: userId,
-        courseId: courseId,
-        isPaid: true
-      })
-    });
+  const enrollUserInCourse = async (targetCourseId: string) => {
+    return await enrollInCourse(targetCourseId);
   };
 
   return (

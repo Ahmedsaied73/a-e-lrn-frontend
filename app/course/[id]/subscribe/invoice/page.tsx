@@ -114,86 +114,27 @@ export default function Page({ params }: { params: { id: string } }) {
   }, [quizStatusMap]);
 
   useEffect(() => {
-    // Get userId from localStorage
-    const storedUserId = localStorage.getItem('userId');
-    if (storedUserId) {
-      setUserId(storedUserId);
-    }
-
-    const fetchCourseData = async () => {
+    const loadCourseData = async () => {
       try {
         setIsLoading(true);
-        const refreshToken = localStorage.getItem('refreshToken');
-        
-        if (!refreshToken) {
-          setError('لم يتم العثور على رمز المصادقة');
-          return;
-        }
 
         // Fetch course data
-        const response = await fetch(`http://localhost:3005/courses/${params.id}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${refreshToken}`,
-          },
+        const data = await fetchCourseById(params.id);
+        setCourseData(data);
+        
+        // Initialize all videos as closed
+        const initialOpenState: Record<string, boolean> = {};
+        data.videos?.forEach((video: any) => {
+          initialOpenState[video.id] = false;
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          setCourseData(data);
-          
-          // Initialize all videos as closed
-          const initialOpenState: Record<string, boolean> = {};
-          data.videos?.forEach((video: any) => {
-            initialOpenState[video.id] = false;
-          });
-          setOpenVideoIds(initialOpenState);
-          
-          // Fetch all assignments for the course using the new endpoint
-          try {
-            const assignmentResponse = await fetch(`http://localhost:3005/assignments/course/${params.id}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${refreshToken}`,
-              },
-            });
-
-            if (assignmentResponse.ok) {
-              const assignmentData = await assignmentResponse.json();
-              // The response contains { course: {...}, assignments: [...] }
-              if (assignmentData.assignments && Array.isArray(assignmentData.assignments)) {
-                // Log the fetched assignments for debugging
-                console.log('Fetched course assignments:', assignmentData);
-                // Note: You may need to create a new Redux action to handle this response format
-                // For now, we'll use the existing action with the assignments array
-                // dispatch(setAssignments(assignmentData.assignments));
-              }
-            } else {
-              console.error('Failed to fetch course assignments:', assignmentResponse.statusText);
-              toast.error('فشل في تحميل الواجبات');
-            }
-          } catch (assignmentError) {
-            console.error('Error fetching course assignments:', assignmentError);
-            toast.error('حدث خطأ أثناء تحميل الواجبات');
-          }
-        }
+        setOpenVideoIds(initialOpenState);
         
         // Check enrollment status
-        if (storedUserId) {
-          const enrollmentResponse = await fetch(`http://localhost:3005/enroll/api/check-enrollment?userId=${storedUserId}&courseId=${params.id}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${refreshToken}`,
-            },
-          });
-          
-          if (enrollmentResponse.ok) {
-            const enrollmentData = await enrollmentResponse.json();
-            setIsEnrolled(enrollmentData.isEnrolled);
-          }
+        try {
+          const status = await checkEnrollmentStatus(params.id);
+          setIsEnrolled(status.enrolled);
+        } catch (enrollErr) {
+          console.error('Error checking enrollment status:', enrollErr);
         }
       } catch (error) {
         console.error('Error fetching course data:', error);
@@ -203,18 +144,13 @@ export default function Page({ params }: { params: { id: string } }) {
       }
     };
 
-    fetchCourseData();
+    loadCourseData();
     
     // Fetch quizzes for this course
     dispatch(fetchQuizzesByCourse(params.id));
   }, [params.id, dispatch, router]);
 
   const handleSubscription = async () => {
-    if (!userId) {
-      toast.error('يرجى تسجيل الدخول أولاً');
-      return;
-    }
-
     if (isEnrolled) {
       toast.success('أنت مشترك بالفعل في هذا الكورس');
       router.push(`/course/${params.id}`);
@@ -223,32 +159,14 @@ export default function Page({ params }: { params: { id: string } }) {
 
     setEnrollmentLoading(true);
     try {
-      const response = await fetch('http://localhost:3005/enroll/api/enroll', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`
-        },
-        body: JSON.stringify({
-          userId: userId,
-          courseId: params.id,
-          isPaid: true
-        })
-      });
-      
-      if (response.ok) {
-        setIsEnrolled(true);
-        toast.success('تم الاشتراك في الكورس بنجاح! جاري التوجيه...');
-        // Redirect to course page after successful enrollment
-        setTimeout(() => {
-          router.push(`/course/${params.id}`);
-        }, 2000);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        toast.error(errorData.message || 'حدث خطأ أثناء الاشتراك في الكورس');
-      }
-    } catch (error) {
-      toast.error('حدث خطأ أثناء الاشتراك في الكورس');
+      await enrollInCourse(params.id);
+      setIsEnrolled(true);
+      toast.success('تم الاشتراك في الكورس بنجاح! جاري التوجيه...');
+      setTimeout(() => {
+        router.push(`/course/${params.id}`);
+      }, 1500);
+    } catch (error: any) {
+      toast.error(error.message || 'حدث خطأ أثناء الاشتراك في الكورس');
     } finally {
       setEnrollmentLoading(false);
     }

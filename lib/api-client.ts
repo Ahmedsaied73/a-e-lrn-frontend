@@ -2,13 +2,11 @@
  * Central HTTP Client — lib/api-client.ts
  *
  * Responsibilities:
- *  - Holds the accessToken in a module-level variable (NEVER localStorage/sessionStorage)
- *  - Attaches Authorization: Bearer <token> to every authenticated request
- *  - Parses the new { success, data, error } API response envelope
- *  - Handles HTTP 429 → throws RateLimitError with retryAfterSeconds
- *  - Handles HTTP 401 → clears token, dispatches a redirect signal
- *  - Handles HTTP 403, 404 → throws typed errors
- *  - Exports a typed interface: apiClient.get / post / put / delete
+ *  - Sends `credentials: 'include'` on all requests for HttpOnly cookie management
+ *  - Attaches in-memory Authorization Bearer header (if present) for backward compatibility
+ *  - Automatically handles 401 Unauthorized by attempting a silent token refresh (/auth/refresh-token or /auth/refresh)
+ *  - Formats network failures (TypeError: Failed to fetch) into readable Arabic error messages
+ *  - Standardizes parsing for `{ success: boolean, data: any, message?: string, error?: string }`
  */
 
 import {
@@ -26,112 +24,30 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3005';
 
 // ---------------------------------------------------------------------------
-// In-memory token store (module-level singleton — invisible to XSS scripts)
+// In-memory token store (module-level singleton)
 // ---------------------------------------------------------------------------
 let _accessToken: string | null = null;
 
-/** Called by authService after a successful login or token refresh. */
 export function setAccessToken(token: string): void {
   _accessToken = token;
 }
 
-/** Called by authService on logout. */
 export function clearAccessToken(): void {
   _accessToken = null;
 }
 
-/** Read the current in-memory token (used internally and by authService). */
 export function getAccessToken(): string | null {
   return _accessToken;
 }
 
 // ---------------------------------------------------------------------------
-// Response envelope parser
-// ---------------------------------------------------------------------------
-/**
- * Parses an API response and:
- *  - Returns `data` on success
- *  - Throws a typed error on failure
- */
-async function parseResponse<T>(response: Response): Promise<T> {
-  // Handle 429 before parsing body
-  if (response.status === 429) {
-    const retryAfter = response.headers.get('Retry-After');
-    const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : null;
-    const waitMsg =
-      retryAfterSeconds != null
-        ? ` حاول مرة أخرى بعد ${retryAfterSeconds} ثانية.`
-        : ' حاول مرة أخرى لاحقاً.';
-    throw new RateLimitError(
-      `لقد تجاوزت عدد الطلبات المسموح بها.${waitMsg}`,
-      retryAfterSeconds,
-    );
-  }
-
-  if (response.status === 401) {
-    clearAccessToken();
-    // Clear the non-sensitive persistence flag so middleware re-routes to /login
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('isLoggedIn');
-      // Use replace to avoid adding the current page to history
-      window.location.replace('/login');
-    }
-    throw new AuthError();
-  }
-
-  if (response.status === 403) {
-    throw new ForbiddenError();
-  }
-
-  if (response.status === 404) {
-    throw new NotFoundError();
-  }
-
-  // Parse JSON body
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch {
-    throw new ApiError(
-      `استجابة غير متوقعة من الخادم (status ${response.status})`,
-      response.status,
-    );
-  }
-
-  // Handle remaining non-OK statuses using the { success: false, error } envelope
-  if (!response.ok) {
-    const errorBody = body as { success: false; error?: string };
-    throw new ApiError(
-      errorBody?.error ?? `خطأ من الخادم (status ${response.status})`,
-      response.status,
-    );
-  }
-
-  // Successful envelope: { success: true, data: T }  OR  { success: true, data: T[], meta: ... }
-  const successBody = body as { success?: boolean; data?: T } & T;
-
-  // If the backend wraps in { success, data }, unwrap it.
-  // Some endpoints (auth) return flat objects without the envelope.
-  if (
-    successBody !== null &&
-    typeof successBody === 'object' &&
-    'success' in successBody &&
-    'data' in successBody
-  ) {
-    return successBody.data as T;
-  }
-
-  // Flat response (e.g. { message, token } from /auth/login)
-  return successBody as T;
-}
-
-// ---------------------------------------------------------------------------
-// Request builder
+// Request builder with Credentials & Silent Refresh Interceptor
 // ---------------------------------------------------------------------------
 interface RequestOptions {
   /** Set to false for public endpoints that don't need a Bearer token */
   authenticated?: boolean;
   signal?: AbortSignal;
+  _isRetry?: boolean;
 }
 
 function buildHeaders(authenticated = true): HeadersInit {
@@ -146,28 +62,151 @@ function buildHeaders(authenticated = true): HeadersInit {
   return headers;
 }
 
+/**
+ * Attempts silent token refresh when receiving a 401 status.
+ */
+async function attemptSilentRefresh(): Promise<boolean> {
+  const refreshEndpoints = ['/auth/refresh-token', '/auth/refresh'];
+
+  for (const endpoint of refreshEndpoints) {
+    try {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        let body: any = null;
+        try {
+          body = await res.json();
+        } catch {
+          // Response body might be empty or non-JSON if cookies were set directly
+        }
+
+        if (body?.token) {
+          setAccessToken(body.token);
+        } else if (body?.data?.token) {
+          setAccessToken(body.data.token);
+        }
+        return true;
+      }
+    } catch {
+      // Continue to next endpoint or fail
+    }
+  }
+
+  return false;
+}
+
 async function request<T>(
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   path: string,
   body?: unknown,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { authenticated = true, signal } = options;
-
+  const { authenticated = true, signal, _isRetry = false } = options;
   const url = `${API_BASE_URL}${path}`;
 
-  const response = await fetch(url, {
-    method,
-    headers: buildHeaders(authenticated),
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal,
-  });
+  let response: Response;
 
-  return parseResponse<T>(response);
+  try {
+    response = await fetch(url, {
+      method,
+      headers: buildHeaders(authenticated),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      credentials: 'include', // ⚠️ MANDATORY: Enables HttpOnly Cookie transmission
+      signal,
+    });
+  } catch (netErr: any) {
+    // Friendly error for CORS failures, server down, or offline status
+    throw new ApiError(
+      'تعذر الاتصال بالخادم، يرجى التأكد من تشغيل الخادم والتأكد من الاتصال بالشبكة.',
+      0,
+    );
+  }
+
+  // Handle 429 Too Many Requests
+  if (response.status === 429) {
+    const retryAfter = response.headers.get('Retry-After');
+    const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : null;
+    const waitMsg =
+      retryAfterSeconds != null
+        ? ` حاول مرة أخرى بعد ${retryAfterSeconds} ثانية.`
+        : ' حاول مرة أخرى لاحقاً.';
+    throw new RateLimitError(
+      `لقد تجاوزت عدد الطلبات المسموح بها.${waitMsg}`,
+      retryAfterSeconds,
+    );
+  }
+
+  // Handle 401 Unauthorized (Silent Token Refresh Interceptor)
+  if (response.status === 401) {
+    const isRefreshPath = path.includes('/auth/refresh');
+    if (!isRefreshPath && !_isRetry) {
+      const refreshed = await attemptSilentRefresh();
+      if (refreshed) {
+        // Retry original request once
+        return request<T>(method, path, body, { ...options, _isRetry: true });
+      }
+    }
+
+    clearAccessToken();
+    if (typeof window !== 'undefined') {
+      document.cookie = 'isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      localStorage.removeItem('isLoggedIn');
+      // Redirect to login if unauthenticated on protected action
+      if (!isRefreshPath && !path.includes('/auth/login')) {
+        window.location.replace('/login');
+      }
+    }
+    throw new AuthError();
+  }
+
+  if (response.status === 403) {
+    throw new ForbiddenError();
+  }
+
+  if (response.status === 404) {
+    throw new NotFoundError();
+  }
+
+  // Parse JSON response body
+  let resBody: unknown;
+  try {
+    resBody = await response.json();
+  } catch {
+    throw new ApiError(
+      `استجابة غير متوقعة من الخادم (status ${response.status})`,
+      response.status,
+    );
+  }
+
+  // Handle non-OK HTTP statuses using `{ success: false, error: "..." }` or `{ message: "..." }`
+  if (!response.ok) {
+    const errObj = resBody as { success?: boolean; error?: string; message?: string };
+    const errMsg =
+      errObj?.error || errObj?.message || `خطأ من الخادم (status ${response.status})`;
+    throw new ApiError(errMsg, response.status);
+  }
+
+  // Unwrap `{ success: true, data: T }` envelope if present
+  const successBody = resBody as { success?: boolean; data?: T; message?: string } & T;
+
+  if (
+    successBody !== null &&
+    typeof successBody === 'object' &&
+    'success' in successBody &&
+    'data' in successBody
+  ) {
+    return successBody.data as T;
+  }
+
+  return successBody as T;
 }
 
 // ---------------------------------------------------------------------------
-// Public API surface
+// Public API Surface
 // ---------------------------------------------------------------------------
 export const apiClient = {
   get<T>(path: string, options?: RequestOptions): Promise<T> {

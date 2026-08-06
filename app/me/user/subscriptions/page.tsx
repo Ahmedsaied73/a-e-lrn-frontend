@@ -12,40 +12,13 @@ export default function UserSubscriptionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+import { apiClient } from '@/lib/api-client';
+
   useEffect(() => {
     const fetchEnrolledCourses = async () => {
       try {
-        // Get refresh token from localStorage
-        let refreshToken;
-        
-        try {
-          refreshToken = localStorage.getItem('refreshToken');
-        } catch (e) {
-          console.error('Error accessing localStorage:', e);
-        }
-        
-        if (!refreshToken) {
-          setError('لم يتم العثور على رمز التحقق. يرجى تسجيل الدخول مرة أخرى.');
-          setLoading(false);
-          return;
-        }
-
-        // Fetch enrolled courses
-        const response = await fetch('http://localhost:3005/courses/enrolled', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${refreshToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`فشل في الحصول على الاشتراكات: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Received data:', data);
-        setCourses(data);
+        const data = await apiClient.get<Course[]>('/courses/enrolled');
+        setCourses(Array.isArray(data) ? data : []);
       } catch (err: any) {
         console.error('خطأ في جلب الاشتراكات:', err);
         setError(err.message || 'حدث خطأ أثناء جلب الاشتراكات');

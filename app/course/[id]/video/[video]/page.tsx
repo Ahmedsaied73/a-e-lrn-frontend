@@ -55,21 +55,15 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+import { fetchVideoProgress } from '@/services/quizService';
+import { apiClient } from '@/lib/api-client';
+
   // Check if the video is already completed
   useEffect(() => {
     const checkVideoCompletion = async () => {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken) return;
-      
       try {
-        const response = await fetch(`http://localhost:3005/progress/${params.video}`, {
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-          },
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
+        const data = await fetchVideoProgress(params.video);
+        if (data) {
           setApiCompletionStatus(data.completed);
           if (data.completed) {
             setCompletionDate(data.watchedAt);
@@ -200,37 +194,21 @@ export default function VideoPage({ params }: { params: { id: string; video: str
 
   useEffect(() => {
     const fetchVideoData = async () => {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken) {
-        setError("Not authenticated");
-        setIsLoading(false);
-        return;
-      }
       try {
-        const response = await fetch(`http://localhost:3005/stream/video/${params.video}/url`, {
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-          },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setVideoData(data);
-          
-          // Fetch available quizzes for this course
-          dispatch(fetchQuizzesByCourse(params.id));
-          
-          // Fetch available assignments for this video
-          dispatch(fetchAssignmentsByVideo(params.video));
-          
-          // if the user didn't complete the previous video, redirect to the first video
-        }else if (response.status === 403) {
+        const data = await apiClient.get<any>(`/stream/video/${params.video}/url`);
+        setVideoData(data);
+        
+        // Fetch available quizzes for this course
+        dispatch(fetchQuizzesByCourse(params.id));
+        
+        // Fetch available assignments for this video
+        dispatch(fetchAssignmentsByVideo(params.video));
+      } catch (err: any) {
+        if (err.status === 403) {
           setError("كمل الفيديو اللي قبل ده الاول");
+        } else {
+          setError(err.message || "حدث خطأ أثناء تحميل الفيديو");
         }
-         else {
-          setError("حدث خطأ أثناء تحميل الفيديو");
-        }
-      } catch (err) {
-        setError("حدث خطأ أثناء تحميل الفيديو");
       } finally {
         setIsLoading(false);
       }

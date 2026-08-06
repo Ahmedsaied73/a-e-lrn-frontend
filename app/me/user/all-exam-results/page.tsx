@@ -46,6 +46,8 @@ interface ApiResponse {
   results: QuizResult[];
 }
 
+import { apiClient } from '@/lib/api-client';
+
 export default function AllExamResultsPage() {
   const [results, setResults] = useState<QuizResult[]>([]);
   const [filteredResults, setFilteredResults] = useState<QuizResult[]>([]);
@@ -56,41 +58,18 @@ export default function AllExamResultsPage() {
   
   useEffect(() => {
     const fetchAllResults = async () => {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        setError('يرجى تسجيل الدخول أولاً');
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const response = await fetch('http://localhost:3005/quizzes/user/results', {
-          headers: {
-            'Authorization': `Bearer ${refreshToken}`
-          }
-        });
-
-        // Handle 404 specifically for "No quiz results found" message
-        if (response.status === 404) {
-          const data = await response.json();
-          if (data.message === "No quiz results found") {
-            // Set empty results but don't set an error
-            setResults([]);
-            setFilteredResults([]);
-            setIsLoading(false);
-            return;
-          }
+        const data = await apiClient.get<any>('/quizzes/user/results');
+        const list = Array.isArray(data) ? data : data?.results || [];
+        setResults(list);
+        setFilteredResults(list);
+      } catch (err: any) {
+        if (err.status === 404) {
+          setResults([]);
+          setFilteredResults([]);
+        } else {
+          setError(err.message || 'حدث خطأ أثناء تحميل نتائج الامتحانات');
         }
-        
-        if (!response.ok) {
-          throw new Error('فشل في جلب نتائج الاختبارات');
-        }
-
-        const data: ApiResponse = await response.json();
-        setResults(data.results);
-        setFilteredResults(data.results);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'حدث خطأ أثناء جلب النتائج');
       } finally {
         setIsLoading(false);
       }

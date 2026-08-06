@@ -7,36 +7,32 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
+import { fetchAllCourses, CourseListItem } from '@/services/courseService';
+
 export default function Grade3CoursesPage() {
+  const [courses, setCourses] = useState<CourseListItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [courses, setCourses] = useState([]);
 
   useEffect(() => {
-    // Check if user is logged in by looking for refreshToken in localStorage
-    const refreshToken = localStorage.getItem('refreshToken');
-    setIsLoggedIn(!!refreshToken);
+    if (typeof document !== 'undefined') {
+      setIsLoggedIn(document.cookie.includes('isLoggedIn=true'));
+    }
 
-    // Fetch courses data
-    const fetchCourses = async () => {
+    const loadCourses = async () => {
       try {
-        const response = await fetch('http://localhost:3005/courses', {
-          headers: {
-            'Authorization': `Bearer ${refreshToken}`
-          }
-        });
-        if (!response.ok) throw new Error('Failed to fetch courses');
-        const data = await response.json();
-        setCourses(data);
-        console.log(data);
+        setLoading(true);
+        const result = await fetchAllCourses();
+        setCourses(result.data);
       } catch (error) {
         console.error('Error fetching courses:', error);
         setCourses([]);
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (refreshToken) {
-      fetchCourses();
-    }
+    loadCourses();
   }, []);
 
   // Courses data will be fetched from API

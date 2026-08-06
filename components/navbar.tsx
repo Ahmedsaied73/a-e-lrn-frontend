@@ -16,52 +16,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { checkAuthResponse } from "@/utils/auth-utils";
+import { getCurrentUser, logoutUser } from '@/services/authService';
+
 export function Navbar() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [notificationCount, setNotificationCount] = useState(2); // Number of notifications example
 
-  const fetchData = async (refreshToken: string) => {
-    try {
-      const response = await fetch('http://localhost:3005/user/me', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${refreshToken}`,
-        },
-      });
-      
-      // Use helper function to check response status
-      if (checkAuthResponse(response)) {
-        return null;
-      }
-      
-      const data = await response.json();
-      return data;
-    }
-    catch (error) {
-      console.error('Error fetching user data:', error);
-      return null;
-    }
-  }
-
   useEffect(() => {
     const checkAuth = async () => {
-      const refreshToken = localStorage.getItem('refreshToken');
-      setIsAuthenticated(!!refreshToken);
-      if (refreshToken) {
-        const data = await fetchData(refreshToken);
-        if (data) {
-          setUser({
-            name: data.name,
-            email: data.email
-          });
-          // Refresh the page or update state here
-          router.refresh();
-        } else {
-          // If data couldn't be retrieved, there might be an authentication issue
-          // Already handled in the fetchData function
+      const loggedInCookie = typeof document !== 'undefined' && document.cookie.includes('isLoggedIn=true');
+      if (loggedInCookie) {
+        setIsAuthenticated(true);
+        try {
+          const userData = await getCurrentUser();
+          if (userData) {
+            setUser({
+              name: userData.name,
+              email: userData.email,
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching user data in navbar:', error);
           setIsAuthenticated(false);
         }
       }
@@ -69,14 +46,13 @@ export function Navbar() {
 
     checkAuth();
   }, []);
-  const handleLogout = () => {
-    // Clear all user data from localStorage
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userData');
+
+  const handleLogout = async () => {
+    await logoutUser();
+    setIsAuthenticated(false);
+    setUser(null);
+    router.push('/login');
+  };
     
     setIsAuthenticated(false);
     setUser(null);

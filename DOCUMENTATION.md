@@ -60,95 +60,46 @@ Guidelines for state management:
 The authentication system uses JWT tokens with the following flow:
 
 1. **Login/Registration**: User credentials sent to API
-2. **Token Storage**: JWT stored in localStorage
-3. **Auth State**: User data stored in Redux
-4. **Protected Routes**: Check auth state before rendering
-5. **Token Refresh**: Automatic refresh of expired tokens
+2. **Token Storage**: In-memory accessToken management via central `apiClient` (`lib/api-client.ts`), eliminating vulnerable localStorage token reads.
+3. **Auth State**: Non-sensitive login flag stored in cookies for server middleware verification; user profile stored in Redux.
+4. **Protected Routes**: Handled server-side via Next.js `middleware.ts`.
 
 ## API Integration
 
 API calls follow these patterns:
 
-1. **Centralized API Services**: API calls are organized in service files
-2. **Error Handling**: Consistent error handling across all API calls
-3. **Loading States**: Track loading state for all async operations
-4. **Data Transformation**: Transform API responses before storing in Redux
-
-## Performance Optimizations
-
-1. **Code Splitting**: Automatic code splitting with Next.js
-2. **Lazy Loading**: Components and images loaded only when needed
-3. **Memoization**: Use React.memo, useMemo, and useCallback to prevent unnecessary re-renders
-4. **Image Optimization**: Next.js Image component for optimized images
-
-## Best Practices
-
-### Quiz System Architecture
-
-1. **Quiz Flow**:
-   - Video completion tracking
-   - Quiz availability based on video completion
-   - Real-time answer submission
-   - Immediate feedback and scoring
-   - Detailed results view
-
-2. **Results Management**:
-   - Individual quiz results storage
-   - Performance analytics
-   - Historical data tracking
-   - Score aggregation
-
-3. **Components**:
-   - QuizResultsDialog: Displays quiz completion feedback
-   - Video completion tracking
-   - Quiz submission interface
-   - Results visualization
-
-### Code Organization
-
-1. **Feature-Based Structure**: Group related components and logic
-2. **Consistent Naming**: Follow consistent naming conventions
-3. **Component Composition**: Build complex UIs from simple components
-4. **Custom Hooks**: Extract reusable logic into custom hooks
-
-### Form Handling
-
-1. **React Hook Form**: Efficient form state management
-2. **Zod Validation**: Schema-based form validation
-3. **Error Messages**: Clear, user-friendly error messages
-4. **Submission Handling**: Consistent form submission patterns
-
-### Styling
-
-1. **Tailwind CSS**: Utility-first CSS framework
-2. **Theme Variables**: Custom CSS variables for theming
-3. **Responsive Design**: Mobile-first approach
-4. **Component Library**: Shadcn UI components for consistent design
-
-### Accessibility
-
-1. **Semantic HTML**: Use appropriate HTML elements
-2. **ARIA Attributes**: Add ARIA attributes where needed
-3. **Keyboard Navigation**: Ensure keyboard accessibility
-4. **Color Contrast**: Maintain sufficient color contrast
-
-## Future Improvements
-
-1. **Server-Side Rendering**: Increase use of SSR for better SEO
-2. **Testing**: Add comprehensive test coverage
-3. **Internationalization**: Support for multiple languages
-4. **PWA Features**: Add Progressive Web App capabilities
-5. **Analytics**: Implement usage analytics
-6. **Caching Strategy**: Implement more sophisticated data caching
-
-## Development Workflow
-
-1. **Feature Branches**: Develop new features in separate branches
-2. **Code Reviews**: Peer review before merging
-3. **Linting**: ESLint for code quality
-4. **Type Safety**: TypeScript for type checking
-5. **Documentation**: Keep documentation updated with code changes
+1. **Centralized API Services**: API calls are strictly organized in dedicated service files:
+   - `services/authService.ts`
+   - `services/courseService.ts`
+   - `services/quizService.ts`
+   - `services/assignmentService.ts`
+   - `services/userService.ts`
+2. **Central HTTP Client**: `lib/api-client.ts` manages Bearer tokens, HTTP 429 rate limits, and `{ success, data, meta }` response envelope parsing.
+3. **DRY Redux Architecture**: Redux async thunks delegate directly to the service layer without re-implementing inline `fetch()` or `localStorage` access.
+4. **Resilient Data Parsing**: Service functions seamlessly handle both `{ success: true, data }` envelopes and flat API response payloads.
 
 ---
 
-This documentation is intended to be a living document. As the application evolves, this documentation should be updated to reflect the current state and best practices of the codebase.
+## Execution Status Update
+
+### [1] What Was Just Done
+- **Branch Created**: Checked out `feature/phase-2-3-service-redux-layer`.
+- **Phase 2 — Service Layer Completed**:
+  - Rewrote [`services/courseService.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/services/courseService.ts) to use `apiClient`, updated to `/enroll/status` (`{ courseId }`) and added pagination support.
+  - Created [`services/quizService.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/services/quizService.ts) for all quiz and video progress calls, updating video completion to `POST /progress/mark` (`{ videoId, completed: true }`).
+  - Created [`services/assignmentService.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/services/assignmentService.ts) for all assignment operations.
+  - Created [`services/userService.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/services/userService.ts) for profile retrieval.
+- **Phase 3 — Redux Slices Cleaned Up**:
+  - Rewrote [`store/slices/courseSlice.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/store/slices/courseSlice.ts) — thunks delegate directly to `courseService`; added pagination state.
+  - Rewrote [`store/slices/quizSlice.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/store/slices/quizSlice.ts) — thunks delegate to `quizService`; updated `completeVideo` to use `/progress/mark`.
+  - Rewrote [`store/slices/assignmentSlice.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/store/slices/assignmentSlice.ts) — eliminated sequential N+1 HTTP loop in `fetchAssignmentsByCourse` in favor of parallel `Promise.all` fetches.
+- **State & Git Tracking**:
+  - Updated [`PLANNING.md`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/PLANNING.md) tracking task status for Phase 2 & Phase 3 as Done.
+  - Built and type-checked clean with `npx tsc --noEmit`.
+  - Committed changes under `feat(service-redux): complete Phase 2 service layer and Phase 3 Redux slices cleanup`.
+
+### [2] Current Blockers
+- None.
+
+### [3] Immediate Next Step
+- Phase 4: Refactor pages & UI components (`app/course/[id]/page.tsx`, `components/enrollment-card.tsx`, etc.) to remove remaining direct `localStorage.getItem('refreshToken')` and inline `fetch()` calls, using the new Redux thunks and services.

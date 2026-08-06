@@ -15,42 +15,27 @@ export default function ExamResultsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+import { fetchQuizResults } from '@/services/quizService';
+
   useEffect(() => {
-    const fetchResults = async () => {
+    const loadResults = async () => {
       if (!quizId) {
         setError('معرف الاختبار غير متوفر');
         setIsLoading(false);
         return;
       }
 
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        setError('يرجى تسجيل الدخول أولاً');
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const response = await fetch(`http://localhost:3005/quizzes/${quizId}/results`, {
-          headers: {
-            'Authorization': `Bearer ${refreshToken}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('فشل في جلب نتائج الاختبار');
-        }
-
-        const data = await response.json();
+        const data = await fetchQuizResults(Number(quizId));
         setResults(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'حدث خطأ أثناء جلب النتائج');
+      } catch (err: any) {
+        setError(err.message || 'حدث خطأ أثناء جلب النتائج');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchResults();
+    loadResults();
   }, [quizId]);
 
   if (isLoading) {
