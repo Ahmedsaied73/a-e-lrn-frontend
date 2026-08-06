@@ -11,7 +11,7 @@ The application is built using Next.js 14 with the App Router, providing a moder
 1. **Component-Based Structure**: UI is composed of reusable components
 2. **Client-Side Navigation**: Fast page transitions with Next.js Link component
 3. **Server Components**: Leveraging Next.js server components where appropriate
-4. **Responsive Design**: Mobile-first approach with Tailwind CSS
+4. **Responsive Design**: Mobile-first approach with Tailwind CSS & RTL logical utility properties (`start/end`, `ms/me`, `ps/pe`)
 
 ## State Management
 
@@ -23,83 +23,38 @@ The application uses Redux Toolkit for global state management. The implementati
 
 The Redux store is configured in `store/store.ts` with the following slices:
 
-- **Auth Slice**: Manages authentication state (user data, login status)
-- **Course Slice**: Handles course-related state (available courses, enrollment status)
+- **Auth Slice**: Manages authentication state (user profile, login status)
+- **Course Slice**: Handles course-related state (available courses, enrollment status, pagination metadata)
 - **UI Slice**: Manages UI-related state (theme, notifications, loading states)
-- **Quiz Slice**: Manages quiz-related state (quiz data, submissions, results)
-  - Quiz attempt tracking
-  - Video completion status
-  - Quiz results and history
-  - Performance analytics
+- **Quiz Slice**: Manages quiz-related state (quiz data, submissions, results, video progress)
+- **Assignment Slice**: Manages assignments and user submission history
 
-#### Redux Best Practices
+## Authentication Flow & Security
 
-1. **Use Redux Toolkit**: Simplifies store setup and reduces boilerplate
-2. **TypeScript Integration**: Full type safety for actions and state
-3. **Normalized State**: Store complex data in normalized form
-4. **Selective State Access**: Use selectors to access specific parts of state
-5. **Async Logic**: Use createAsyncThunk for API calls and async operations
+The authentication system relies on **Dual HttpOnly Cookie Authentication** (`accessToken` & `refreshToken`) supported by silent token refresh:
 
-### Local vs. Global State
+1. **Cookie Transmission**: `credentials: 'include'` is set globally on all API requests in `lib/api-client.ts`.
+2. **Token Store**: Zero access or refresh tokens are stored in `localStorage` or `sessionStorage`, protecting the application against XSS token extraction.
+3. **Silent Token Refresh Interceptor**: When an API request receives a 401 Unauthorized status, `apiClient` automatically triggers a silent refresh call to `/auth/refresh-token` (or `/auth/refresh`) and retries the original request seamlessly.
+4. **Protected Routes**: Server-side Next.js `middleware.ts` checks the `isLoggedIn` cookie flag to enforce route protection.
 
-Guidelines for state management:
+## API Integration & Response Envelope
 
-- **Use Redux for**:
-  - User authentication data
-  - Course enrollment status
-  - Data needed across multiple components
-  - Data that persists across page navigation
-
-- **Use Local State for**:
-  - UI state specific to a single component
-  - Form input values during form completion
-  - Temporary visual states (expanded/collapsed, etc.)
-
-## Authentication Flow
-
-The authentication system uses JWT tokens with the following flow:
-
-1. **Login/Registration**: User credentials sent to API
-2. **Token Storage**: In-memory accessToken management via central `apiClient` (`lib/api-client.ts`), eliminating vulnerable localStorage token reads.
-3. **Auth State**: Non-sensitive login flag stored in cookies for server middleware verification; user profile stored in Redux.
-4. **Protected Routes**: Handled server-side via Next.js `middleware.ts`.
-
-## API Integration
-
-API calls follow these patterns:
-
-1. **Centralized API Services**: API calls are strictly organized in dedicated service files:
-   - `services/authService.ts`
-   - `services/courseService.ts`
-   - `services/quizService.ts`
-   - `services/assignmentService.ts`
-   - `services/userService.ts`
-2. **Central HTTP Client**: `lib/api-client.ts` manages Bearer tokens, HTTP 429 rate limits, and `{ success, data, meta }` response envelope parsing.
-3. **DRY Redux Architecture**: Redux async thunks delegate directly to the service layer without re-implementing inline `fetch()` or `localStorage` access.
-4. **Resilient Data Parsing**: Service functions seamlessly handle both `{ success: true, data }` envelopes and flat API response payloads.
+1. **Centralized HTTP Client**: `lib/api-client.ts` standardizes API interaction across all services.
+2. **Response Envelope Unwrapping**: Automatically unwraps `{ success: boolean, data: T, message?: string, error?: string }` while supporting flat payload fallbacks.
+3. **Arabic Error Formatting**: Handles network errors (`TypeError: Failed to fetch`) and HTTP 429 rate limits with clear, user-facing Arabic error messages.
 
 ---
 
-## Execution Status Update
+## 🎯 Verification & Acceptance Summary
 
-### [1] What Was Just Done
-- **Branch Created**: Checked out `feature/phase-2-3-service-redux-layer`.
-- **Phase 2 — Service Layer Completed**:
-  - Rewrote [`services/courseService.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/services/courseService.ts) to use `apiClient`, updated to `/enroll/status` (`{ courseId }`) and added pagination support.
-  - Created [`services/quizService.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/services/quizService.ts) for all quiz and video progress calls, updating video completion to `POST /progress/mark` (`{ videoId, completed: true }`).
-  - Created [`services/assignmentService.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/services/assignmentService.ts) for all assignment operations.
-  - Created [`services/userService.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/services/userService.ts) for profile retrieval.
-- **Phase 3 — Redux Slices Cleaned Up**:
-  - Rewrote [`store/slices/courseSlice.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/store/slices/courseSlice.ts) — thunks delegate directly to `courseService`; added pagination state.
-  - Rewrote [`store/slices/quizSlice.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/store/slices/quizSlice.ts) — thunks delegate to `quizService`; updated `completeVideo` to use `/progress/mark`.
-  - Rewrote [`store/slices/assignmentSlice.ts`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/store/slices/assignmentSlice.ts) — eliminated sequential N+1 HTTP loop in `fetchAssignmentsByCourse` in favor of parallel `Promise.all` fetches.
-- **State & Git Tracking**:
-  - Updated [`PLANNING.md`](file:///C:/Users/os/Desktop/E-LRN-FRONTEND/a-e-lrn-frontend/PLANNING.md) tracking task status for Phase 2 & Phase 3 as Done.
-  - Built and type-checked clean with `npx tsc --noEmit`.
-  - Committed changes under `feat(service-redux): complete Phase 2 service layer and Phase 3 Redux slices cleanup`.
+### 1. Refactored Modules
+- **Core API Client**: `lib/api-client.ts` updated with `credentials: 'include'`, silent 401 token refresh interceptor, and formatted Arabic error handling.
+- **Auth Module**: `services/authService.ts`, `app/login/page.tsx`, `app/register/page.tsx`, `components/navbar.tsx` refactored to use HttpOnly cookies and `getCurrentUser()`.
+- **Courses Module**: `services/courseService.ts`, `store/slices/courseSlice.ts`, `app/course/[id]/page.tsx`, `app/grades/*`, `components/enrollment-card.tsx` refactored to remove all direct `localStorage` token reads.
+- **Quizzes & Video Progress Module**: `services/quizService.ts`, `store/slices/quizSlice.ts`, `app/course/[id]/video/[video]/page.tsx` updated for `/progress/mark` and `/quizzes/submit`.
+- **User Dashboard & Subscriptions**: `services/userService.ts`, `app/me/user/*`, `app/course/[id]/subscribe/invoice/page.tsx` synchronized with backend schemas.
 
-### [2] Current Blockers
-- None.
-
-### [3] Immediate Next Step
-- Phase 4: Refactor pages & UI components (`app/course/[id]/page.tsx`, `components/enrollment-card.tsx`, etc.) to remove remaining direct `localStorage.getItem('refreshToken')` and inline `fetch()` calls, using the new Redux thunks and services.
+### 2. Next Action Items
+- Run end-to-end user testing with live backend (`http://localhost:3005`).
+- Deploy updated frontend build to staging environment.
