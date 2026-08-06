@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { fetchQuizResults } from '@/services/quizService';
 
 export default function ExamResultsPage() {
   const searchParams = useSearchParams();
@@ -14,8 +15,6 @@ export default function ExamResultsPage() {
   const [results, setResults] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-import { fetchQuizResults } from '@/services/quizService';
 
   useEffect(() => {
     const loadResults = async () => {

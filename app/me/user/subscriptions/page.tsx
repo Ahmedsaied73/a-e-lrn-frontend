@@ -6,18 +6,18 @@ import { CreditCard, ArrowLeft, Clock, BookOpenCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { apiClient } from '@/lib/api-client';
+import { CourseListItem } from '@/services/courseService';
 
 export default function UserSubscriptionsPage() {
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-import { apiClient } from '@/lib/api-client';
 
   useEffect(() => {
     const fetchEnrolledCourses = async () => {
       try {
-        const data = await apiClient.get<Course[]>('/courses/enrolled');
+        const data = await apiClient.get<CourseListItem[]>('/courses/enrolled');
         setCourses(Array.isArray(data) ? data : []);
       } catch (err: any) {
         console.error('خطأ في جلب الاشتراكات:', err);
@@ -70,32 +70,27 @@ import { apiClient } from '@/lib/api-client';
           ) : courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
-                <Link href={`/course/${course.course.id}`} key={course.id}>
+                <Link href={`/course/${course.id}`} key={course.id}>
                   <div className="bg-[#1f2937] rounded-lg p-4 h-full hover:bg-[#2d3748] transition-colors cursor-pointer">
                     <div className="relative w-full h-40 mb-4 overflow-hidden rounded-md group">
                       <Image 
-                        src={course.course.thumbnail} 
-                        alt={course.course.title} 
+                        src={course.thumbnail || '/placeholder.jpg'} 
+                        alt={course.title || 'Course'} 
                         fill 
                         className="object-cover transition-transform group-hover:scale-105" 
                       />
-                      {course.course.videos && course.course.videos.length > 0 && (
-                        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-                          {course.course.videos.length} فيديو
-                        </div>
-                      )}
                     </div>
-                    <h3 className="text-xl font-bold mb-2 text-blue-400 line-clamp-1">{course.course.title}</h3>
-                    <p className="text-gray-300 mb-3 line-clamp-2 h-12">{course.course.description}</p>
+                    <h3 className="text-xl font-bold mb-2 text-blue-400 line-clamp-1">{course.title}</h3>
+                    <p className="text-gray-300 mb-3 line-clamp-2 h-12">{course.description}</p>
                     <div className="flex items-center justify-between mt-auto">
                       <div className="flex items-center text-gray-400">
                         <Clock className="h-4 w-4 ml-1" />
-                        <span>{course.course.price > 0 ? `${course.course.price} ج.م` : 'مجاني'}</span>
+                        <span>{course.price && course.price > 0 ? `${course.price} ج.م` : 'مجاني'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center text-gray-400">
                           <BookOpenCheck className="h-4 w-4 ml-1" />
-                          <span className="text-sm">{course.course.grade}</span>
+                          <span className="text-sm">{course.grade}</span>
                         </div>
                       </div>
                     </div>

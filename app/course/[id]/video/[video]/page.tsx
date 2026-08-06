@@ -12,6 +12,8 @@ import { AppDispatch } from "@/store/store";
 import { completeVideo, fetchQuizzesByCourse, selectQuizzes, selectVideoCompleted, setVideoCompleted } from "@/store/slices/quizSlice";
 import { addNotification } from "@/store/slices/uiSlice";
 import { fetchAssignmentsByVideo, selectAssignments } from "@/store/slices/assignmentSlice";
+import { fetchVideoProgress } from '@/services/quizService';
+import { apiClient } from '@/lib/api-client';
 
 export default function VideoPage({ params }: { params: { id: string; video: string } }) {
   const router = useRouter();
@@ -54,9 +56,6 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
-
-import { fetchVideoProgress } from '@/services/quizService';
-import { apiClient } from '@/lib/api-client';
 
   // Check if the video is already completed
   useEffect(() => {

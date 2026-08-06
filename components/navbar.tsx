@@ -53,10 +53,6 @@ export function Navbar() {
     setUser(null);
     router.push('/login');
   };
-    
-    setIsAuthenticated(false);
-    setUser(null);
-  };
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#0A0F1C]/80 backdrop-blur">
