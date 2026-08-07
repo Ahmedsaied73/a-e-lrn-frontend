@@ -6,7 +6,10 @@
  */
 
 import { apiClient } from '@/lib/api-client';
+import { isMockCourse, mockCourse, MOCK_COURSE_ID } from '@/lib/mock/course';
 import { PaginationMeta } from '@/types/api';
+
+export { MOCK_COURSE_ID };
 
 // ---------------------------------------------------------------------------
 // Types
@@ -22,6 +25,7 @@ export interface CourseListItem {
 }
 
 export interface CourseDetail extends CourseListItem {
+  description_short?: string;
   duration?: string;
   files_count?: number;
   videos_count?: number;
@@ -95,6 +99,7 @@ export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage
  * Fetch a single course by its ID.
  */
 export async function fetchCourseById(courseId: string | number): Promise<CourseDetail> {
+  if (isMockCourse(courseId)) return mockCourse;
   const raw = await apiClient.get<unknown>(`/courses/${courseId}`);
   return extractData<CourseDetail>(raw);
 }
@@ -106,6 +111,9 @@ export async function fetchCourseById(courseId: string | number): Promise<Course
 export async function checkEnrollmentStatus(
   courseId: string | number,
 ): Promise<EnrollmentResult> {
+  if (isMockCourse(courseId)) {
+    return { courseId, enrolled: true, isPaid: false };
+  }
   const raw = await apiClient.post<unknown>('/enroll/status', { courseId });
   const data = extractData<{ enrolled?: boolean; isPaid?: boolean }>(raw);
   return {
@@ -120,6 +128,9 @@ export async function checkEnrollmentStatus(
  * POST /enroll/  { courseId }
  */
 export async function enrollInCourse(courseId: string | number): Promise<EnrollmentResult> {
+  if (isMockCourse(courseId)) {
+    return { courseId, enrolled: true, isPaid: false };
+  }
   const raw = await apiClient.post<unknown>('/enroll/', { courseId });
   const data = extractData<{ enrollment?: { isPaid?: boolean } }>(raw);
   return {

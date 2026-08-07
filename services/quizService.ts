@@ -9,6 +9,16 @@
  */
 
 import { apiClient } from '@/lib/api-client';
+import {
+  getMockQuizResult,
+  getMockQuizStatus,
+  getMockVideoProgress,
+  isMockCourse,
+  isMockQuizId,
+  isMockVideoId,
+  mockQuizDetails,
+  mockQuizzes,
+} from '@/lib/mock/course';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -101,6 +111,7 @@ function unwrap<T>(raw: unknown): T {
  * Returns a list of quizzes for a course.
  */
 export async function fetchQuizzesByCourse(courseId: string | number): Promise<Quiz[]> {
+  if (isMockCourse(courseId)) return mockQuizzes;
   const raw = await apiClient.get<unknown>(`/quizzes/course/${courseId}`);
   const data = unwrap<Quiz[] | { quizzes?: Quiz[] }>(raw);
   if (Array.isArray(data)) return data;
@@ -113,6 +124,7 @@ export async function fetchQuizzesByCourse(courseId: string | number): Promise<Q
  * Returns a single quiz with its questions.
  */
 export async function fetchQuizById(quizId: number): Promise<Quiz> {
+  if (isMockQuizId(quizId)) return mockQuizDetails[quizId];
   const raw = await apiClient.get<unknown>(`/quizzes/${quizId}`);
   return unwrap<Quiz>(raw);
 }
@@ -125,6 +137,7 @@ export async function submitQuizAnswers(
   quizId: number,
   answers: { questionId: number; selectedOption: number }[],
 ): Promise<QuizResult> {
+  if (isMockQuizId(quizId)) return getMockQuizResult(quizId);
   const raw = await apiClient.post<unknown>('/quizzes/submit', { quizId, answers });
   return unwrap<QuizResult>(raw);
 }
@@ -134,6 +147,7 @@ export async function submitQuizAnswers(
  * Fetch the result of a previously taken quiz.
  */
 export async function fetchQuizResults(quizId: number): Promise<QuizResult> {
+  if (isMockQuizId(quizId)) return getMockQuizResult(quizId);
   const raw = await apiClient.get<unknown>(`/quizzes/${quizId}/results`);
   return unwrap<QuizResult>(raw);
 }
@@ -143,6 +157,7 @@ export async function fetchQuizResults(quizId: number): Promise<QuizResult> {
  * Check whether the current user has taken a quiz.
  */
 export async function fetchQuizStatus(quizId: number): Promise<QuizStatus> {
+  if (isMockQuizId(quizId)) return getMockQuizStatus(quizId);
   const raw = await apiClient.get<unknown>(`/quizzes/${quizId}/status`);
   return unwrap<QuizStatus>(raw);
 }
@@ -156,6 +171,7 @@ export async function fetchQuizStatus(quizId: number): Promise<QuizStatus> {
  * Retrieve the authenticated user's watch progress for a video.
  */
 export async function fetchVideoProgress(videoId: string | number): Promise<VideoProgress> {
+  if (isMockVideoId(videoId)) return getMockVideoProgress(videoId);
   const raw = await apiClient.get<unknown>(`/progress/${videoId}`);
   return unwrap<VideoProgress>(raw);
 }
@@ -167,6 +183,9 @@ export async function fetchVideoProgress(videoId: string | number): Promise<Vide
  */
 export async function markVideoComplete(videoId: string | number): Promise<VideoProgress> {
   const numericId = Number(videoId);
+  if (isMockVideoId(numericId)) {
+    return { videoId: numericId, completed: true, watchedAt: new Date().toISOString() };
+  }
   const raw = await apiClient.post<unknown>('/progress/mark', {
     videoId: numericId,
     completed: true,

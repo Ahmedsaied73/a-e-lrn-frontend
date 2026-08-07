@@ -14,6 +14,7 @@ import { addNotification } from "@/store/slices/uiSlice";
 import { fetchAssignmentsByVideo, selectAssignments } from "@/store/slices/assignmentSlice";
 import { fetchVideoProgress } from '@/services/quizService';
 import { apiClient } from '@/lib/api-client';
+import { getMockVideoStream, isMockCourse } from '@/lib/mock/course';
 
 export default function VideoPage({ params }: { params: { id: string; video: string } }) {
   const router = useRouter();
@@ -194,7 +195,9 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   useEffect(() => {
     const fetchVideoData = async () => {
       try {
-        const data = await apiClient.get<any>(`/stream/video/${params.video}/url`);
+        const data = isMockCourse(params.id)
+          ? getMockVideoStream(params.video)
+          : await apiClient.get<any>(`/stream/video/${params.video}/url`);
         setVideoData(data);
         
         // Fetch available quizzes for this course

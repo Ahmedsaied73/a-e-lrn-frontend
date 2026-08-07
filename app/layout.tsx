@@ -9,8 +9,8 @@ import { Toaster } from '@/components/ui/toaster';
 const cairo = Cairo({ subsets: ['arabic'] });
 
 export const metadata: Metadata = {
-  title: 'الأستاذ لطفي زهران | مدرس الرياضيات',
-  description: 'تعلم الرياضيات بأسهل الطرق مع الأستاذ لطفي زهران',
+  title: 'الأستاذ عبد الهادي موسى | مدرس الكيمياء',
+  description: 'تعلم الكيمياء بأسهل الطرق مع الأستاذ عبد الهادي موسى',
 };
 
 export default function RootLayout({
