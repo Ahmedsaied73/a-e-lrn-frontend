@@ -31,7 +31,7 @@ export default function UserCoursesPage() {
   }, []);
 
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="account-page">
       {/* Header with courses icon */}
       <div className="flex flex-col items-center justify-center mb-8">
         <div className="bg-blue-500 rounded-full p-3 mb-2">

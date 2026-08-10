@@ -39,7 +39,7 @@ export default function ExamResultsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 px-4 flex items-center justify-center min-h-screen">
+      <div className="account-page flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
           <p className="mt-4 text-white">جاري تحميل النتائج...</p>
@@ -50,7 +50,7 @@ export default function ExamResultsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="account-page">
         <Card className="bg-[#111827] border-[#1f2937] text-white">
           <CardHeader>
             <CardTitle className="text-center text-red-500">خطأ</CardTitle>
@@ -68,7 +68,7 @@ export default function ExamResultsPage() {
 
   if (!results) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="account-page">
         <Card className="bg-[#111827] border-[#1f2937] text-white">
           <CardHeader>
             <CardTitle className="text-center">لا توجد نتائج</CardTitle>
@@ -85,7 +85,7 @@ export default function ExamResultsPage() {
   }
 
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="account-page">
       <Card className="bg-[#111827] border-[#1f2937] text-white mb-8">
         <CardHeader>
           <CardTitle className="text-center">

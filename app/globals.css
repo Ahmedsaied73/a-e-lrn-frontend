@@ -65,3 +65,43 @@
 .interactive {
   @apply transition-all duration-300 ease-in-out;
 }
+
+/* Shared treatment for the authenticated learning workspace. */
+@layer components {
+  .lesson-body .text-white { color: #191c1e !important; }
+  .lesson-body .text-gray-300,
+  .lesson-body .text-gray-400 { color: #414754 !important; }
+  .lesson-body .border-gray-700 { border-color: #c1c6d7 !important; }
+
+  .account-page {
+    @apply mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12 lg:py-16;
+  }
+
+  .account-page [class*='bg-[#111827]'] {
+    background-color: #ffffff !important;
+    border-color: #e1e8f0 !important;
+    box-shadow: 0 4px 20px rgb(0 0 0 / 0.04);
+  }
+
+  .account-page [class*='bg-[#1f2937]'] {
+    background-color: #f2f4f7 !important;
+    border-color: #e1e8f0 !important;
+  }
+
+  .account-page :is(button, input)[class*='bg-[#111827]'] {
+    background-color: #ffffff !important;
+    color: #191c1e !important;
+    border-color: #c1c6d7 !important;
+  }
+
+  .account-page [class*='bg-gray-800'] { background-color: #f2f4f7 !important; }
+
+  .account-page :is(div, h1, h2, h3, h4, p, span, td, th)[class*='text-white'] {
+    color: #191c1e !important;
+  }
+
+  .account-page [class*='text-gray-400'] { color: #414754 !important; }
+  .account-page [class*='text-gray-300'] { color: #414754 !important; }
+  .account-page [class*='border-gray-700'],
+  .account-page [class*='border-[#374151]'] { border-color: #c1c6d7 !important; }
+}

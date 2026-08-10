@@ -126,7 +126,7 @@ export default function AssignmentsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="account-page">
         <Card className="bg-[#111827] border-[#1f2937] text-white mb-8">
           <CardHeader>
             <CardTitle className="text-center">
@@ -145,7 +145,7 @@ export default function AssignmentsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="account-page">
         <Card className="bg-[#111827] border-[#1f2937] text-white">
           <CardHeader>
             <CardTitle className="text-center text-red-500">خطأ</CardTitle>
@@ -163,7 +163,7 @@ export default function AssignmentsPage() {
 
   if (!submissionsData || submissionsData.submissions?.length === 0) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="account-page">
         <Card className="bg-[#111827] border-[#1f2937] text-white">
           <CardHeader>
             <CardTitle className="text-center">لا توجد واجبات مقدمة</CardTitle>
@@ -279,7 +279,7 @@ export default function AssignmentsPage() {
 
   // Main render function
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="account-page">
       <Card className="bg-[#111827] border-[#1f2937] text-white mb-8">
         <CardHeader>
           <CardTitle className="text-center">

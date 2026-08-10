@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Play, Pause, Volume2, VolumeX, Settings, Maximize, SkipForward, ChevronUp, ArrowLeft } from "lucide-react";
+import { CheckCircle, XCircle, Play, Pause, Volume2, VolumeX, Settings, Maximize, SkipForward, ChevronUp, ArrowLeft, BookOpenCheck, ListVideo } from "lucide-react";
 import { AppDispatch } from "@/store/store";
 import { completeVideo, fetchQuizzesByCourse, selectQuizzes, selectVideoCompleted, setVideoCompleted } from "@/store/slices/quizSlice";
 import { addNotification } from "@/store/slices/uiSlice";
@@ -316,31 +316,32 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   }
 
   return (
-    <div className="flex justify-center items-start py-8 px-2 min-h-[80vh] bg-background">
-      <Card className="w-full max-w-4xl mx-auto shadow-lg border border-muted bg-[#111827] text-white overflow-hidden relative">
+    <div className="mx-auto min-h-[80vh] w-full max-w-7xl px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <Card className="relative mx-auto w-full overflow-hidden rounded-lg bg-white text-on-surface shadow-level-2">
         {/* Back to Course Button */}
         <div className="absolute top-4 left-4 z-20">
           <Button
             onClick={() => router.push(`/course/${params.id}`)}
             variant="outline"
             size="icon"
-            className="bg-[#111827]/80 hover:bg-[#111827] border-gray-700 text-white rounded-full h-10 w-10 backdrop-blur-sm transition-all"
+            className="h-10 w-10 rounded-full border-outline-variant bg-white text-primary shadow-level-2 transition-all hover:bg-[#e8f2ff]"
             aria-label="العودة إلى الكورس"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </div>
 
-        <CardHeader className="pb-2 border-b border-gray-700">
+        <CardHeader className="border-b border-outline-variant/60 pb-4">
           <CardTitle className="text-2xl font-bold text-white">مشاهدة الفيديو</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6 p-0">
           <div className="w-full">
             {videoElement}
           </div>
-          <div className="space-y-3 p-6">
+          <div className="lesson-body space-y-4 p-6 sm:p-8">
             <h3 className="text-xl font-semibold text-white">{videoData.title || "عنوان الفيديو غير متوفر"}</h3>
-            <div className="flex flex-col sm:flex-row gap-2 text-sm text-gray-400">
+            <div className="flex flex-col gap-2 text-sm text-on-surface-variant sm:flex-row">
               <span>تاريخ النشر: {videoData.date || "غير متوفر"}</span>
               <span className="hidden sm:inline">•</span>
               <span>عدد المشاهدات: {videoData.views || "غير متوفر"}</span>
@@ -351,17 +352,17 @@ export default function VideoPage({ params }: { params: { id: string; video: str
                 </>
               )}
             </div>
-            <div className="border-t border-gray-700 my-4 pt-4">
+            <div className="border-t border-outline-variant/60 pt-4">
               <p className="text-base text-gray-300 leading-relaxed">{videoData.description || "وصف الفيديو غير متوفر"}</p>
             </div>
             
             {/* Video Assignments Section */}
             {assignments && assignments.length > 0 && (
-              <div className="border-t border-gray-700 my-4 pt-4">
+              <div className="border-t border-outline-variant/60 pt-5">
                 <h4 className="text-lg font-semibold text-white mb-3">الواجبات المتاحة</h4>
                 <div className="space-y-3">
                   {assignments.map((assignment) => (
-                    <div key={assignment.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-700 bg-gray-800/50 hover:bg-gray-800 transition-colors">
+                    <div key={assignment.id} className="flex items-center justify-between rounded-md border border-outline-variant/60 bg-surface-container-low p-4 transition-colors hover:bg-[#e8f2ff]/60">
                       <div className="flex-1">
                         <h5 className="font-medium text-white">{assignment.title}</h5>
                         <p className="text-sm text-gray-400 mt-1">{assignment.description}</p>
@@ -396,7 +397,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
                         ) : (
                           <Button
                             onClick={() => router.push(`/course/${params.id}/video/${params.video}/assignment/${assignment.id}`)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm rounded transition-colors"
+                            className="rounded-md bg-primary px-4 py-2 text-sm text-white transition-colors hover:bg-[#0057c0]"
                             disabled={!apiCompletionStatus}
                           >
                             بدء الواجب
@@ -414,7 +415,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
               <Button
                 onClick={handleCompleteVideo}
                 disabled={completingVideo || videoCompleted || apiCompletionStatus}
-                className="bg-[#61B846] hover:bg-[#61B846]/90 text-white px-8 py-6 text-lg rounded-lg transition-all shadow-md disabled:opacity-70 disabled:shadow-none"
+                className="rounded-md bg-primary px-8 py-6 text-lg text-white transition-all hover:bg-[#0057c0] disabled:opacity-70"
               >
                 {completingVideo ? (
                   <>
@@ -434,6 +435,25 @@ export default function VideoPage({ params }: { params: { id: string; video: str
           </div>
         </CardContent>
       </Card>
+
+      <aside className="space-y-4 xl:sticky xl:top-24">
+        <div className="rounded-lg bg-white p-5 shadow-level-2">
+          <div className="flex items-center justify-between text-sm font-semibold text-on-surface"><span>التقدم الكلي</span><span>{Math.round(progressPercent)}%</span></div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-container"><div className="h-full rounded-full bg-secondary-color transition-[width] duration-300" style={{ width: `${progressPercent}%` }} /></div>
+        </div>
+        <div className="overflow-hidden rounded-lg bg-white shadow-level-2">
+          <div className="flex items-center gap-2 border-b border-outline-variant/60 p-5"><ListVideo className="h-5 w-5 text-primary" /><h2 className="font-bold text-on-surface">محتوى الدورة</h2></div>
+          <div className="p-3">
+            <div className="rounded-md bg-[#e8f2ff] p-4 text-primary">
+              <div className="flex items-center justify-between"><BookOpenCheck className="h-5 w-5" /><span className="rounded-full bg-white px-2 py-1 text-caption font-bold">01</span></div>
+              <p className="mt-3 text-sm font-bold leading-6">{videoData.title || 'المحاضرة الحالية'}</p>
+              <p className="mt-1 text-caption text-secondary-color">{formatTime(currentTime)} / {formatTime(duration)}</p>
+            </div>
+          </div>
+          <button onClick={() => router.push(`/course/${params.id}`)} className="flex w-full items-center justify-center gap-2 border-t border-outline-variant/60 px-4 py-4 text-sm font-bold text-primary transition-colors hover:bg-[#e8f2ff]/60"><ArrowLeft className="h-4 w-4" />العودة إلى الدورة</button>
+        </div>
+      </aside>
+      </div>
 
       {/* Quiz Confirmation Dialog */}
       {showQuizConfirmation && (

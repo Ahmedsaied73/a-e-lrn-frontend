@@ -227,19 +227,19 @@ export default function Page({ params }: { params: { id: string } }) {
   if (!courseData) return <div className="text-center p-8">لا توجد بيانات متاحة للكورس</div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row gap-8">
+    <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12 lg:py-16">
+      <div className="flex flex-col gap-6 lg:flex-row">
         {/* Main Content - Left Side */}
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           {/* Course Header */}
-          <div className="bg-gradient-to-l from-[#61B846] to-[#61B846]/80 rounded-lg p-6 mb-8">
-            <div className="flex justify-between items-start">
+          <div className="mb-8 rounded-lg bg-primary p-6 text-on-primary sm:p-8">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-4">
+                <h1 className="mb-4 text-2xl font-bold leading-10 sm:text-3xl">
                   {courseData.title || "كورس الأزهر المكثف المجاني"}
                 </h1>
-                <div className="flex gap-4 mb-4">
-                  <span className="bg-white/20 text-white px-4 py-1 rounded-full text-sm">
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold">
                     ملفات {courseData.files_count || 0} +
                   </span>
                   <span className="bg-white/20 text-white px-4 py-1 rounded-full text-sm">
@@ -250,7 +250,7 @@ export default function Page({ params }: { params: { id: string } }) {
                   </span>
                 </div>
               </div>
-              <div className="text-white text-center">
+              <div className="text-right sm:text-left">
                 <p className="text-lg font-bold">{courseData.price === 0 ? "هذا الكورس مجاني !" : `السعر: ${courseData.price} جنيه`}</p>
                 <p className="text-sm">{courseData.description_short || "الدورة لطلبة الأزهر فقط ❤️"}</p>
               </div>
@@ -258,9 +258,9 @@ export default function Page({ params }: { params: { id: string } }) {
           </div>
 
           {/* Course Content */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
+          <div className="overflow-hidden rounded-lg bg-white shadow-level-2">
             <h2 className="text-xl font-bold p-6 border-b dark:border-gray-700">محتوى الكورس</h2>
-            <div className="divide-y dark:divide-gray-700">
+            <div className="space-y-2 p-3 sm:p-4">
               {courseData.videos && courseData.videos.length > 0 ? (
                 courseData.videos.map((video: any, index: number) => {
                   // Get video progress using our helper function
@@ -273,14 +273,14 @@ export default function Page({ params }: { params: { id: string } }) {
                   const quizStatus = quiz ? getQuizStatus(quiz.id) : null;
                   
                   return (
-                    <div key={video.id} className="transition-colors">
+                    <div key={video.id} className="overflow-hidden rounded-md border border-outline-variant/70 transition-colors">
                       <div 
-                        className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                        className="cursor-pointer p-5 transition-colors hover:bg-[#e8f2ff]/50"
                         onClick={() => toggleVideo(video.id)}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <span className="text-xl">
+                            <span className="text-primary">
                               {openVideoIds[video.id] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                             </span>
                             <h3 className="text-lg font-semibold">المحاضرة {getArabicOrdinal(index)}</h3>
@@ -294,7 +294,7 @@ export default function Page({ params }: { params: { id: string } }) {
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="text-sm text-on-surface-variant">
                               {video.title}
                             </span>
                           </div>
@@ -302,12 +302,12 @@ export default function Page({ params }: { params: { id: string } }) {
                       </div>
                       
                       {openVideoIds[video.id] && (
-                        <div className="px-6 pb-6">
-                          <div className="space-y-4 pl-10">
+                        <div className="px-5 pb-5">
+                          <div className="space-y-3">
                             {/* Video Card */}
-                            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-[#61B846]">
+                            <div className="flex flex-col gap-3 rounded-md bg-surface-container-low p-4 sm:flex-row sm:items-center sm:justify-between">
                               <div className="flex items-center gap-2">
-                                <Play size={16} className={`${videoProgress.completed ? "text-green-600" : "text-[#61B846]"}`} />
+                                <Play size={16} className={videoProgress.completed ? "text-green-600" : "text-primary"} />
                                 <span className="font-medium">{video.description || "شاهد هذه المحاضرة"}</span>
                                 
                                 {videoProgress.completed && (
@@ -319,7 +319,7 @@ export default function Page({ params }: { params: { id: string } }) {
                               {isEnrolled && (
                                 <Link
                                   href={`/course/${params.id}/video/${video.id}`}
-                                  className="text-[#61B846] hover:underline text-sm flex items-center gap-1"
+                                  className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
                                 >
                                   {videoProgress.completed ? (
                                     <>
@@ -338,7 +338,7 @@ export default function Page({ params }: { params: { id: string } }) {
                             
                             {/* Quiz Card - if there's a quiz for this video */}
                             {quiz && (
-                              <div className={`flex items-center justify-between p-3 rounded-lg border-l-4 
+                              <div className={`flex items-center justify-between p-3 rounded-md
                                 ${quizStatus?.passed 
                                   ? "bg-green-50 dark:bg-green-900/20 border-green-500" 
                                   : quizStatus?.taken 
@@ -405,7 +405,7 @@ export default function Page({ params }: { params: { id: string } }) {
                               return (
                                 <div 
                                   key={assignment.id}
-                                  className={`flex items-center justify-between p-3 rounded-lg border-l-4 mt-2
+                                  className={`flex items-center justify-between p-3 rounded-md mt-2
                                     ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
                                       ? "bg-green-50 dark:bg-green-900/20 border-green-500"
                                       : isGraded
@@ -513,7 +513,7 @@ export default function Page({ params }: { params: { id: string } }) {
         </div>
         
         {/* Enrollment Card - Right Side */}
-        <div className="md:w-80 lg:w-96 shrink-0">
+        <div className="shrink-0 lg:w-80">
           <EnrollmentCard
             courseId={params.id}
             userId={userId}
@@ -529,4 +529,3 @@ export default function Page({ params }: { params: { id: string } }) {
     </div>
   );
 }
-  

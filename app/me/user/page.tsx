@@ -42,7 +42,7 @@ export default function UserProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 px-4 flex items-center justify-center min-h-screen">
+      <div className="account-page flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
           <p className="mt-4 text-white">جاري تحميل البيانات...</p>
@@ -52,7 +52,7 @@ export default function UserProfilePage() {
   }
   
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="account-page">
       {/* Header with user icon */}
       <div className="flex flex-col items-center justify-center mb-8">
         <div className="bg-blue-500 rounded-full p-3 mb-2">

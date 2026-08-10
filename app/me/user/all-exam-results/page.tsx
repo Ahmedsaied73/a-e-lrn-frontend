@@ -115,7 +115,7 @@ export default function AllExamResultsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 px-4 flex items-center justify-center min-h-screen">
+      <div className="account-page flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
           <p className="mt-4 text-white">جاري تحميل النتائج...</p>
@@ -126,7 +126,7 @@ export default function AllExamResultsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="account-page">
         <Card className="bg-[#111827] border-[#1f2937] text-white">
           <CardHeader>
             <CardTitle className="text-center text-red-500">خطأ</CardTitle>
@@ -145,7 +145,7 @@ export default function AllExamResultsPage() {
   // Check if there are no results but no error (meaning the API returned successfully with no results)
   if (results.length === 0 && !error) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="account-page">
         <div className="flex flex-col items-center justify-center mb-8">
           <div className="bg-blue-500 rounded-full p-3 mb-2">
             <CheckCircle className="text-white h-6 w-6" />
@@ -173,7 +173,7 @@ export default function AllExamResultsPage() {
   }
   
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="account-page">
       <div className="flex flex-col items-center justify-center mb-8">
         <div className="bg-blue-500 rounded-full p-3 mb-2">
           <CheckCircle className="text-white h-6 w-6" />
@@ -392,7 +392,7 @@ export default function AllExamResultsPage() {
             </div>
             
             <div className="bg-[#1f2937] p-4 rounded-lg text-center">
-              <div className="text-3xl font-bold text-purple-400 mb-2">
+              <div className="text-3xl font-bold text-primary mb-2">
                 {results.length > 0 ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length) : 0}%
               </div>
               <div className="text-gray-400">متوسط الدرجات</div>
