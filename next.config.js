@@ -7,7 +7,14 @@ const nextConfig = {
   },
   images: {
     // Next.js image optimisation re-enabled.
-    // Add any external hostname the backend serves images from below.
+    //
+    // IMPORTANT: list every real external hostname explicitly here.
+    // `hostname: '**'` (removed) told Next's image optimizer to fetch and
+    // re-serve an image from ANY https URL on request — effectively an
+    // open image proxy that can be abused for SSRF-style requests and to
+    // burn your bandwidth/CDN quota on someone else's images. Add each
+    // hostname you actually serve images from (your API/CDN, S3 bucket,
+    // etc.) as its own entry below.
     remotePatterns: [
       {
         protocol: 'http',
@@ -15,10 +22,21 @@ const nextConfig = {
         port: '3005',
         pathname: '/**',
       },
+
+
+      // YouTube thumbnails
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'i.ytimg.com',
+        pathname: '/**',
       },
+
+      // Example — replace with your real production API/CDN host(s):
+      // {
+      //   protocol: 'https',
+      //   hostname: 'api.yourdomain.com',
+      //   pathname: '/**',
+      // },
     ],
   },
 };

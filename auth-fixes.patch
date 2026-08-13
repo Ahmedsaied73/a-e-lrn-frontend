@@ -1,0 +1,445 @@
+diff --git a/app/layout.tsx b/app/layout.tsx
+index aecd6d2..cbed6bb 100644
+--- a/app/layout.tsx
++++ b/app/layout.tsx
+@@ -4,6 +4,7 @@ import { Cairo } from 'next/font/google';
+ import { Navbar } from '@/components/navbar';
+ import { Footer } from '@/components/footer';
+ import { ReduxProvider } from '@/store/provider';
++import { AuthInitializer } from '@/store/auth-initializer';
+ import { Toaster } from '@/components/ui/toaster';
+ 
+ const cairo = Cairo({ subsets: ['arabic'] });
+@@ -22,12 +23,14 @@ export default function RootLayout({
+     <html lang="ar" dir="rtl" suppressHydrationWarning>
+       <body className={`${cairo.className} min-h-screen bg-background flex flex-col`}>
+         <ReduxProvider>
+-          <Navbar />
+-          <main className="flex-grow pt-16">
+-            {children}
+-          </main>
+-          <Footer />
+-          <Toaster />
++          <AuthInitializer>
++            <Navbar />
++            <main className="flex-grow pt-16">
++              {children}
++            </main>
++            <Footer />
++            <Toaster />
++          </AuthInitializer>
+         </ReduxProvider>
+       </body>
+     </html>
+diff --git a/app/me/user/page.tsx b/app/me/user/page.tsx
+index 1beba22..f839cf5 100644
+--- a/app/me/user/page.tsx
++++ b/app/me/user/page.tsx
+@@ -8,37 +8,35 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+ import { Button } from '@/components/ui/button';
+ import { User, Lock, BookOpen, CreditCard, Clock, Video, CheckCircle } from 'lucide-react';
+-import { checkAuthResponse } from '@/utils/auth-utils';
+-import { getCurrentUser } from '@/services/authService';
++import { useAppSelector } from '@/store/hooks';
++import { selectUser, selectAuth } from '@/store/slices/authSlice';
+ 
+ export default function UserProfilePage() {
+   const [activeTab, setActiveTab] = useState('profile');
+-  const [user, setUser] = useState<any>(null);
+-  const [isLoading, setIsLoading] = useState(true);
++  // No independent fetch here anymore — this was one of the two places
++  // (this page + Navbar) both calling getCurrentUser() on their own,
++  // which is what produced the duplicate "/user/me" requests. Auth is now
++  // fetched exactly once by AuthInitializer on app load and shared via
++  // Redux, so this page just reads the result.
++  const user = useAppSelector(selectUser);
++  const { initialized, isAuthenticated } = useAppSelector(selectAuth);
++  // Show the spinner until the app-level auth check has completed at least
++  // once. Gating on `initialized` (not `loading`) matters here: this page's
++  // effect can fire before AuthInitializer's effect even runs (React fires
++  // child effects before parent effects on mount), so checking `loading`
++  // alone could redirect to /login before the real check ever started.
++  const isLoading = !initialized;
+ 
+   useEffect(() => {
+-    const loadUserData = async () => {
+-      const hasAuthCookie = document.cookie.includes('isLoggedIn=true');
+-      if (hasAuthCookie) {
+-        try {
+-          const userData = await getCurrentUser();
+-          if (userData) {
+-            setUser(userData);
+-          }
+-        } catch (error) {
+-          console.error('Error fetching user data:', error);
+-          // 401 errors are handled automatically by apiClient and auth-utils
+-        }
+-      } else {
+-        // If there is no token, redirect user to login page
+-        window.location.replace('/login');
+-        return;
+-      }
+-      setIsLoading(false);
+-    };
+-    
+-    loadUserData();
+-  }, []);
++    // Belt-and-suspenders: middleware already redirects unauthenticated
++    // visitors away from /me/* before this page renders, and apiClient's
++    // 401 interceptor redirects on session expiry. This just covers the
++    // brief window where hydration has finished and genuinely found no
++    // authenticated session (e.g. cookie present but session invalid).
++    if (initialized && !isAuthenticated) {
++      window.location.replace('/login');
++    }
++  }, [initialized, isAuthenticated]);
+ 
+   if (isLoading) {
+     return (
+diff --git a/app/page.tsx b/app/page.tsx
+index 8c6e24c..28a3ef5 100644
+--- a/app/page.tsx
++++ b/app/page.tsx
+@@ -2,8 +2,9 @@
+ 
+ import Image from 'next/image';
+ import Link from 'next/link';
+-import { useState, useEffect } from 'react';
+ import { Play, MonitorPlay, BrainCircuit, Headphones, ArrowLeft } from 'lucide-react';
++import { useAppSelector } from '@/store/hooks';
++import { selectIsAuthenticated } from '@/store/slices/authSlice';
+ 
+ // ─── Grade Cards data ───────────────────────────────────────────
+ const GRADES = [
+@@ -47,12 +48,7 @@ const FEATURES = [
+ ];
+ 
+ export default function Home() {
+-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+-
+-  useEffect(() => {
+-    const hasAuthCookie = document.cookie.includes('isLoggedIn=true');
+-    setIsLoggedIn(hasAuthCookie);
+-  }, []);
++  const isLoggedIn = useAppSelector(selectIsAuthenticated);
+ 
+   return (
+     <main className="w-full min-h-screen bg-[#f7f9fc]" dir="rtl">
+diff --git a/components/navbar.tsx b/components/navbar.tsx
+index 861472b..7e117cd 100644
+--- a/components/navbar.tsx
++++ b/components/navbar.tsx
+@@ -5,7 +5,9 @@ import Image from "next/image";
+ import Link from "next/link";
+ import { useRouter, usePathname } from "next/navigation";
+ import { Bell, User, LogOut, Menu, X, BookOpen, Trophy, CreditCard, HelpCircle } from "lucide-react";
+-import { getCurrentUser, logoutUser } from "@/services/authService";
++import { logoutUser } from "@/services/authService";
++import { useAppDispatch, useAppSelector } from "@/store/hooks";
++import { selectIsAuthenticated, selectUser, logout } from "@/store/slices/authSlice";
+ 
+ const NAV_LINKS = [
+   { href: "/", label: "الرئيسية" },
+@@ -18,29 +20,18 @@ const NAV_LINKS = [
+ export function Navbar() {
+   const router = useRouter();
+   const pathname = usePathname();
+-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
++  // Auth state now comes from Redux (hydrated once by AuthInitializer and
++  // updated instantly on login/logout) instead of an independent fetch here.
++  // That's what fixes both the duplicate "/user/me" requests and the
++  // "stays logged out until refresh" bug — this now re-renders reactively
++  // the moment login/logout dispatch to the store, no remount needed.
++  const isAuthenticated = useAppSelector(selectIsAuthenticated);
++  const user = useAppSelector(selectUser);
++  const dispatch = useAppDispatch();
+   const [dropdownOpen, setDropdownOpen] = useState(false);
+   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+   const dropdownRef = useRef<HTMLDivElement>(null);
+ 
+-  useEffect(() => {
+-    const checkAuth = async () => {
+-      const loggedIn =
+-        typeof document !== "undefined" && document.cookie.includes("isLoggedIn=true");
+-      if (loggedIn) {
+-        setIsAuthenticated(true);
+-        try {
+-          const userData = await getCurrentUser();
+-          if (userData) setUser({ name: userData.name, email: userData.email });
+-        } catch {
+-          setIsAuthenticated(false);
+-        }
+-      }
+-    };
+-    checkAuth();
+-  }, []);
+-
+   // Close dropdown on outside click
+   useEffect(() => {
+     const handler = (e: MouseEvent) => {
+@@ -54,8 +45,7 @@ export function Navbar() {
+ 
+   const handleLogout = async () => {
+     await logoutUser();
+-    setIsAuthenticated(false);
+-    setUser(null);
++    dispatch(logout());
+     setDropdownOpen(false);
+     router.push("/login");
+   };
+diff --git a/lib/jwt.ts b/lib/jwt.ts
+deleted file mode 100644
+index 46a2001..0000000
+--- a/lib/jwt.ts
++++ /dev/null
+@@ -1,34 +0,0 @@
+-import jwt from 'jsonwebtoken';
+-
+-interface TokenPayload {
+-  id: string;
+-  email: string;
+-  role: string;
+-  iat?: number;
+-  exp?: number;
+-}
+-
+-/**
+- * Decodes and verifies a refresh token using the secret key from environment variables
+- * @param refreshToken - The refresh token to decode and verify
+- * @returns The decoded token payload containing user information
+- * @throws Error if token is invalid or verification fails
+- */
+-export const decodeRefreshToken = (refreshToken: string): TokenPayload => {
+-  try {
+-    const secret = process.env.REFRESH_TOKEN_SECRET;
+-    if (!secret) {
+-      throw new Error('Refresh token secret is not configured');
+-    }
+-
+-    const decoded = jwt.verify(refreshToken, secret) as TokenPayload;
+-    return decoded;
+-  } catch (error) {
+-    if (error instanceof jwt.TokenExpiredError) {
+-      throw new Error('Refresh token has expired');
+-    } else if (error instanceof jwt.JsonWebTokenError) {
+-      throw new Error('Invalid refresh token');
+-    }
+-    throw new Error('Failed to decode refresh token');
+-  }
+-};
+\ No newline at end of file
+diff --git a/middleware.ts b/middleware.ts
+index b0d67a9..41cb6ab 100644
+--- a/middleware.ts
++++ b/middleware.ts
+@@ -10,9 +10,20 @@ export function middleware(request: NextRequest) {
+   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+   
+   if (isProtectedRoute) {
++    // NOTE: `isLoggedIn` is a plain (non-httpOnly) cookie, set client-side so
++    // the UI can read it too — which means it's just a UX signal, not a real
++    // security boundary: a visitor can set it in devtools without ever
++    // logging in. That's OK *only* because it doesn't grant access on its
++    // own — actual protected data still requires the real httpOnly session
++    // cookie, and any request without it gets a 401 from the API (handled by
++    // apiClient's interceptor). This check just avoids showing a flash of
++    // protected UI before that 401 round-trip resolves.
++    // For real server-enforced gating here, the backend would need to set
++    // `isLoggedIn` (or an equivalent) as httpOnly so only it can write it —
++    // that's a backend change, tracked separately.
+     const isLoggedIn = request.cookies.get('isLoggedIn');
+-    
+-    if (!isLoggedIn) {
++
++    if (!isLoggedIn || isLoggedIn.value !== 'true') {
+       const loginUrl = new URL('/login', request.url);
+       return NextResponse.redirect(loginUrl);
+     }
+diff --git a/next.config.js b/next.config.js
+index c982483..b8a3d45 100644
+--- a/next.config.js
++++ b/next.config.js
+@@ -7,7 +7,14 @@ const nextConfig = {
+   },
+   images: {
+     // Next.js image optimisation re-enabled.
+-    // Add any external hostname the backend serves images from below.
++    //
++    // IMPORTANT: list every real external hostname explicitly here.
++    // `hostname: '**'` (removed) told Next's image optimizer to fetch and
++    // re-serve an image from ANY https URL on request — effectively an
++    // open image proxy that can be abused for SSRF-style requests and to
++    // burn your bandwidth/CDN quota on someone else's images. Add each
++    // hostname you actually serve images from (your API/CDN, S3 bucket,
++    // etc.) as its own entry below.
+     remotePatterns: [
+       {
+         protocol: 'http',
+@@ -15,10 +22,12 @@ const nextConfig = {
+         port: '3005',
+         pathname: '/**',
+       },
+-      {
+-        protocol: 'https',
+-        hostname: '**',
+-      },
++      // Example — replace with your real production API/CDN host(s):
++      // {
++      //   protocol: 'https',
++      //   hostname: 'api.yourdomain.com',
++      //   pathname: '/**',
++      // },
+     ],
+   },
+ };
+diff --git a/package.json b/package.json
+index b082d6e..5033b97 100644
+--- a/package.json
++++ b/package.json
+@@ -51,7 +51,6 @@
+     "eslint": "8.49.0",
+     "eslint-config-next": "13.5.1",
+     "input-otp": "^1.2.4",
+-    "jsonwebtoken": "^9.0.2",
+     "lucide-react": "^0.446.0",
+     "next": "^13.5.11",
+     "next-themes": "^0.3.0",
+@@ -73,7 +72,5 @@
+     "vaul": "^0.9.9",
+     "zod": "^3.23.8"
+   },
+-  "devDependencies": {
+-    "@types/jsonwebtoken": "^9.0.9"
+-  }
++  "devDependencies": {}
+ }
+diff --git a/store/auth-initializer.tsx b/store/auth-initializer.tsx
+new file mode 100644
+index 0000000..d278131
+--- /dev/null
++++ b/store/auth-initializer.tsx
+@@ -0,0 +1,56 @@
++'use client';
++
++import { useEffect, useRef } from 'react';
++import { useAppDispatch } from './hooks';
++import { loginStart, loginSuccess, loginFailure, guestSessionChecked } from './slices/authSlice';
++import { getCurrentUser } from '@/services/authService';
++
++/**
++ * Single source of truth for "am I logged in" on app load.
++ *
++ * Runs the /user/me check exactly ONCE per app session and writes the
++ * result into Redux (authSlice). Every component that needs auth state
++ * (Navbar, protected pages, etc.) should read it from Redux via
++ * `useAppSelector(selectIsAuthenticated)` / `selectUser` instead of
++ * calling getCurrentUser() itself — that's what was causing the same
++ * "/user/me" request to fire multiple times per page load and cascade
++ * into 429 "Too many requests" errors.
++ *
++ * The `hasRun` ref also guards against React StrictMode's dev-mode
++ * double-invocation of effects firing this twice.
++ */
++export function AuthInitializer({ children }: { children: React.ReactNode }) {
++  const dispatch = useAppDispatch();
++  const hasRun = useRef(false);
++
++  useEffect(() => {
++    if (hasRun.current) return;
++    hasRun.current = true;
++
++    const hydrate = async () => {
++      const loggedIn =
++        typeof document !== 'undefined' && document.cookie.includes('isLoggedIn=true');
++
++      if (!loggedIn) {
++        dispatch(guestSessionChecked());
++        return;
++      }
++
++      dispatch(loginStart());
++      try {
++        const user = await getCurrentUser();
++        dispatch(loginSuccess(user));
++      } catch {
++        // Cookie said "logged in" but the session is actually invalid/expired.
++        // apiClient's own 401 interceptor already clears the cookie and
++        // redirects to /login when this happens, so we just reflect it in
++        // Redux here for any UI that renders before that redirect completes.
++        dispatch(loginFailure('Session expired'));
++      }
++    };
++
++    hydrate();
++  }, [dispatch]);
++
++  return <>{children}</>;
++}
+diff --git a/store/slices/authSlice.ts b/store/slices/authSlice.ts
+index 4515bd5..6e102f9 100644
+--- a/store/slices/authSlice.ts
++++ b/store/slices/authSlice.ts
+@@ -7,6 +7,12 @@ export interface AuthState {
+   user: User | null;
+   isAuthenticated: boolean;
+   loading: boolean;
++  // True once the app-level "am I logged in" check has run at least once
++  // (success, failure, or "no session cookie at all"). Lets consumers tell
++  // "still checking, don't know yet" apart from "checked, definitely logged
++  // out" — without this, a page guarding itself on !isAuthenticated could
++  // redirect to /login before the initial check has even had a chance to run.
++  initialized: boolean;
+   error: string | null;
+ }
+ 
+@@ -15,6 +21,7 @@ const initialState: AuthState = {
+   user: null,
+   isAuthenticated: false,
+   loading: false,
++  initialized: false,
+   error: null,
+ };
+ 
+@@ -31,6 +38,7 @@ export const authSlice = createSlice({
+     // Login success
+     loginSuccess: (state, action: PayloadAction<User>) => {
+       state.loading = false;
++      state.initialized = true;
+       state.isAuthenticated = true;
+       state.user = action.payload;
+       state.error = null;
+@@ -38,21 +46,31 @@ export const authSlice = createSlice({
+     // Login failure
+     loginFailure: (state, action: PayloadAction<string>) => {
+       state.loading = false;
++      state.initialized = true;
+       state.isAuthenticated = false;
+       state.user = null;
+       state.error = action.payload;
+     },
++    // No session cookie found at all on the initial check — a plain guest,
++    // not an error. Keeps this out of loginFailure so the UI never shows an
++    // "error" state for the ordinary case of a visitor who isn't logged in.
++    guestSessionChecked: (state) => {
++      state.loading = false;
++      state.initialized = true;
++    },
+     // Logout
+     logout: (state) => {
+       state.isAuthenticated = false;
+       state.user = null;
+       state.error = null;
++      state.initialized = true;
+     },
+   },
+ });
+ 
+ // Export actions
+-export const { loginStart, loginSuccess, loginFailure, logout } = authSlice.actions;
++export const { loginStart, loginSuccess, loginFailure, guestSessionChecked, logout } =
++  authSlice.actions;
+ 
+ // Select state from RootState
+ export const selectAuth = (state: RootState) => state.auth;

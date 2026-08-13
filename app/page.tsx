@@ -2,8 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 import { Play, MonitorPlay, BrainCircuit, Headphones, ArrowLeft } from 'lucide-react';
+import { useAppSelector } from '@/store/hooks';
+import { selectIsAuthenticated } from '@/store/slices/authSlice';
 
 // ─── Grade Cards data ───────────────────────────────────────────
 const GRADES = [
@@ -47,12 +48,7 @@ const FEATURES = [
 ];
 
 export default function Home() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const hasAuthCookie = document.cookie.includes('isLoggedIn=true');
-    setIsLoggedIn(hasAuthCookie);
-  }, []);
+  const isLoggedIn = useAppSelector(selectIsAuthenticated);
 
   return (
     <main className="w-full min-h-screen bg-[#f7f9fc]" dir="rtl">

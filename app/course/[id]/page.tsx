@@ -7,55 +7,54 @@ import { EnrollmentCard } from '@/components/enrollment-card';
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Play, Check, CheckCircle, Award, Clock } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { 
-  fetchQuizzesByCourse, 
-  selectQuizzes, 
-  fetchVideoProgress, 
+import {
+  fetchCourseById,
+  selectCurrentCourse,
+  selectEnrollmentStatus,
+  selectCoursesLoading,
+  selectCoursesError,
+} from '@/store/slices/courseSlice';
+import {
+  fetchQuizzesByCourse,
+  selectQuizzes,
   fetchQuizStatus,
   selectVideoProgress,
-  selectQuizStatus
+  selectQuizStatus,
 } from '@/store/slices/quizSlice';
 import {
-  fetchAssignmentsByVideo,
   fetchAssignmentStatus,
   selectAssignments,
-  fetchAssignmentsByCourse // Added import
+  fetchAssignmentsByCourse,
 } from '@/store/slices/assignmentSlice';
-
-import { fetchCourseById, checkEnrollmentStatus } from '@/services/courseService';
 
 export default function Page({ params }: { params: { id: string } }) {
   const dispatch = useAppDispatch();
-  const [courseData, setCourseData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isEnrolled, setIsEnrolled] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [enrollmentLoading, setEnrollmentLoading] = useState(false);
   const [openVideoIds, setOpenVideoIds] = useState<Record<string, boolean>>({});
   const [courseDuration, setCourseDuration] = useState<string>('0');
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
-  
-  // Get quizzes from Redux store
-  const quizzes = useAppSelector(selectQuizzes);
-  
-  // Get all video progress and quiz statuses
-  const videoProgressMap = useAppSelector(state => state.quiz.videoProgressMap);
-  const quizStatusMap = useAppSelector(state => state.quiz.quizStatuses);
-  
-  // Get assignments from Redux store
-  const assignments = useAppSelector(selectAssignments);
-  const assignmentStatusMap = useAppSelector(state => state.assignment.assignmentStatuses);
 
-  // Function to toggle a specific video dropdown
+  // ---- Redux selectors ----------------------------------------------------
+  const course = useAppSelector(selectCurrentCourse);
+  const isEnrolled = useAppSelector(selectEnrollmentStatus(params.id));
+  const loading = useAppSelector(selectCoursesLoading);
+  const error = useAppSelector(selectCoursesError);
+
+  const quizzes = useAppSelector(selectQuizzes);
+  const videoProgressMap = useAppSelector((state) => state.quiz.videoProgressMap);
+  const quizStatusMap = useAppSelector((state) => state.quiz.quizStatuses);
+
+  const assignments = useAppSelector(selectAssignments);
+  const assignmentStatusMap = useAppSelector((state) => state.assignment.assignmentStatuses);
+
+  // ---- UI helpers ---------------------------------------------------------
+
   const toggleVideo = (videoId: string) => {
-    setOpenVideoIds(prev => ({
+    setOpenVideoIds((prev) => ({
       ...prev,
-      [videoId]: !prev[videoId]
+      [videoId]: !prev[videoId],
     }));
   };
 
-  // Function to get Arabic ordinal number (first, second, etc.)
   const getArabicOrdinal = (index: number) => {
     const arabicOrdinals = [
       'الأولى',
@@ -77,154 +76,136 @@ export default function Page({ params }: { params: { id: string } }) {
       'السابعة عشر',
       'الثامنة عشر',
       'التاسعة عشر',
-      'العشرون'
+      'العشرون',
     ];
-    
-    return index < arabicOrdinals.length 
-      ? arabicOrdinals[index] 
-      : `${index + 1}`;
+    return index < arabicOrdinals.length ? arabicOrdinals[index] : `${index + 1}`;
   };
 
-  // Helper function to find a quiz for a specific video
-  const findQuizForVideo = useCallback((videoId: number | string) => {
-    const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
-    return quizzes.find(quiz => quiz.videoId === videoIdNum) || null;
-  }, [quizzes]);
-  
-  // Helper function to find assignments for a specific video
-  const findAssignmentsForVideo = useCallback((videoId: number | string) => {
-    const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
-    return assignments.filter(assignment => assignment.videoId === videoIdNum);
-  }, [assignments]);
+  const findQuizForVideo = useCallback(
+    (videoId: number | string) => {
+      const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
+      return quizzes.find((quiz) => quiz.videoId === videoIdNum) || null;
+    },
+    [quizzes],
+  );
 
-  // Helper function to format duration from seconds
+  const findAssignmentsForVideo = useCallback(
+    (videoId: number | string) => {
+      const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
+      return assignments.filter((assignment) => assignment.videoId === videoIdNum);
+    },
+    [assignments],
+  );
+
   const formatDuration = useCallback((totalSeconds: number) => {
     if (totalSeconds === 0) return '0 دقيقة';
     const totalMinutes = Math.floor(totalSeconds / 60);
     if (totalMinutes < 60) {
       return `${totalMinutes} دقيقة`;
-    } else {
-      const hours = Math.floor(totalMinutes / 60);
-      const minutes = totalMinutes % 60;
-      if (minutes === 0) {
-        return `${hours} ساعة`;
-      } else {
-        return `${hours} ساعة و ${minutes} دقيقة`;
-      }
     }
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (minutes === 0) {
+      return `${hours} ساعة`;
+    }
+    return `${hours} ساعة و ${minutes} دقيقة`;
   }, []);
 
-  // Helper function to calculate total course duration and questions
-  const calculateCourseStats = useCallback((courseData: any, quizzes: any[]) => {
-    // Calculate total duration from all videos in seconds
-    const totalDurationInSeconds = courseData?.videos?.reduce((total: number, video: any) => {
-      return total + (video.duration || 0);
-    }, 0) || 0;
+  const calculateCourseStats = useCallback(
+    (courseArg: typeof course, quizzesArg: typeof quizzes) => {
+      const totalDurationInSeconds =
+        courseArg?.videos?.reduce((total: number, video: any) => total + (video.duration || 0), 0) ||
+        0;
+      const totalQuestionsCount = quizzesArg.reduce(
+        (total, quiz) => total + (quiz.questionCount || 0),
+        0,
+      );
+      setCourseDuration(formatDuration(totalDurationInSeconds));
+      setTotalQuestions(totalQuestionsCount);
+    },
+    [formatDuration],
+  );
 
-    // Calculate total questions from all quizzes
-    const totalQuestionsCount = quizzes.reduce((total, quiz) => {
-      return total + (quiz.questionCount || 0);
-    }, 0);
-    
-    setCourseDuration(formatDuration(totalDurationInSeconds));
-    setTotalQuestions(totalQuestionsCount);
-  }, [formatDuration]);
+  // Fetch quiz + assignment status per video.
+  // NOTE: video progress is pre-hydrated from consolidated course fetch,
+  // so we no longer dispatch `fetchVideoProgress` per video here.
+  const checkVideoAndQuizStatus = useCallback(
+    async (videoId: string | number) => {
+      const quiz = findQuizForVideo(videoId);
+      if (quiz) {
+        dispatch(fetchQuizStatus(quiz.id));
+      }
+      const videoAssignments = findAssignmentsForVideo(videoId);
+      if (videoAssignments.length > 0) {
+        videoAssignments.forEach((assignment) => {
+          dispatch(fetchAssignmentStatus(assignment.id));
+        });
+      }
+    },
+    [dispatch, findQuizForVideo, findAssignmentsForVideo],
+  );
 
-  // Check video progress, quiz status, and assignment status when needed
-  const checkVideoAndQuizStatus = useCallback(async (videoId: string | number) => {
-    // Fetch video progress
-    dispatch(fetchVideoProgress(videoId));
-    
-    // Find if there's a quiz for this video
-    const quiz = findQuizForVideo(videoId);
-    if (quiz) {
-      // Fetch quiz status
-      dispatch(fetchQuizStatus(quiz.id));
-    }
-    
-    // Find assignments for this video and fetch their status
-    const videoAssignments = findAssignmentsForVideo(videoId);
-    if (videoAssignments.length > 0) {
-      videoAssignments.forEach(assignment => {
-        dispatch(fetchAssignmentStatus(assignment.id));
-      });
-    }
-  }, [dispatch, findQuizForVideo, findAssignmentsForVideo]);
-
-  // Helper function to get video progress
   const getVideoProgress = (videoId: string | number) => {
     return videoProgressMap[videoId] || { completed: false, watchedAt: null };
   };
 
-  // Helper function to get quiz status
   const getQuizStatus = (quizId: number) => {
     return quizStatusMap[quizId] || null;
   };
-  
-  // Helper function to get assignment status
+
   const getAssignmentStatus = (assignmentId: number) => {
     return assignmentStatusMap[assignmentId] || null;
   };
 
-  useEffect(() => {
-    const loadCourseAndEnrollment = async () => {
-      try {
-        setIsLoading(true);
-        const data = await fetchCourseById(params.id);
-        setCourseData(data);
-        
-        // Initialize all videos as closed
-        if (data.videos && data.videos.length > 0) {
-          const initialOpenState: Record<string, boolean> = {};
-          data.videos.forEach((video: any) => {
-            initialOpenState[video.id] = false;
-          });
-          setOpenVideoIds(initialOpenState);
-          
-          // Fetch all assignments for the course
-          dispatch(fetchAssignmentsByCourse({ courseId: params.id, videoIds: data.videos.map((video: any) => video.id) }));
-        }
-        
-        // Check if user is enrolled in this course
-        try {
-          const status = await checkEnrollmentStatus(params.id);
-          setIsEnrolled(status.enrolled);
-        } catch (enrollErr) {
-          console.error('Error checking enrollment status:', enrollErr);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // ---- Data fetching ------------------------------------------------------
 
-    loadCourseAndEnrollment();
-    
-    // Fetch quizzes for this course
+  // 1) Kick off consolidated course fetch (+ independent quizzes fetch) in parallel.
+  useEffect(() => {
+    dispatch(fetchCourseById(params.id));
     dispatch(fetchQuizzesByCourse(params.id));
   }, [params.id, dispatch]);
-  
-  // Fetch status for videos when course data is loaded and user is enrolled
+
+  // 2) Once `course.videos` is in Redux, fetch assignments and init accordion state.
   useEffect(() => {
-    if (courseData?.videos && courseData.videos.length > 0 && isEnrolled) {
-      // Fetch status for each video
-      courseData.videos.forEach((video: any) => {
+    const videos = course?.videos;
+    if (videos && videos.length > 0) {
+      dispatch(
+        fetchAssignmentsByCourse({
+          courseId: params.id,
+          videoIds: videos.map((v) => v.id),
+        }),
+      );
+      const initialOpenState: Record<string, boolean> = {};
+      for (const v of videos) initialOpenState[String(v.id)] = false;
+      setOpenVideoIds(initialOpenState);
+    }
+  }, [course, params.id, dispatch]);
+
+  // 3) Per-video status loop for quiz/assignment badges (progress already hydrated).
+  useEffect(() => {
+    const videos = course?.videos;
+    if (videos && videos.length > 0 && isEnrolled) {
+      videos.forEach((video: any) => {
         checkVideoAndQuizStatus(video.id);
       });
     }
-  }, [courseData, isEnrolled, checkVideoAndQuizStatus]);
+  }, [course, isEnrolled, checkVideoAndQuizStatus]);
 
-  // Calculate course statistics when course data and quizzes are loaded
+  // 4) Derived display stats.
   useEffect(() => {
-    if (courseData && quizzes.length >= 0) {
-      calculateCourseStats(courseData, quizzes);
+    if (course) {
+      calculateCourseStats(course, quizzes);
     }
-  }, [courseData, quizzes, calculateCourseStats]);
+  }, [course, quizzes, calculateCourseStats]);
 
-  if (isLoading) return <div className="text-center p-8">جاري التحميل...</div>;
+  // ---- Render guards ------------------------------------------------------
+
+  if (loading) return <div className="text-center p-8">جاري التحميل...</div>;
   if (error) return <div className="text-center p-8 text-red-500">خطأ: {error}</div>;
-  if (!courseData) return <div className="text-center p-8">لا توجد بيانات متاحة للكورس</div>;
+  if (!course)
+    return <div className="text-center p-8">لا توجد بيانات متاحة للكورس</div>;
+
+  // ---- JSX ----------------------------------------------------------------
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12 lg:py-16">
@@ -236,56 +217,65 @@ export default function Page({ params }: { params: { id: string } }) {
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h1 className="mb-4 text-2xl font-bold leading-10 sm:text-3xl">
-                  {courseData.title || "كورس الأزهر المكثف المجاني"}
+                  {course.title || 'كورس الأزهر المكثف المجاني'}
                 </h1>
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold">
-                    ملفات {courseData.files_count || 0} +
+                    + {course.files_count || 0} ملفات
                   </span>
                   <span className="bg-white/20 text-white px-4 py-1 rounded-full text-sm">
-                    فيديوهات {courseData.videos?.length || 0} +
+                    + {course.videos?.length || 0} فيديوهات
                   </span>
                   <span className="bg-white/20 text-white px-4 py-1 rounded-full text-sm">
-                    امتحانات {quizzes.length || 0} +
+                    + {quizzes.length || 0} امتحانات
                   </span>
                 </div>
               </div>
               <div className="text-right sm:text-left">
-                <p className="text-lg font-bold">{courseData.price === 0 ? "هذا الكورس مجاني !" : `السعر: ${courseData.price} جنيه`}</p>
-                <p className="text-sm">{courseData.description_short || "الدورة لطلبة الأزهر فقط ❤️"}</p>
+                <p className="text-lg font-bold">
+                  {course.price === 0 ? 'هذا الكورس مجاني !' : `السعر: ${course.price} جنيه`}
+                </p>
+                <p className="text-sm">
+                  {course.description_short || 'الدورة لطلبة الأزهر فقط ❤️'}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Course Content */}
           <div className="overflow-hidden rounded-lg bg-white shadow-level-2">
-            <h2 className="text-xl font-bold p-6 border-b dark:border-gray-700">محتوى الكورس</h2>
+            <h2 className="text-xl font-bold p-6 border-b dark:border-gray-700">
+              محتوى الكورس
+            </h2>
             <div className="space-y-2 p-3 sm:p-4">
-              {courseData.videos && courseData.videos.length > 0 ? (
-                courseData.videos.map((video: any, index: number) => {
-                  // Get video progress using our helper function
+              {course.videos && course.videos.length > 0 ? (
+                course.videos.map((video: any, index: number) => {
                   const videoProgress = getVideoProgress(video.id);
-                  
-                  // Find the quiz for this video
                   const quiz = findQuizForVideo(video.id);
-                  
-                  // Get quiz status if there's a quiz
                   const quizStatus = quiz ? getQuizStatus(quiz.id) : null;
-                  
+
                   return (
-                    <div key={video.id} className="overflow-hidden rounded-md border border-outline-variant/70 transition-colors">
-                      <div 
+                    <div
+                      key={video.id}
+                      className="overflow-hidden rounded-md border border-outline-variant/70 transition-colors"
+                    >
+                      <div
                         className="cursor-pointer p-5 transition-colors hover:bg-[#e8f2ff]/50"
-                        onClick={() => toggleVideo(video.id)}
+                        onClick={() => toggleVideo(String(video.id))}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <span className="text-primary">
-                              {openVideoIds[video.id] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                              {openVideoIds[String(video.id)] ? (
+                                <ChevronUp size={20} />
+                              ) : (
+                                <ChevronDown size={20} />
+                              )}
                             </span>
-                            <h3 className="text-lg font-semibold">المحاضرة {getArabicOrdinal(index)}</h3>
-                            
-                            {/* Show video completion status */}
+                            <h3 className="text-lg font-semibold">
+                              المحاضرة {getArabicOrdinal(index)}
+                            </h3>
+
                             {videoProgress.completed && (
                               <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
                                 <CheckCircle size={12} className="text-green-600" />
@@ -300,19 +290,31 @@ export default function Page({ params }: { params: { id: string } }) {
                           </div>
                         </div>
                       </div>
-                      
-                      {openVideoIds[video.id] && (
+
+                      {openVideoIds[String(video.id)] && (
                         <div className="px-5 pb-5">
                           <div className="space-y-3">
                             {/* Video Card */}
                             <div className="flex flex-col gap-3 rounded-md bg-surface-container-low p-4 sm:flex-row sm:items-center sm:justify-between">
                               <div className="flex items-center gap-2">
-                                <Play size={16} className={videoProgress.completed ? "text-green-600" : "text-primary"} />
-                                <span className="font-medium">{video.description || "شاهد هذه المحاضرة"}</span>
-                                
+                                <Play
+                                  size={16}
+                                  className={
+                                    videoProgress.completed
+                                      ? 'text-green-600'
+                                      : 'text-primary'
+                                  }
+                                />
+                                <span className="font-medium">
+                                  {video.description || 'شاهد هذه المحاضرة'}
+                                </span>
+
                                 {videoProgress.completed && (
                                   <span className="text-xs text-gray-500">
-                                    تمت المشاهدة في {new Date(videoProgress.watchedAt || '').toLocaleDateString('ar-EG')}
+                                    تمت المشاهدة في{' '}
+                                    {new Date(
+                                      videoProgress.watchedAt || '',
+                                    ).toLocaleDateString('ar-EG')}
                                   </span>
                                 )}
                               </div>
@@ -335,15 +337,18 @@ export default function Page({ params }: { params: { id: string } }) {
                                 </Link>
                               )}
                             </div>
-                            
+
                             {/* Quiz Card - if there's a quiz for this video */}
                             {quiz && (
-                              <div className={`flex items-center justify-between p-3 rounded-md
-                                ${quizStatus?.passed 
-                                  ? "bg-green-50 dark:bg-green-900/20 border-green-500" 
-                                  : quizStatus?.taken 
-                                  ? "bg-red-50 dark:bg-red-900/20 border-red-500" 
-                                  : "bg-gray-50 dark:bg-gray-700 border-gray-400"}`}
+                              <div
+                                className={`flex items-center justify-between p-3 rounded-md
+                                ${
+                                  quizStatus?.passed
+                                    ? 'bg-green-50 dark:bg-green-900/20 border-green-500'
+                                    : quizStatus?.taken
+                                      ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
+                                      : 'bg-gray-50 dark:bg-gray-700 border-gray-400'
+                                }`}
                               >
                                 <div className="flex items-center gap-2">
                                   {quizStatus?.passed ? (
@@ -354,25 +359,33 @@ export default function Page({ params }: { params: { id: string } }) {
                                     <Award size={16} className="text-gray-500" />
                                   )}
                                   <span className="font-medium">{quiz.title}</span>
-                                  
+
                                   {quizStatus?.taken && (
-                                    <span className={`text-xs ${quizStatus?.passed ? "text-green-500" : "text-red-500"}`}>
-                                      {quizStatus?.passed 
-                                        ? `نجاح - ${quizStatus.score}%` 
+                                    <span
+                                      className={`text-xs ${
+                                        quizStatus?.passed
+                                          ? 'text-green-500'
+                                          : 'text-red-500'
+                                      }`}
+                                    >
+                                      {quizStatus?.passed
+                                        ? `نجاح - ${quizStatus.score}%`
                                         : `رسوب - ${quizStatus.score}%`}
                                     </span>
                                   )}
                                 </div>
-                                
+
                                 {isEnrolled && videoProgress.completed && (
                                   <Link
                                     href={`/course/${params.id}/video/${video.id}/quiz/${quiz.id}`}
                                     className={`hover:underline text-sm flex items-center gap-1
-                                      ${quizStatus?.passed 
-                                        ? "text-green-600" 
-                                        : quizStatus?.taken 
-                                        ? "text-red-500" 
-                                        : "text-[#61B846]"}`}
+                                      ${
+                                        quizStatus?.passed
+                                          ? 'text-green-600'
+                                          : quizStatus?.taken
+                                            ? 'text-red-500'
+                                            : 'text-[#61B846]'
+                                      }`}
                                   >
                                     {quizStatus?.passed ? (
                                       <>
@@ -394,30 +407,40 @@ export default function Page({ params }: { params: { id: string } }) {
                                 )}
                               </div>
                             )}
-                            
+
                             {/* Assignment Cards - if there are assignments for this video */}
-                            {findAssignmentsForVideo(video.id).map(assignment => {
+                            {findAssignmentsForVideo(video.id).map((assignment) => {
                               const assignmentStatus = getAssignmentStatus(assignment.id);
-                              const isPastDue = new Date(assignment.dueDate) < new Date();
+                              const isPastDue =
+                                new Date(assignment.dueDate) < new Date();
                               const isSubmitted = assignment.hasSubmitted;
-                              const isGraded = assignment.submission?.status === "GRADED";
-                              
+                              const isGraded =
+                                assignment.submission?.status === 'GRADED';
+
                               return (
-                                <div 
+                                <div
                                   key={assignment.id}
                                   className={`flex items-center justify-between p-3 rounded-md mt-2
-                                    ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
-                                      ? "bg-green-50 dark:bg-green-900/20 border-green-500"
-                                      : isGraded
-                                      ? "bg-red-50 dark:bg-red-900/20 border-red-500"
-                                      : isSubmitted
-                                      ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500"
-                                      : isPastDue
-                                      ? "bg-gray-50 dark:bg-gray-700 border-red-400"
-                                      : "bg-gray-50 dark:bg-gray-700 border-blue-400"}`}
+                                    ${
+                                      isGraded &&
+                                      assignment.submission &&
+                                      assignment.submission.grade >=
+                                        assignment.passingScore
+                                        ? 'bg-green-50 dark:bg-green-900/20 border-green-500'
+                                        : isGraded
+                                          ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
+                                          : isSubmitted
+                                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500'
+                                            : isPastDue
+                                              ? 'bg-gray-50 dark:bg-gray-700 border-red-400'
+                                              : 'bg-gray-50 dark:bg-gray-700 border-blue-400'
+                                    }`}
                                 >
                                   <div className="flex items-center gap-2">
-                                    {isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore ? (
+                                    {isGraded &&
+                                    assignment.submission &&
+                                    assignment.submission.grade >=
+                                      assignment.passingScore ? (
                                       <CheckCircle size={16} className="text-green-600" />
                                     ) : isGraded ? (
                                       <Clock size={16} className="text-red-500" />
@@ -429,47 +452,63 @@ export default function Page({ params }: { params: { id: string } }) {
                                       <Clock size={16} className="text-blue-400" />
                                     )}
                                     <span className="font-medium">{assignment.title}</span>
-                                    
+
                                     {isGraded && assignment.submission && (
-                                      <span className={`text-xs ${assignment.submission.grade >= assignment.passingScore ? "text-green-500" : "text-red-500"}`}>
-                                        {assignment.submission.grade >= assignment.passingScore
+                                      <span
+                                        className={`text-xs ${
+                                          assignment.submission.grade >=
+                                          assignment.passingScore
+                                            ? 'text-green-500'
+                                            : 'text-red-500'
+                                        }`}
+                                      >
+                                        {assignment.submission.grade >=
+                                        assignment.passingScore
                                           ? `نجاح - ${assignment.submission.grade}/${assignment.passingScore}`
                                           : `رسوب - ${assignment.submission.grade}/${assignment.passingScore}`}
                                       </span>
                                     )}
-                                    
+
                                     {!isGraded && isSubmitted && (
                                       <span className="text-xs text-yellow-500">
                                         قيد المراجعة
                                       </span>
                                     )}
-                                    
+
                                     {!isSubmitted && isPastDue && (
                                       <span className="text-xs text-red-500">
                                         انتهى موعد التسليم
                                       </span>
                                     )}
-                                    
+
                                     {!isSubmitted && !isPastDue && (
                                       <span className="text-xs text-blue-500">
-                                        موعد التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
+                                        موعد التسليم:{' '}
+                                        {new Date(
+                                          assignment.dueDate,
+                                        ).toLocaleDateString('ar-EG')}
                                       </span>
                                     )}
                                   </div>
-                                  
+
                                   {isEnrolled && videoProgress.completed && (
                                     <Link
                                       href={`/course/${params.id}/video/${video.id}/assignment/${assignment.id}`}
                                       className={`hover:underline text-sm flex items-center gap-1
-                                        ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
-                                          ? "text-green-600"
-                                          : isGraded
-                                          ? "text-red-500"
-                                          : isSubmitted
-                                          ? "text-yellow-500"
-                                          : isPastDue
-                                          ? "text-red-400"
-                                          : "text-blue-500"}`}
+                                        ${
+                                          isGraded &&
+                                          assignment.submission &&
+                                          assignment.submission.grade >=
+                                            assignment.passingScore
+                                            ? 'text-green-600'
+                                            : isGraded
+                                              ? 'text-red-500'
+                                              : isSubmitted
+                                                ? 'text-yellow-500'
+                                                : isPastDue
+                                                  ? 'text-red-400'
+                                                  : 'text-blue-500'
+                                        }`}
                                     >
                                       {isGraded ? (
                                         <>
@@ -511,15 +550,14 @@ export default function Page({ params }: { params: { id: string } }) {
             </div>
           </div>
         </div>
-        
+
         {/* Enrollment Card - Right Side */}
         <div className="shrink-0 lg:w-80">
           <EnrollmentCard
             courseId={params.id}
-            userId={userId}
             isEnrolled={isEnrolled}
-            courseTitle={courseData.title}
-            coursePrice={courseData.price || "مجاني"}
+            courseTitle={course.title}
+            coursePrice={course.price || 'مجاني'}
             courseDuration={courseDuration}
             questionsCount={totalQuestions.toString()}
             className="sticky top-24"

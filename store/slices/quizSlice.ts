@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
+import type { CourseConsolidatedPayload } from '@/services/courseService';
 import {
   fetchQuizzesByCourse as svcFetchQuizzesByCourse,
   fetchQuizById as svcFetchQuizById,
@@ -263,7 +264,25 @@ export const quizSlice = createSlice({
       .addCase(fetchVideoProgress.fulfilled, (state, action) => {
         const { videoId, completed, watchedAt } = action.payload;
         state.videoProgressMap[String(videoId)] = { completed, watchedAt };
-      });
+      })
+
+      // Cross-slice: hydrate videoProgressMap when consolidated course fetch resolves.
+      // Using string action type avoids a circular import between quizSlice <-> courseSlice.
+      .addCase(
+        'courses/fetchCourseById/fulfilled' as string,
+        (state, action: PayloadAction<CourseConsolidatedPayload>) => {
+          const progressArr = action.payload?.progress;
+          if (!Array.isArray(progressArr)) return;
+          for (const vp of progressArr) {
+            if (vp && vp.videoId !== undefined && vp.videoId !== null) {
+              state.videoProgressMap[String(vp.videoId)] = {
+                completed: !!vp.completed,
+                watchedAt: vp.watchedAt ?? null,
+              };
+            }
+          }
+        },
+      );
   },
 });
 

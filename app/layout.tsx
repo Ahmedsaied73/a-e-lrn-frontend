@@ -4,6 +4,7 @@ import { Cairo } from 'next/font/google';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { ReduxProvider } from '@/store/provider';
+import { AuthInitializer } from '@/store/auth-initializer';
 import { Toaster } from '@/components/ui/toaster';
 
 const cairo = Cairo({ subsets: ['arabic'] });
@@ -22,12 +23,14 @@ export default function RootLayout({
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <body className={`${cairo.className} min-h-screen bg-background flex flex-col`}>
         <ReduxProvider>
-          <Navbar />
-          <main className="flex-grow pt-16">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
+          <AuthInitializer>
+            <Navbar />
+            <main className="flex-grow pt-16">
+              {children}
+            </main>
+            <Footer />
+            <Toaster />
+          </AuthInitializer>
         </ReduxProvider>
       </body>
     </html>

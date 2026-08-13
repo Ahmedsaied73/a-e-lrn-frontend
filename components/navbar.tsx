@@ -5,7 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Bell, User, LogOut, Menu, X, BookOpen, Trophy, CreditCard, HelpCircle } from "lucide-react";
-import { getCurrentUser, logoutUser } from "@/services/authService";
+import { logoutUser } from "@/services/authService";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectIsAuthenticated, selectUser, logout } from "@/store/slices/authSlice";
 
 const NAV_LINKS = [
   { href: "/", label: "الرئيسية" },
@@ -18,28 +20,17 @@ const NAV_LINKS = [
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  // Auth state now comes from Redux (hydrated once by AuthInitializer and
+  // updated instantly on login/logout) instead of an independent fetch here.
+  // That's what fixes both the duplicate "/user/me" requests and the
+  // "stays logged out until refresh" bug — this now re-renders reactively
+  // the moment login/logout dispatch to the store, no remount needed.
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const user = useAppSelector(selectUser);
+  const dispatch = useAppDispatch();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const loggedIn =
-        typeof document !== "undefined" && document.cookie.includes("isLoggedIn=true");
-      if (loggedIn) {
-        setIsAuthenticated(true);
-        try {
-          const userData = await getCurrentUser();
-          if (userData) setUser({ name: userData.name, email: userData.email });
-        } catch {
-          setIsAuthenticated(false);
-        }
-      }
-    };
-    checkAuth();
-  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -54,8 +45,7 @@ export function Navbar() {
 
   const handleLogout = async () => {
     await logoutUser();
-    setIsAuthenticated(false);
-    setUser(null);
+    dispatch(logout());
     setDropdownOpen(false);
     router.push("/login");
   };

@@ -8,37 +8,35 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { User, Lock, BookOpen, CreditCard, Clock, Video, CheckCircle } from 'lucide-react';
-import { checkAuthResponse } from '@/utils/auth-utils';
-import { getCurrentUser } from '@/services/authService';
+import { useAppSelector } from '@/store/hooks';
+import { selectUser, selectAuth } from '@/store/slices/authSlice';
 
 export default function UserProfilePage() {
   const [activeTab, setActiveTab] = useState('profile');
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // No independent fetch here anymore — this was one of the two places
+  // (this page + Navbar) both calling getCurrentUser() on their own,
+  // which is what produced the duplicate "/user/me" requests. Auth is now
+  // fetched exactly once by AuthInitializer on app load and shared via
+  // Redux, so this page just reads the result.
+  const user = useAppSelector(selectUser);
+  const { initialized, isAuthenticated } = useAppSelector(selectAuth);
+  // Show the spinner until the app-level auth check has completed at least
+  // once. Gating on `initialized` (not `loading`) matters here: this page's
+  // effect can fire before AuthInitializer's effect even runs (React fires
+  // child effects before parent effects on mount), so checking `loading`
+  // alone could redirect to /login before the real check ever started.
+  const isLoading = !initialized;
 
   useEffect(() => {
-    const loadUserData = async () => {
-      const hasAuthCookie = document.cookie.includes('isLoggedIn=true');
-      if (hasAuthCookie) {
-        try {
-          const userData = await getCurrentUser();
-          if (userData) {
-            setUser(userData);
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          // 401 errors are handled automatically by apiClient and auth-utils
-        }
-      } else {
-        // If there is no token, redirect user to login page
-        window.location.replace('/login');
-        return;
-      }
-      setIsLoading(false);
-    };
-    
-    loadUserData();
-  }, []);
+    // Belt-and-suspenders: middleware already redirects unauthenticated
+    // visitors away from /me/* before this page renders, and apiClient's
+    // 401 interceptor redirects on session expiry. This just covers the
+    // brief window where hydration has finished and genuinely found no
+    // authenticated session (e.g. cookie present but session invalid).
+    if (initialized && !isAuthenticated) {
+      window.location.replace('/login');
+    }
+  }, [initialized, isAuthenticated]);
 
   if (isLoading) {
     return (
