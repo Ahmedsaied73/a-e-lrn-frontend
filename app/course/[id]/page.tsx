@@ -1,60 +1,61 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
-import { toast } from 'react-hot-toast';
 import { EnrollmentCard } from '@/components/enrollment-card';
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Play, Check, CheckCircle, Award, Clock } from 'lucide-react';
+import { ChevronDown, ChevronUp, Play, Check, CheckCircle, Award, Clock, Loader2, AlertTriangle } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  fetchCourseById,
-  selectCurrentCourse,
-  selectEnrollmentStatus,
-  selectCoursesLoading,
-  selectCoursesError,
-} from '@/store/slices/courseSlice';
-import {
-  fetchQuizzesByCourse,
-  selectQuizzes,
+import { 
+  fetchQuizzesByCourse, 
+  selectQuizzes, 
+  hydrateVideoProgress,
   fetchQuizStatus,
-  selectVideoProgress,
-  selectQuizStatus,
 } from '@/store/slices/quizSlice';
 import {
   fetchAssignmentStatus,
   selectAssignments,
-  fetchAssignmentsByCourse,
+  fetchAssignmentsByCourse
 } from '@/store/slices/assignmentSlice';
+
+import { fetchCourseById } from '@/services/courseService';
+import { fetchBunnyCourseVideos, formatBunnyDuration } from '@/services/bunnyVideoService';
+import type { BunnyVideo } from '@/types/bunny';
 
 export default function Page({ params }: { params: { id: string } }) {
   const dispatch = useAppDispatch();
+  const [courseData, setCourseData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [openVideoIds, setOpenVideoIds] = useState<Record<string, boolean>>({});
   const [courseDuration, setCourseDuration] = useState<string>('0');
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
-
-  // ---- Redux selectors ----------------------------------------------------
-  const course = useAppSelector(selectCurrentCourse);
-  const isEnrolled = useAppSelector(selectEnrollmentStatus(params.id));
-  const loading = useAppSelector(selectCoursesLoading);
-  const error = useAppSelector(selectCoursesError);
-
+  
+  // Bunny Stream videos for this course
+  const [bunnyVideos, setBunnyVideos] = useState<BunnyVideo[]>([]);
+  
+  // Get quizzes from Redux store
   const quizzes = useAppSelector(selectQuizzes);
-  const videoProgressMap = useAppSelector((state) => state.quiz.videoProgressMap);
-  const quizStatusMap = useAppSelector((state) => state.quiz.quizStatuses);
-
+  
+  // Get all video progress and quiz statuses
+  const videoProgressMap = useAppSelector(state => state.quiz.videoProgressMap);
+  const quizStatusMap = useAppSelector(state => state.quiz.quizStatuses);
+  
+  // Get assignments from Redux store
   const assignments = useAppSelector(selectAssignments);
-  const assignmentStatusMap = useAppSelector((state) => state.assignment.assignmentStatuses);
+  const assignmentStatusMap = useAppSelector(state => state.assignment.assignmentStatuses);
 
-  // ---- UI helpers ---------------------------------------------------------
-
+  // Function to toggle a specific video dropdown
   const toggleVideo = (videoId: string) => {
-    setOpenVideoIds((prev) => ({
+    setOpenVideoIds(prev => ({
       ...prev,
-      [videoId]: !prev[videoId],
+      [videoId]: !prev[videoId]
     }));
   };
 
+  // Function to get Arabic ordinal number (first, second, etc.)
   const getArabicOrdinal = (index: number) => {
     const arabicOrdinals = [
       'الأولى',
@@ -76,136 +77,149 @@ export default function Page({ params }: { params: { id: string } }) {
       'السابعة عشر',
       'الثامنة عشر',
       'التاسعة عشر',
-      'العشرون',
+      'العشرون'
     ];
-    return index < arabicOrdinals.length ? arabicOrdinals[index] : `${index + 1}`;
+    
+    return index < arabicOrdinals.length 
+      ? arabicOrdinals[index] 
+      : `${index + 1}`;
   };
 
-  const findQuizForVideo = useCallback(
-    (videoId: number | string) => {
-      const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
-      return quizzes.find((quiz) => quiz.videoId === videoIdNum) || null;
-    },
-    [quizzes],
-  );
+  // Helper function to find a quiz for a specific video
+  const findQuizForVideo = useCallback((videoId: number | string) => {
+    const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
+    return quizzes.find(quiz => quiz.videoId === videoIdNum) || null;
+  }, [quizzes]);
+  
+  // Helper function to find assignments for a specific video
+  const findAssignmentsForVideo = useCallback((videoId: number | string) => {
+    const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
+    return assignments.filter(assignment => assignment.videoId === videoIdNum);
+  }, [assignments]);
 
-  const findAssignmentsForVideo = useCallback(
-    (videoId: number | string) => {
-      const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
-      return assignments.filter((assignment) => assignment.videoId === videoIdNum);
-    },
-    [assignments],
-  );
-
+  // Helper function to format duration from seconds
   const formatDuration = useCallback((totalSeconds: number) => {
     if (totalSeconds === 0) return '0 دقيقة';
     const totalMinutes = Math.floor(totalSeconds / 60);
     if (totalMinutes < 60) {
       return `${totalMinutes} دقيقة`;
+    } else {
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      if (minutes === 0) {
+        return `${hours} ساعة`;
+      } else {
+        return `${hours} ساعة و ${minutes} دقيقة`;
+      }
     }
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (minutes === 0) {
-      return `${hours} ساعة`;
-    }
-    return `${hours} ساعة و ${minutes} دقيقة`;
   }, []);
 
-  const calculateCourseStats = useCallback(
-    (courseArg: typeof course, quizzesArg: typeof quizzes) => {
-      const totalDurationInSeconds =
-        courseArg?.videos?.reduce((total: number, video: any) => total + (video.duration || 0), 0) ||
-        0;
-      const totalQuestionsCount = quizzesArg.reduce(
-        (total, quiz) => total + (quiz.questionCount || 0),
-        0,
-      );
-      setCourseDuration(formatDuration(totalDurationInSeconds));
-      setTotalQuestions(totalQuestionsCount);
-    },
-    [formatDuration],
-  );
+  // Helper function to calculate total course duration and questions
+  const calculateCourseStats = useCallback((courseData: any, bunnyVids: BunnyVideo[], quizzesList: any[]) => {
+    const totalDurationInSeconds = (bunnyVids && bunnyVids.length > 0)
+      ? bunnyVids.reduce((total, bv) => total + (bv.duration || 0), 0)
+      : (courseData?.videos?.reduce((total: number, video: any) => total + (video.duration || 0), 0) || 0);
 
-  // Fetch quiz + assignment status per video.
-  // NOTE: video progress is pre-hydrated from consolidated course fetch,
-  // so we no longer dispatch `fetchVideoProgress` per video here.
-  const checkVideoAndQuizStatus = useCallback(
-    async (videoId: string | number) => {
-      const quiz = findQuizForVideo(videoId);
-      if (quiz) {
-        dispatch(fetchQuizStatus(quiz.id));
-      }
-      const videoAssignments = findAssignmentsForVideo(videoId);
-      if (videoAssignments.length > 0) {
-        videoAssignments.forEach((assignment) => {
-          dispatch(fetchAssignmentStatus(assignment.id));
-        });
-      }
-    },
-    [dispatch, findQuizForVideo, findAssignmentsForVideo],
-  );
+    const totalQuestionsCount = quizzesList.reduce((total, quiz) => {
+      return total + (quiz.questionCount || 0);
+    }, 0);
+    
+    setCourseDuration(formatDuration(totalDurationInSeconds));
+    setTotalQuestions(totalQuestionsCount);
+  }, [formatDuration]);
 
+  // Check quiz status and assignment status when needed.
+  const checkVideoAndQuizStatus = useCallback(async (videoId: string | number) => {
+    const quiz = findQuizForVideo(videoId);
+    if (quiz) {
+      dispatch(fetchQuizStatus(quiz.id));
+    }
+    
+    const videoAssignments = findAssignmentsForVideo(videoId);
+    if (videoAssignments.length > 0) {
+      videoAssignments.forEach(assignment => {
+        dispatch(fetchAssignmentStatus(assignment.id));
+      });
+    }
+  }, [dispatch, findQuizForVideo, findAssignmentsForVideo]);
+
+  // Helper function to get video progress
   const getVideoProgress = (videoId: string | number) => {
     return videoProgressMap[videoId] || { completed: false, watchedAt: null };
   };
 
+  // Helper function to get quiz status
   const getQuizStatus = (quizId: number) => {
     return quizStatusMap[quizId] || null;
   };
-
+  
+  // Helper function to get assignment status
   const getAssignmentStatus = (assignmentId: number) => {
     return assignmentStatusMap[assignmentId] || null;
   };
 
-  // ---- Data fetching ------------------------------------------------------
+  const fetchedCourseIdRef = useRef<string | null>(null);
 
-  // 1) Kick off consolidated course fetch (+ independent quizzes fetch) in parallel.
   useEffect(() => {
-    dispatch(fetchCourseById(params.id));
+    if (fetchedCourseIdRef.current === params.id) return;
+    fetchedCourseIdRef.current = params.id;
+
+    const loadCourseAndEnrollment = async () => {
+      try {
+        setIsLoading(true);
+        const [data, bunnyData] = await Promise.all([
+          fetchCourseById(params.id),
+          fetchBunnyCourseVideos(params.id),
+        ]);
+        setCourseData(data);
+        setBunnyVideos(bunnyData);
+
+        setIsEnrolled(!!data.enrollment);
+        dispatch(hydrateVideoProgress(data.progress ?? []));
+
+        // Initialize video accordions
+        const initialOpenState: Record<string, boolean> = {};
+        bunnyData.forEach((bv: BunnyVideo) => {
+          initialOpenState[`bunny-${bv.id}`] = false;
+        });
+        setOpenVideoIds(initialOpenState);
+
+        const videoIdsToFetch = bunnyData.map(bv => bv.id);
+        if (videoIdsToFetch.length > 0) {
+          dispatch(fetchAssignmentsByCourse({ courseId: params.id, videoIds: videoIdsToFetch }));
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCourseAndEnrollment();
     dispatch(fetchQuizzesByCourse(params.id));
   }, [params.id, dispatch]);
-
-  // 2) Once `course.videos` is in Redux, fetch assignments and init accordion state.
+  
+  // Fetch status for videos when course data is loaded and user is enrolled
   useEffect(() => {
-    const videos = course?.videos;
-    if (videos && videos.length > 0) {
-      dispatch(
-        fetchAssignmentsByCourse({
-          courseId: params.id,
-          videoIds: videos.map((v) => v.id),
-        }),
-      );
-      const initialOpenState: Record<string, boolean> = {};
-      for (const v of videos) initialOpenState[String(v.id)] = false;
-      setOpenVideoIds(initialOpenState);
-    }
-  }, [course, params.id, dispatch]);
-
-  // 3) Per-video status loop for quiz/assignment badges (progress already hydrated).
-  useEffect(() => {
-    const videos = course?.videos;
-    if (videos && videos.length > 0 && isEnrolled) {
-      videos.forEach((video: any) => {
-        checkVideoAndQuizStatus(video.id);
+    if (isEnrolled && bunnyVideos.length > 0) {
+      bunnyVideos.forEach((bv) => {
+        checkVideoAndQuizStatus(bv.id);
       });
     }
-  }, [course, isEnrolled, checkVideoAndQuizStatus]);
+  }, [bunnyVideos, isEnrolled, checkVideoAndQuizStatus]);
 
-  // 4) Derived display stats.
+  // Calculate course statistics when course data and quizzes are loaded
   useEffect(() => {
-    if (course) {
-      calculateCourseStats(course, quizzes);
+    if (courseData && quizzes.length >= 0) {
+      calculateCourseStats(courseData, bunnyVideos, quizzes);
     }
-  }, [course, quizzes, calculateCourseStats]);
+  }, [courseData, bunnyVideos, quizzes, calculateCourseStats]);
 
-  // ---- Render guards ------------------------------------------------------
-
-  if (loading) return <div className="text-center p-8">جاري التحميل...</div>;
+  if (isLoading) return <div className="text-center p-8">جاري التحميل...</div>;
   if (error) return <div className="text-center p-8 text-red-500">خطأ: {error}</div>;
-  if (!course)
-    return <div className="text-center p-8">لا توجد بيانات متاحة للكورس</div>;
+  if (!courseData) return <div className="text-center p-8">لا توجد بيانات متاحة للكورس</div>;
 
-  // ---- JSX ----------------------------------------------------------------
+  const totalVideosCount = bunnyVideos.length;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12 lg:py-16">
@@ -217,138 +231,168 @@ export default function Page({ params }: { params: { id: string } }) {
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h1 className="mb-4 text-2xl font-bold leading-10 sm:text-3xl">
-                  {course.title || 'كورس الأزهر المكثف المجاني'}
+                  {courseData.title || "كورس الأزهر المكثف المجاني"}
                 </h1>
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold">
-                    + {course.files_count || 0} ملفات
+                    ملفات {courseData.files_count || 0} +
                   </span>
                   <span className="bg-white/20 text-white px-4 py-1 rounded-full text-sm">
-                    + {course.videos?.length || 0} فيديوهات
+                    فيديوهات {totalVideosCount} +
                   </span>
                   <span className="bg-white/20 text-white px-4 py-1 rounded-full text-sm">
-                    + {quizzes.length || 0} امتحانات
+                    امتحانات {quizzes.length || 0} +
                   </span>
                 </div>
               </div>
               <div className="text-right sm:text-left">
-                <p className="text-lg font-bold">
-                  {course.price === 0 ? 'هذا الكورس مجاني !' : `السعر: ${course.price} جنيه`}
-                </p>
-                <p className="text-sm">
-                  {course.description_short || 'الدورة لطلبة الأزهر فقط ❤️'}
-                </p>
+                <p className="text-lg font-bold">{courseData.price === 0 ? "هذا الكورس مجاني !" : `السعر: ${courseData.price} جنيه`}</p>
+                <p className="text-sm">{courseData.description_short || "الدورة لطلبة الأزهر فقط ❤️"}</p>
               </div>
             </div>
           </div>
 
           {/* Course Content */}
           <div className="overflow-hidden rounded-lg bg-white shadow-level-2">
-            <h2 className="text-xl font-bold p-6 border-b dark:border-gray-700">
-              محتوى الكورس
-            </h2>
+            <h2 className="text-xl font-bold p-6 border-b dark:border-gray-700">محتوى الكورس</h2>
             <div className="space-y-2 p-3 sm:p-4">
-              {course.videos && course.videos.length > 0 ? (
-                course.videos.map((video: any, index: number) => {
-                  const videoProgress = getVideoProgress(video.id);
-                  const quiz = findQuizForVideo(video.id);
+              {/* ─── Video List (Bunny Stream) ───────────────────────────────── */}
+              {bunnyVideos.length > 0 ? (
+                bunnyVideos.map((bv, index) => {
+                  const bvKey = `bunny-${bv.id}`;
+                  const isOpen = !!openVideoIds[bvKey];
+                  const isReady = bv.status === 'READY';
+                  const isProcessing = bv.status === 'PROCESSING' || bv.status === 'UPLOADING' || bv.status === 'PENDING';
+                  const isFailed = bv.status === 'FAILED';
+                  const videoProgress = getVideoProgress(bv.id);
+                  const quiz = findQuizForVideo(bv.id);
                   const quizStatus = quiz ? getQuizStatus(quiz.id) : null;
+                  const videoAssignments = findAssignmentsForVideo(bv.id);
 
                   return (
-                    <div
-                      key={video.id}
-                      className="overflow-hidden rounded-md border border-outline-variant/70 transition-colors"
-                    >
+                    <div key={bvKey} className="overflow-hidden rounded-md border border-outline-variant/70 transition-colors">
+                      {/* Accordion Header */}
                       <div
                         className="cursor-pointer p-5 transition-colors hover:bg-[#e8f2ff]/50"
-                        onClick={() => toggleVideo(String(video.id))}
+                        onClick={() => isReady && toggleVideo(bvKey)}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3">
                             <span className="text-primary">
-                              {openVideoIds[String(video.id)] ? (
-                                <ChevronUp size={20} />
-                              ) : (
-                                <ChevronDown size={20} />
-                              )}
+                              {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                             </span>
-                            <h3 className="text-lg font-semibold">
-                              المحاضرة {getArabicOrdinal(index)}
-                            </h3>
+                            <h3 className="text-lg font-semibold">المحاضرة {getArabicOrdinal(index)}</h3>
 
+                            {/* Show video completion status */}
                             {videoProgress.completed && (
                               <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
                                 <CheckCircle size={12} className="text-green-600" />
                                 <span>تم المشاهدة</span>
                               </span>
                             )}
+
+                            {/* Processing/Failed status badges */}
+                            {isProcessing && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                <Loader2 size={10} className="animate-spin" />
+                                قيد المعالجة
+                              </span>
+                            )}
+                            {isFailed && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                                <AlertTriangle size={10} />
+                                فشل التحميل
+                              </span>
+                            )}
                           </div>
+
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-on-surface-variant">
-                              {video.title}
-                            </span>
+                            {/* Duration badge */}
+                            {isReady && bv.duration != null && (
+                              <span className="flex items-center gap-1 text-xs text-on-surface-variant">
+                                <Clock size={12} />
+                                {formatBunnyDuration(bv.duration)}
+                              </span>
+                            )}
+                            <span className="text-sm text-on-surface-variant">{bv.title}</span>
                           </div>
                         </div>
                       </div>
 
-                      {openVideoIds[String(video.id)] && (
+                      {/* Accordion Body — only for READY videos */}
+                      {isOpen && isReady && (
                         <div className="px-5 pb-5">
                           <div className="space-y-3">
-                            {/* Video Card */}
-                            <div className="flex flex-col gap-3 rounded-md bg-surface-container-low p-4 sm:flex-row sm:items-center sm:justify-between">
-                              <div className="flex items-center gap-2">
-                                <Play
-                                  size={16}
-                                  className={
-                                    videoProgress.completed
-                                      ? 'text-green-600'
-                                      : 'text-primary'
-                                  }
-                                />
-                                <span className="font-medium">
-                                  {video.description || 'شاهد هذه المحاضرة'}
-                                </span>
+                            {/* Thumbnail + Watch card */}
+                            <div className="flex flex-col gap-3 rounded-md bg-surface-container-low overflow-hidden sm:flex-row sm:items-stretch">
+                              {/* Thumbnail */}
+                              {bv.thumbnailUrl && (
+                                <div className="relative h-28 w-full shrink-0 sm:h-auto sm:w-44">
+                                  <Image
+                                    src={bv.thumbnailUrl}
+                                    alt={bv.title}
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 640px) 100vw, 176px"
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow">
+                                      <Play size={16} className="text-primary" fill="currentColor" />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
 
-                                {videoProgress.completed && (
-                                  <span className="text-xs text-gray-500">
-                                    تمت المشاهدة في{' '}
-                                    {new Date(
-                                      videoProgress.watchedAt || '',
-                                    ).toLocaleDateString('ar-EG')}
+                              {/* Info + button */}
+                              <div className="flex flex-1 flex-col justify-between gap-3 p-4">
+                                <div>
+                                  <p className="font-medium text-on-surface">{bv.title}</p>
+                                  {bv.duration != null && (
+                                    <p className="mt-1 text-xs text-on-surface-variant">
+                                      المدة: {formatBunnyDuration(bv.duration)}
+                                    </p>
+                                  )}
+                                  {videoProgress.completed && (
+                                    <span className="mt-1 inline-block text-xs text-gray-500">
+                                      تمت المشاهدة في {new Date(videoProgress.watchedAt || '').toLocaleDateString('ar-EG')}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {isEnrolled ? (
+                                  <Link
+                                    href={`/course/${params.id}/video/${bv.id}`}
+                                    className="inline-flex items-center gap-1.5 self-start rounded-md bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition-colors hover:bg-[#0057c0] active:bg-[#004aa0]"
+                                  >
+                                    {videoProgress.completed ? (
+                                      <>
+                                        <Check size={14} />
+                                        مشاهدة مرة أخرى
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Play size={14} />
+                                        شاهد المحاضرة
+                                      </>
+                                    )}
+                                  </Link>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 self-start rounded-md bg-surface-container px-4 py-2 text-sm font-medium text-on-surface-variant">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    اشترك لمشاهدة المحاضرة
                                   </span>
                                 )}
                               </div>
-                              {isEnrolled && (
-                                <Link
-                                  href={`/course/${params.id}/video/${video.id}`}
-                                  className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-                                >
-                                  {videoProgress.completed ? (
-                                    <>
-                                      <Check size={16} />
-                                      مشاهدة مرة أخرى
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Play size={16} />
-                                      شاهد المحاضرة من هنا
-                                    </>
-                                  )}
-                                </Link>
-                              )}
                             </div>
 
                             {/* Quiz Card - if there's a quiz for this video */}
                             {quiz && (
-                              <div
-                                className={`flex items-center justify-between p-3 rounded-md
-                                ${
-                                  quizStatus?.passed
-                                    ? 'bg-green-50 dark:bg-green-900/20 border-green-500'
-                                    : quizStatus?.taken
-                                      ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
-                                      : 'bg-gray-50 dark:bg-gray-700 border-gray-400'
-                                }`}
+                              <div className={`flex items-center justify-between p-3 rounded-md
+                                ${quizStatus?.passed 
+                                  ? "bg-green-50 dark:bg-green-900/20 border-green-500" 
+                                  : quizStatus?.taken 
+                                  ? "bg-red-50 dark:bg-red-900/20 border-red-500" 
+                                  : "bg-gray-50 dark:bg-gray-700 border-gray-400"}`}
                               >
                                 <div className="flex items-center gap-2">
                                   {quizStatus?.passed ? (
@@ -359,33 +403,25 @@ export default function Page({ params }: { params: { id: string } }) {
                                     <Award size={16} className="text-gray-500" />
                                   )}
                                   <span className="font-medium">{quiz.title}</span>
-
+                                  
                                   {quizStatus?.taken && (
-                                    <span
-                                      className={`text-xs ${
-                                        quizStatus?.passed
-                                          ? 'text-green-500'
-                                          : 'text-red-500'
-                                      }`}
-                                    >
-                                      {quizStatus?.passed
-                                        ? `نجاح - ${quizStatus.score}%`
+                                    <span className={`text-xs ${quizStatus?.passed ? "text-green-500" : "text-red-500"}`}>
+                                      {quizStatus?.passed 
+                                        ? `نجاح - ${quizStatus.score}%` 
                                         : `رسوب - ${quizStatus.score}%`}
                                     </span>
                                   )}
                                 </div>
-
+                                
                                 {isEnrolled && videoProgress.completed && (
                                   <Link
-                                    href={`/course/${params.id}/video/${video.id}/quiz/${quiz.id}`}
+                                    href={`/course/${params.id}/video/${bv.id}/quiz/${quiz.id}`}
                                     className={`hover:underline text-sm flex items-center gap-1
-                                      ${
-                                        quizStatus?.passed
-                                          ? 'text-green-600'
-                                          : quizStatus?.taken
-                                            ? 'text-red-500'
-                                            : 'text-[#61B846]'
-                                      }`}
+                                      ${quizStatus?.passed 
+                                        ? "text-green-600" 
+                                        : quizStatus?.taken 
+                                        ? "text-red-500" 
+                                        : "text-[#61B846]"}`}
                                   >
                                     {quizStatus?.passed ? (
                                       <>
@@ -409,38 +445,28 @@ export default function Page({ params }: { params: { id: string } }) {
                             )}
 
                             {/* Assignment Cards - if there are assignments for this video */}
-                            {findAssignmentsForVideo(video.id).map((assignment) => {
+                            {videoAssignments.map(assignment => {
                               const assignmentStatus = getAssignmentStatus(assignment.id);
-                              const isPastDue =
-                                new Date(assignment.dueDate) < new Date();
+                              const isPastDue = new Date(assignment.dueDate) < new Date();
                               const isSubmitted = assignment.hasSubmitted;
-                              const isGraded =
-                                assignment.submission?.status === 'GRADED';
-
+                              const isGraded = assignment.submission?.status === "GRADED";
+                              
                               return (
-                                <div
+                                <div 
                                   key={assignment.id}
                                   className={`flex items-center justify-between p-3 rounded-md mt-2
-                                    ${
-                                      isGraded &&
-                                      assignment.submission &&
-                                      assignment.submission.grade >=
-                                        assignment.passingScore
-                                        ? 'bg-green-50 dark:bg-green-900/20 border-green-500'
-                                        : isGraded
-                                          ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
-                                          : isSubmitted
-                                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500'
-                                            : isPastDue
-                                              ? 'bg-gray-50 dark:bg-gray-700 border-red-400'
-                                              : 'bg-gray-50 dark:bg-gray-700 border-blue-400'
-                                    }`}
+                                    ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
+                                      ? "bg-green-50 dark:bg-green-900/20 border-green-500"
+                                      : isGraded
+                                      ? "bg-red-50 dark:bg-red-900/20 border-red-500"
+                                      : isSubmitted
+                                      ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500"
+                                      : isPastDue
+                                      ? "bg-gray-50 dark:bg-gray-700 border-red-400"
+                                      : "bg-gray-50 dark:bg-gray-700 border-blue-400"}`}
                                 >
                                   <div className="flex items-center gap-2">
-                                    {isGraded &&
-                                    assignment.submission &&
-                                    assignment.submission.grade >=
-                                      assignment.passingScore ? (
+                                    {isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore ? (
                                       <CheckCircle size={16} className="text-green-600" />
                                     ) : isGraded ? (
                                       <Clock size={16} className="text-red-500" />
@@ -452,63 +478,47 @@ export default function Page({ params }: { params: { id: string } }) {
                                       <Clock size={16} className="text-blue-400" />
                                     )}
                                     <span className="font-medium">{assignment.title}</span>
-
+                                    
                                     {isGraded && assignment.submission && (
-                                      <span
-                                        className={`text-xs ${
-                                          assignment.submission.grade >=
-                                          assignment.passingScore
-                                            ? 'text-green-500'
-                                            : 'text-red-500'
-                                        }`}
-                                      >
-                                        {assignment.submission.grade >=
-                                        assignment.passingScore
+                                      <span className={`text-xs ${assignment.submission.grade >= assignment.passingScore ? "text-green-500" : "text-red-500"}`}>
+                                        {assignment.submission.grade >= assignment.passingScore
                                           ? `نجاح - ${assignment.submission.grade}/${assignment.passingScore}`
                                           : `رسوب - ${assignment.submission.grade}/${assignment.passingScore}`}
                                       </span>
                                     )}
-
+                                    
                                     {!isGraded && isSubmitted && (
                                       <span className="text-xs text-yellow-500">
                                         قيد المراجعة
                                       </span>
                                     )}
-
+                                    
                                     {!isSubmitted && isPastDue && (
                                       <span className="text-xs text-red-500">
                                         انتهى موعد التسليم
                                       </span>
                                     )}
-
+                                    
                                     {!isSubmitted && !isPastDue && (
                                       <span className="text-xs text-blue-500">
-                                        موعد التسليم:{' '}
-                                        {new Date(
-                                          assignment.dueDate,
-                                        ).toLocaleDateString('ar-EG')}
+                                        موعد التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
                                       </span>
                                     )}
                                   </div>
-
+                                  
                                   {isEnrolled && videoProgress.completed && (
                                     <Link
-                                      href={`/course/${params.id}/video/${video.id}/assignment/${assignment.id}`}
+                                      href={`/course/${params.id}/video/${bv.id}/assignment/${assignment.id}`}
                                       className={`hover:underline text-sm flex items-center gap-1
-                                        ${
-                                          isGraded &&
-                                          assignment.submission &&
-                                          assignment.submission.grade >=
-                                            assignment.passingScore
-                                            ? 'text-green-600'
-                                            : isGraded
-                                              ? 'text-red-500'
-                                              : isSubmitted
-                                                ? 'text-yellow-500'
-                                                : isPastDue
-                                                  ? 'text-red-400'
-                                                  : 'text-blue-500'
-                                        }`}
+                                        ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
+                                          ? "text-green-600"
+                                          : isGraded
+                                          ? "text-red-500"
+                                          : isSubmitted
+                                          ? "text-yellow-500"
+                                          : isPastDue
+                                          ? "text-red-400"
+                                          : "text-blue-500"}`}
                                     >
                                       {isGraded ? (
                                         <>
@@ -543,6 +553,7 @@ export default function Page({ params }: { params: { id: string } }) {
                   );
                 })
               ) : (
+                /* Empty state — no videos */
                 <div className="p-6 text-center text-gray-500">
                   لا توجد محاضرات متاحة حالياً
                 </div>
@@ -550,17 +561,19 @@ export default function Page({ params }: { params: { id: string } }) {
             </div>
           </div>
         </div>
-
+        
         {/* Enrollment Card - Right Side */}
         <div className="shrink-0 lg:w-80">
           <EnrollmentCard
             courseId={params.id}
+            userId={userId}
             isEnrolled={isEnrolled}
-            courseTitle={course.title}
-            coursePrice={course.price || 'مجاني'}
+            courseTitle={courseData.title}
+            coursePrice={courseData.price || "مجاني"}
             courseDuration={courseDuration}
             questionsCount={totalQuestions.toString()}
             className="sticky top-24"
+            onEnrollSuccess={() => setIsEnrolled(true)}
           />
         </div>
       </div>
