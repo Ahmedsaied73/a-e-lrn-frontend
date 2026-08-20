@@ -5,60 +5,127 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Play, Pause, Volume2, VolumeX, Settings, Maximize, SkipForward, ChevronUp, ArrowLeft, BookOpenCheck, ListVideo } from "lucide-react";
+import { 
+  CheckCircle, 
+  Play, 
+  ArrowLeft, 
+  BookOpenCheck, 
+  ListVideo, 
+  Lock, 
+  Loader2, 
+  AlertCircle, 
+  RotateCcw 
+} from "lucide-react";
 import { AppDispatch } from "@/store/store";
 import { completeVideo, fetchQuizzesByCourse, selectQuizzes, selectVideoCompleted, setVideoCompleted } from "@/store/slices/quizSlice";
 import { addNotification } from "@/store/slices/uiSlice";
 import { fetchAssignmentsByVideo, selectAssignments } from "@/store/slices/assignmentSlice";
 import { fetchVideoProgress } from '@/services/quizService';
-import { apiClient } from '@/lib/api-client';
-import { getMockVideoStream, isMockCourse } from '@/lib/mock/course';
+import { fetchBunnyPlaybackUrl, BunnyVideoError, fetchBunnyCourseVideos, formatBunnyDuration } from '@/services/bunnyVideoService';
+import type { BunnyPlaybackData, BunnyVideo } from '@/types/bunny';
 
 export default function VideoPage({ params }: { params: { id: string; video: string } }) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   
-  const [videoData, setVideoData] = useState<any>(null);
+  // Bunny playback and video metadata
+  const [playbackData, setPlaybackData] = useState<BunnyPlaybackData | null>(null);
+  const [bunnyVideo, setBunnyVideo] = useState<BunnyVideo | null>(null);
+  
+  // Loading & error states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isNotEnrolled, setIsNotEnrolled] = useState(false);
+  const [isNotReady, setIsNotReady] = useState(false);
+  
+  // Video completion states
   const [completingVideo, setCompletingVideo] = useState(false);
   const [apiCompletionStatus, setApiCompletionStatus] = useState(false);
   const [completionDate, setCompletionDate] = useState<string | null>(null);
-  
-  // Interactive UI states
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(80);
-  const [progressPercent, setProgressPercent] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(490); // 8 min 10 sec in seconds
-  const [showSettings, setShowSettings] = useState(false);
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  
-  // Refs
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
-  const progressTimer = useRef<NodeJS.Timeout | null>(null);
-  
-  // Get quiz state from Redux store
+
+  // Redux store selections
   const quizzes = useSelector(selectQuizzes);
   const videoCompleted = useSelector(selectVideoCompleted);
-  
-  // Get assignments state from Redux store
   const assignments = useSelector(selectAssignments);
 
-  // Format time in MM:SS format
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
+  // Quiz confirmation modal state
+  const [showQuizConfirmation, setShowQuizConfirmation] = useState(false);
+  const [pendingQuiz, setPendingQuiz] = useState<any>(null);
 
-  // Check if the video is already completed
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 1. Fetch Video Playback URL & Metadata (Bunny Stream)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const loadVideo = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setIsNotEnrolled(false);
+      setIsNotReady(false);
+
+      const [playback, courseVideos] = await Promise.all([
+        fetchBunnyPlaybackUrl(params.video),
+        fetchBunnyCourseVideos(params.id).catch(() => [] as BunnyVideo[])
+      ]);
+
+      setPlaybackData(playback);
+      const foundVideo = courseVideos.find(v => v.id === Number(params.video));
+      if (foundVideo) {
+        setBunnyVideo(foundVideo);
+      }
+
+      // Fetch associated course quizzes & video assignments
+      dispatch(fetchQuizzesByCourse(params.id));
+      dispatch(fetchAssignmentsByVideo(params.video));
+    } catch (err: any) {
+      if (err instanceof BunnyVideoError) {
+        if (err.code === 'VIDEO_ACCESS_DENIED') {
+          setIsNotEnrolled(true);
+          return;
+        } else if (err.code === 'VIDEO_NOT_READY') {
+          setIsNotReady(true);
+          return;
+        }
+      }
+      const message = err?.message || "حدث خطأ أثناء تحميل مشغل الفيديو";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [params.video, params.id, dispatch]);
+
+  useEffect(() => {
+    loadVideo();
+  }, [loadVideo]);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 2. Silent Token Refresh (proactively refreshes 5 minutes before expiresAt)
+  // ─────────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!playbackData?.expiresAt) return;
+
+    const expiresAtMs = playbackData.expiresAt * 1000;
+    const now = Date.now();
+    const refreshMarginMs = 5 * 60 * 1000; // 5 minutes before expiry
+    const timeUntilRefresh = expiresAtMs - now - refreshMarginMs;
+
+    // If already expired or expiring within 10 seconds, refresh almost immediately
+    const delay = Math.max(10000, timeUntilRefresh);
+
+    const timer = setTimeout(async () => {
+      try {
+        const refreshed = await fetchBunnyPlaybackUrl(params.video);
+        setPlaybackData(refreshed);
+      } catch (err) {
+        console.warn('Failed to silently refresh Bunny video playback token:', err);
+      }
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [playbackData?.expiresAt, params.video]);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 3. Check Video Completion Status
+  // ─────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     const checkVideoCompletion = async () => {
       try {
@@ -78,18 +145,13 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     checkVideoCompletion();
   }, [params.video, dispatch]);
 
-  // State for quiz confirmation dialog
-  const [showQuizConfirmation, setShowQuizConfirmation] = useState(false);
-  const [pendingQuiz, setPendingQuiz] = useState<any>(null);
-
-  // Handle video completion with quiz confirmation
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 4. Handle Video Completion
+  // ─────────────────────────────────────────────────────────────────────────────
   const handleCompleteVideo = useCallback(async () => {
-    // If already completed via API check, don't submit again
     if (apiCompletionStatus) {
-      // Just navigate to quiz if available
       const videoQuiz = quizzes.find(quiz => quiz.videoId === Number(params.video));
       if (videoQuiz) {
-        // Show confirmation dialog instead of direct navigation
         setPendingQuiz(videoQuiz);
         setShowQuizConfirmation(true);
       } else {
@@ -104,378 +166,322 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     try {
       setCompletingVideo(true);
       await dispatch(completeVideo({ videoId: params.video })).unwrap();
-      // Update local state to reflect completion
       setApiCompletionStatus(true);
       setCompletionDate(new Date().toISOString());
       
-      // Find quiz for this video
       const videoQuiz = quizzes.find(quiz => quiz.videoId === Number(params.video));
       if (videoQuiz) {
-        // Show confirmation dialog instead of direct navigation
         setPendingQuiz(videoQuiz);
         setShowQuizConfirmation(true);
       } else {
         dispatch(addNotification({
-          type: 'info',
-          message: 'لا يوجد اختبار متاح لهذا الفيديو'
+          type: 'success',
+          message: 'تم إكمال المحاضرة بنجاح!'
         }));
       }
-    } catch (err) {
+    } catch (err: any) {
       dispatch(addNotification({
         type: 'error',
-        message: 'حدث خطأ أثناء تسجيل اكتمال الفيديو'
+        message: err.message || 'حدث خطأ أثناء تحديث حالة الفيديو'
       }));
     } finally {
       setCompletingVideo(false);
     }
-  }, [apiCompletionStatus, quizzes, params.video, params.id, router, dispatch]);
+  }, [apiCompletionStatus, quizzes, params.video, dispatch]);
 
-  // Handle quiz confirmation - take now
+  // Handle taking the quiz immediately
   const handleTakeQuizNow = () => {
     if (pendingQuiz) {
+      setShowQuizConfirmation(false);
       router.push(`/course/${params.id}/video/${params.video}/quiz/${pendingQuiz.id}`);
     }
-    setShowQuizConfirmation(false);
-    setPendingQuiz(null);
   };
 
-  // Handle quiz confirmation - take later
+  // Handle continuing without taking the quiz
   const handleTakeQuizLater = () => {
-    dispatch(addNotification({
-      type: 'success',
-      message: 'تم حفظ تقدمك. يمكنك أخذ الاختبار لاحقاً من صفحة الكورس'
-    }));
     setShowQuizConfirmation(false);
     setPendingQuiz(null);
   };
 
-  // Start progress simulation
-  useEffect(() => {
-    if (isPlaying) {
-      // Start timer to update progress
-      progressTimer.current = setInterval(() => {
-        setCurrentTime(prevTime => {
-          const newTime = prevTime + 1;
-          
-          // Calculate new progress percentage
-          const newPercent = (newTime / duration) * 100;
-          setProgressPercent(newPercent > 100 ? 100 : newPercent);
-          
-          // If reached end, stop playing
-          if (newTime >= duration) {
-            setIsPlaying(false);
-            if (progressTimer.current) {
-              clearInterval(progressTimer.current);
-            }
-            
-            // Auto-complete video when it ends
-            if (newPercent >= 100) {
-              handleCompleteVideo();
-            }
-          }
-          
-          return newTime > duration ? duration : newTime;
-        });
-      }, 1000);
-    } else if (progressTimer.current) {
-      // Clear timer when paused
-      clearInterval(progressTimer.current);
-      progressTimer.current = null;
-    }
-    
-    // Cleanup on unmount
-    return () => {
-      if (progressTimer.current) {
-        clearInterval(progressTimer.current);
-        progressTimer.current = null;
-      }
-    };
-  }, [isPlaying, duration, handleCompleteVideo]);
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 5. Render Video Player or State Placeholders
+  // ─────────────────────────────────────────────────────────────────────────────
+  let playerContent;
 
-  useEffect(() => {
-    const fetchVideoData = async () => {
-      try {
-        const data = isMockCourse(params.id)
-          ? getMockVideoStream(params.video)
-          : await apiClient.get<any>(`/stream/video/${params.video}/url`);
-        setVideoData(data);
-        
-        // Fetch available quizzes for this course
-        dispatch(fetchQuizzesByCourse(params.id));
-        
-        // Fetch available assignments for this video
-        dispatch(fetchAssignmentsByVideo(params.video));
-      } catch (err: any) {
-        if (err.status === 403) {
-          setError("كمل الفيديو اللي قبل ده الاول");
-        } else {
-          setError(err.message || "حدث خطأ أثناء تحميل الفيديو");
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchVideoData();
-    
-    // Reset video completion status when component mounts
-    if (!apiCompletionStatus) {
-      dispatch(setVideoCompleted(false));
-    }
-  }, [params.video, params.id, dispatch, apiCompletionStatus]);
-  
-  if (isLoading) return <div className="flex justify-center items-center min-h-[300px] text-lg text-primary-foreground">جاري التحميل...</div>;
-  if (error) return <div className="flex justify-center items-center min-h-[300px] text-lg text-destructive">خطأ: {error}</div>;
-  if (!videoData) return <div className="flex justify-center items-center min-h-[300px] text-lg text-muted-foreground">لا يوجد بيانات للفيديو</div>;
-
-  // Determine how to render the video
-  let videoElement = null;
-  if (videoData.isYoutube && videoData.embedHtml) {
-    let youtubeId = null;
-    if (videoData.url) {
-      const match = videoData.url.match(/[?&]v=([^&#]+)/) || videoData.url.match(/youtu\.be\/([^?&#]+)/);
-      youtubeId = match ? match[1] : null;
-    }
-    if (!youtubeId && videoData.embedHtml) {
-      const match = videoData.embedHtml.match(/embed\/(.*?)\?/) || videoData.embedHtml.match(/embed\/(.*?)"/);
-      youtubeId = match ? match[1] : null;
-    }
-    if (youtubeId) {
-      videoElement = (
-        <div className="aspect-video rounded-lg overflow-hidden border border-gray-700 bg-black relative youtube-frame-wrapper">
-          {/* Custom YouTube-like header */}
-          <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center bg-black bg-opacity-90 text-white p-2 px-4">
-            <div className="flex items-center">
-              <span className="text-sm md:text-base font-medium truncate">
-                (٨) {videoData.title || "Learn JavaScript - Full Course for Beginners"}
-              </span>
-            </div>
-            <div className="relative">
-              <button disabled className="text-sm bg-transparent rounded px-3 py-1 pointer-events-none opacity-100">
-                Share
-              </button>
-              {/* Yellow border overlay */}
-              <div className="absolute inset-0 border-2 border-[#FFE500] rounded pointer-events-none"></div>
-            </div>
-          </div>
-          
-          {/* YouTube iframe */}
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&controls=1&fs=1&playsinline=1&origin=http://localhost:3000`}
-            title={videoData.title || "YouTube video"}
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full youtube-iframe-custom"
-            frameBorder="0"
-            sandbox="allow-scripts allow-same-origin allow-presentation"
-            tabIndex={-1}
-            referrerPolicy="no-referrer"
-            aria-label="مشغل فيديو YouTube"
-            style={{zIndex:1}}
-          />
-          
-          {/* Custom YouTube-like footer */}
-          <div className="absolute bottom-12 right-4 z-20">
-            <div className="relative">
-              <button disabled className="bg-black bg-opacity-80 rounded px-3 py-1.5 text-white flex items-center pointer-events-none text-xs">
-                <span className="mr-1">Watch on</span>
-                <svg viewBox="0 0 90 20" className="h-4 inline-block">
-                  <path d="M27.9727 3.12324C27.6435 1.89323 26.6768 0.926623 25.4468 0.597366C23.2197 2.24288e-07 14.285 0 14.285 0C14.285 0 5.35042 2.24288e-07 3.12323 0.597366C1.89323 0.926623 0.926623 1.89323 0.597366 3.12324C2.24288e-07 5.35042 0 10 0 10C0 10 2.24288e-07 14.6496 0.597366 16.8768C0.926623 18.1068 1.89323 19.0734 3.12323 19.4026C5.35042 20 14.285 20 14.285 20C14.285 20 23.2197 20 25.4468 19.4026C26.6768 19.0734 27.6435 18.1068 27.9727 16.8768C28.5701 14.6496 28.5701 10 28.5701 10C28.5701 10 28.5677 5.35042 27.9727 3.12324Z" fill="#FF0000"></path>
-                  <path d="M11.4253 14.2854L18.8477 10.0004L11.4253 5.71533V14.2854Z" fill="white"></path>
-                  <path d="M34.6024 13.0036L31.3945 1.41846H34.1932L35.3174 6.6701C35.6043 7.96361 35.8136 9.06662 35.95 9.97913H36.0323C36.1264 9.32532 36.3381 8.22937 36.665 6.68892L37.8291 1.41846H40.6278L37.3799 13.0036V18.561H34.6001V13.0036H34.6024Z" fill="white"></path>
-                  <path d="M41.4697 18.1937C40.9053 17.8127 40.5031 17.22 40.2632 16.4157C40.0257 15.6114 39.9058 14.5437 39.9058 13.2078V11.3898C39.9058 10.0422 40.0422 8.95805 40.315 8.14196C40.5878 7.32588 41.0135 6.72851 41.592 6.35457C42.1706 5.98063 42.9302 5.79248 43.871 5.79248C44.7976 5.79248 45.5384 5.98298 46.0981 6.36398C46.6555 6.74497 47.0647 7.34234 47.3234 8.15137C47.5821 8.96275 47.7115 10.0422 47.7115 11.3898V13.2078C47.7115 14.5437 47.5845 15.6161 47.3329 16.4251C47.0812 17.2365 46.672 17.8292 46.1075 18.2031C45.5431 18.5771 44.7764 18.7652 43.8098 18.7652C42.8126 18.7675 42.0342 18.5747 41.4697 18.1937ZM44.6353 16.2323C44.7905 15.8231 44.8705 15.1575 44.8705 14.2309V10.3292C44.8705 9.43077 44.7929 8.77225 44.6353 8.35833C44.4777 7.94206 44.2026 7.7351 43.8074 7.7351C43.4265 7.7351 43.156 7.94206 43.0008 8.35833C42.8432 8.77461 42.7656 9.43077 42.7656 10.3292V14.2309C42.7656 15.1575 42.8408 15.8254 42.9914 16.2323C43.1419 16.6415 43.4123 16.8461 43.8074 16.8461C44.2026 16.8461 44.4777 16.6415 44.6353 16.2323Z" fill="white"></path>
-                  <path d="M56.8154 18.5634H54.6094L54.3648 17.03H54.3037C53.7039 18.1871 52.8055 18.7656 51.6061 18.7656C50.7759 18.7656 50.1621 18.4928 49.767 17.9496C49.3719 17.4039 49.1743 16.5526 49.1743 15.3955V6.03751H51.9942V15.2308C51.9942 15.7906 52.0553 16.188 52.1776 16.4256C52.2999 16.6631 52.5045 16.783 52.7914 16.783C53.036 16.783 53.2712 16.7078 53.497 16.5573C53.7228 16.4067 53.8874 16.2162 53.9979 15.9858V6.03516H56.8154V18.5634Z" fill="white"></path>
-                  <path d="M64.4755 3.68758H61.6768V18.5629H58.9181V3.68758H56.1194V1.42041H64.4755V3.68758Z" fill="white"></path>
-                  <path d="M71.2768 18.5634H69.0708L68.8262 17.03H68.7651C68.1654 18.1871 67.267 18.7656 66.0675 18.7656C65.2373 18.7656 64.6235 18.4928 64.2284 17.9496C63.8333 17.4039 63.6357 16.5526 63.6357 15.3955V6.03751H66.4556V15.2308C66.4556 15.7906 66.5167 16.188 66.639 16.4256C66.7613 16.6631 66.9659 16.783 67.2529 16.783C67.4974 16.783 67.7326 16.7078 67.9584 16.5573C68.1842 16.4067 68.3488 16.2162 68.4593 15.9858V6.03516H71.2768V18.5634Z" fill="white"></path>
-                  <path d="M80.609 8.0387C80.4373 7.24849 80.1621 6.67699 79.7812 6.32186C79.4002 5.96674 78.8757 5.79035 78.2078 5.79035C77.6904 5.79035 77.2059 5.93616 76.7567 6.23014C76.3075 6.52412 75.9594 6.90747 75.7148 7.38489H75.6937V0.785645H72.9773V18.5608H75.3056L75.5925 17.3755H75.6537C75.8724 17.7988 76.1993 18.1304 76.6344 18.3774C77.0695 18.622 77.554 18.7443 78.0855 18.7443C79.038 18.7443 79.7412 18.3045 80.1904 17.4272C80.6396 16.5475 80.8653 15.1765 80.8653 13.3092V11.3266C80.8653 9.92722 80.7783 8.82892 80.609 8.0387ZM78.0243 13.1492C78.0243 14.0617 77.9867 14.7767 77.9114 15.2941C77.8362 15.8115 77.7115 16.1808 77.5328 16.3971C77.3564 16.6158 77.1165 16.724 76.8178 16.724C76.585 16.724 76.371 16.6699 76.1734 16.5594C75.9759 16.4512 75.816 16.2866 75.6937 16.0702V8.96062C75.7877 8.6196 75.9524 8.34209 76.1852 8.12337C76.4157 7.90465 76.6697 7.79646 76.9401 7.79646C77.2271 7.79646 77.4481 7.90935 77.6034 8.13278C77.7609 8.35855 77.8691 8.73485 77.9303 9.26636C77.9914 9.79787 78.022 10.5528 78.022 11.5335V13.1492H78.0243Z" fill="white"></path>
-                  <path d="M84.8657 13.8712C84.8657 14.6755 84.8892 15.2776 84.9363 15.6798C84.9833 16.0819 85.0821 16.3736 85.2326 16.5594C85.3831 16.7428 85.6136 16.8345 85.9264 16.8345C86.3474 16.8345 86.639 16.6699 86.8016 16.343C86.9643 16.0161 87.0456 15.4705 87.0456 14.7085V14.6297H89.4487V14.7674C89.4487 16.0281 89.0899 17.0233 88.3776 17.7529C87.6652 18.4824 86.6437 18.8471 85.323 18.8471C83.9368 18.8471 82.9537 18.3557 82.3748 17.3755C81.7959 16.3952 81.5051 14.9179 81.5051 12.9453V10.7154C81.5051 8.73158 81.809 7.2292 82.4143 6.21036C83.0196 5.19152 83.9985 4.68089 85.3489 4.68089C86.1716 4.68089 86.8686 4.84579 87.4388 5.17796C88.0089 5.51013 88.4375 6.00966 88.7235 6.67922C89.012 7.34879 89.1562 8.22264 89.1562 9.30089V11.2833H84.8657V13.8712ZM85.2232 7.96811C85.0797 8.14449 84.9857 8.43377 84.9363 8.83593C84.8892 9.2381 84.8657 9.84722 84.8657 10.6657V11.5641H86.2497V10.6657C86.2497 9.86133 86.2262 9.25221 86.1792 8.83593C86.1321 8.41966 86.0381 8.12803 85.8946 7.95635C85.7512 7.78702 85.5473 7.7 85.2797 7.7C85.0376 7.70235 84.8657 7.79172 84.2232 7.96811Z" fill="white"></path>
-                </svg>
-              </button>
-              {/* Yellow border overlay */}
-              <div className="absolute inset-0 border-2 border-[#FFE500] rounded pointer-events-none"></div>
-            </div>
-          </div>
-          
-          {/* Overlay to prevent interaction with YouTube buttons */}
-          <div className="absolute inset-0 z-10 pointer-events-none" style={{
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 60px, rgba(0,0,0,0) calc(100% - 60px), rgba(0,0,0,0.7) 100%)'
-          }}></div>
-          
-          {/* طبقة شفافة لإخفاء زر مشاهدة على يوتيوب */}
-          <div style={{position:'absolute',right:0,bottom:0,width:'120px',height:'40px',background:'rgba(0,0,0,0.7)',zIndex:2,pointerEvents:'none',borderBottomRightRadius:'12px'}}></div>
+  if (isLoading) {
+    playerContent = (
+      <div className="w-full aspect-video rounded-lg bg-surface-container-low flex flex-col items-center justify-center text-on-surface-variant">
+        <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
+        <p className="text-sm font-medium">جاري تحميل مشغل الفيديو...</p>
+      </div>
+    );
+  } else if (isNotEnrolled) {
+    playerContent = (
+      <div className="w-full aspect-video rounded-lg bg-surface-container-low border border-outline-variant/60 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 mb-4 shadow-sm">
+          <Lock className="w-8 h-8" />
         </div>
-      );
-    } else {
-      videoElement = <div className="text-center text-muted-foreground">لا يمكن عرض الفيديو</div>;
-    }
-  } else if (videoData.streamUrl) {
-    videoElement = <video controls src={videoData.streamUrl} className="w-full aspect-video rounded-lg border border-muted bg-muted" />;
-  } else if (videoData.url) {
-    videoElement = <video controls src={videoData.url} className="w-full aspect-video rounded-lg border border-muted bg-muted" />;
+        <h3 className="text-xl font-bold text-on-surface mb-2">المحتوى محمي للمشتركين فقط</h3>
+        <p className="text-sm text-on-surface-variant max-w-md mb-6 leading-relaxed">
+          يجب أن تكون مشتركاً في هذا الكورس لتتمكن من مشاهدة المحاضرة والاستفادة من المواد التعليمية والاختبارات.
+        </p>
+        <Button
+          onClick={() => router.push(`/course/${params.id}/subscribe`)}
+          className="rounded-md bg-primary px-6 py-2.5 text-base font-semibold text-white transition-colors hover:bg-[#0057c0]"
+        >
+          اشترك في الكورس الآن
+        </Button>
+      </div>
+    );
+  } else if (isNotReady) {
+    playerContent = (
+      <div className="w-full aspect-video rounded-lg bg-surface-container-low border border-outline-variant/60 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-primary mb-4 shadow-sm">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+        <h3 className="text-xl font-bold text-on-surface mb-2">الفيديو قيد المعالجة</h3>
+        <p className="text-sm text-on-surface-variant max-w-md mb-6 leading-relaxed">
+          يتم حالياً تجهيز وضغط الفيديو بجودة عالية على Bunny Stream. يرجى إعادة المحاولة بعد دقائق قليلة.
+        </p>
+        <Button
+          onClick={() => loadVideo()}
+          variant="outline"
+          className="flex items-center gap-2 rounded-md border-outline-variant px-5 py-2 text-sm font-semibold hover:bg-surface-container"
+        >
+          <RotateCcw className="w-4 h-4" />
+          إعادة المحاولة
+        </Button>
+      </div>
+    );
+  } else if (error) {
+    playerContent = (
+      <div className="w-full aspect-video rounded-lg bg-surface-container-low border border-red-200 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center text-red-600 mb-4 shadow-sm">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h3 className="text-xl font-bold text-red-700 mb-2">تعذر تشغيل الفيديو</h3>
+        <p className="text-sm text-on-surface-variant max-w-md mb-6">
+          {error}
+        </p>
+        <Button
+          onClick={() => loadVideo()}
+          variant="outline"
+          className="flex items-center gap-2 rounded-md border-outline-variant px-5 py-2 text-sm font-semibold"
+        >
+          <RotateCcw className="w-4 h-4" />
+          إعادة المحاولة
+        </Button>
+      </div>
+    );
+  } else if (playbackData?.playbackUrl) {
+    playerContent = (
+      <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-outline-variant/60 bg-black shadow-level-2">
+        <iframe
+          src={playbackData.playbackUrl}
+          loading="lazy"
+          className="w-full h-full border-0"
+          allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;"
+          allowFullScreen
+          title={bunnyVideo?.title || "مشغل فيديو Bunny Stream"}
+        />
+      </div>
+    );
   } else {
-    videoElement = <div className="text-center text-muted-foreground">لا يمكن عرض الفيديو</div>;
+    playerContent = (
+      <div className="w-full aspect-video rounded-lg bg-surface-container-low flex items-center justify-center text-center text-on-surface-variant p-6">
+        لا توجد بيانات متاحة لهذا الفيديو
+      </div>
+    );
   }
+
+  const videoTitle = bunnyVideo?.title || "المحاضرة التعليمية";
+  const videoDurationFormatted = bunnyVideo?.duration != null 
+    ? formatBunnyDuration(bunnyVideo.duration) 
+    : null;
 
   return (
     <div className="mx-auto min-h-[80vh] w-full max-w-7xl px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <Card className="relative mx-auto w-full overflow-hidden rounded-lg bg-white text-on-surface shadow-level-2">
-        {/* Back to Course Button */}
-        <div className="absolute top-4 left-4 z-20">
-          <Button
-            onClick={() => router.push(`/course/${params.id}`)}
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 rounded-full border-outline-variant bg-white text-primary shadow-level-2 transition-all hover:bg-[#e8f2ff]"
-            aria-label="العودة إلى الكورس"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </div>
-
-        <CardHeader className="border-b border-outline-variant/60 pb-4">
-          <CardTitle className="text-2xl font-bold text-white">مشاهدة الفيديو</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6 p-0">
-          <div className="w-full">
-            {videoElement}
+        {/* Main Video Card */}
+        <Card className="relative mx-auto w-full overflow-hidden rounded-lg bg-white text-on-surface shadow-level-2">
+          {/* Back to Course Button */}
+          <div className="absolute top-4 left-4 z-20">
+            <Button
+              onClick={() => router.push(`/course/${params.id}`)}
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 rounded-full border-outline-variant bg-white text-primary shadow-level-2 transition-all hover:bg-[#e8f2ff]"
+              aria-label="العودة إلى الكورس"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           </div>
-          <div className="lesson-body space-y-4 p-6 sm:p-8">
-            <h3 className="text-xl font-semibold text-white">{videoData.title || "عنوان الفيديو غير متوفر"}</h3>
-            <div className="flex flex-col gap-2 text-sm text-on-surface-variant sm:flex-row">
-              <span>تاريخ النشر: {videoData.date || "غير متوفر"}</span>
-              <span className="hidden sm:inline">•</span>
-              <span>عدد المشاهدات: {videoData.views || "غير متوفر"}</span>
-              {completionDate && (
-                <>
-                  <span className="hidden sm:inline">•</span>
-                  <span className="text-[#61B846]">تم الإكمال: {new Date(completionDate).toLocaleDateString('ar-EG')}</span>
-                </>
-              )}
+
+          <CardHeader className="border-b border-outline-variant/60 pb-4">
+            <CardTitle className="text-2xl font-bold text-on-surface">مشاهدة المحاضرة</CardTitle>
+          </CardHeader>
+          
+          <CardContent className="space-y-6 p-0">
+            {/* Player Embed Container */}
+            <div className="w-full p-4 sm:p-6 bg-[#0f172a]/5">
+              {playerContent}
             </div>
-            <div className="border-t border-outline-variant/60 pt-4">
-              <p className="text-base text-gray-300 leading-relaxed">{videoData.description || "وصف الفيديو غير متوفر"}</p>
-            </div>
-            
-            {/* Video Assignments Section */}
-            {assignments && assignments.length > 0 && (
-              <div className="border-t border-outline-variant/60 pt-5">
-                <h4 className="text-lg font-semibold text-white mb-3">الواجبات المتاحة</h4>
-                <div className="space-y-3">
-                  {assignments.map((assignment) => (
-                    <div key={assignment.id} className="flex items-center justify-between rounded-md border border-outline-variant/60 bg-surface-container-low p-4 transition-colors hover:bg-[#e8f2ff]/60">
-                      <div className="flex-1">
-                        <h5 className="font-medium text-white">{assignment.title}</h5>
-                        <p className="text-sm text-gray-400 mt-1">{assignment.description}</p>
-                        <div className="flex items-center mt-2 text-xs text-gray-400">
-                          <span>نوع الواجب: {assignment.isMCQ ? "اختيار من متعدد" : "واجب عادي"}</span>
-                          <span className="mx-2">•</span>
-                          <span className={`${new Date(assignment.dueDate) < new Date() ? 'text-red-400' : 'text-green-400'}`}>
-                            تاريخ التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
-                          </span>
+
+            {/* Video Meta & Actions */}
+            <div className="lesson-body space-y-4 p-6 sm:p-8">
+              <h3 className="text-xl font-semibold text-on-surface">{videoTitle}</h3>
+              
+              <div className="flex flex-wrap items-center gap-3 text-sm text-on-surface-variant">
+                {videoDurationFormatted && (
+                  <span>المدة: {videoDurationFormatted}</span>
+                )}
+                {bunnyVideo?.createdAt && (
+                  <>
+                    <span className="hidden sm:inline">•</span>
+                    <span>تاريخ الإضافة: {new Date(bunnyVideo.createdAt).toLocaleDateString('ar-EG')}</span>
+                  </>
+                )}
+                {completionDate && (
+                  <>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="text-[#16a34a] font-medium">تم الإكمال: {new Date(completionDate).toLocaleDateString('ar-EG')}</span>
+                  </>
+                )}
+              </div>
+
+              {/* Video Assignments Section */}
+              {assignments && assignments.length > 0 && (
+                <div className="border-t border-outline-variant/60 pt-5">
+                  <h4 className="text-lg font-semibold text-on-surface mb-3">الواجبات المتاحة</h4>
+                  <div className="space-y-3">
+                    {assignments.map((assignment) => (
+                      <div key={assignment.id} className="flex items-center justify-between rounded-md border border-outline-variant/60 bg-surface-container-low p-4 transition-colors hover:bg-[#e8f2ff]/60">
+                        <div className="flex-1">
+                          <h5 className="font-medium text-on-surface">{assignment.title}</h5>
+                          <p className="text-sm text-on-surface-variant mt-1">{assignment.description}</p>
+                          <div className="flex items-center mt-2 text-xs text-on-surface-variant">
+                            <span>نوع الواجب: {assignment.isMCQ ? "اختيار من متعدد" : "واجب عادي"}</span>
+                            <span className="mx-2">•</span>
+                            <span className={`${new Date(assignment.dueDate) < new Date() ? 'text-red-500' : 'text-green-600'}`}>
+                              تاريخ التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="mr-4">
+                          {assignment.hasSubmitted ? (
+                            assignment.submission ? (
+                              <div className="flex flex-col items-end">
+                                <span className="text-[#16a34a] flex items-center font-medium">
+                                  <CheckCircle className="h-4 w-4 ml-1" />
+                                  تم التسليم
+                                </span>
+                                {assignment.submission.status === "GRADED" && (
+                                  <span className="text-sm mt-1">
+                                    الدرجة: {assignment.submission.grade}/{assignment.passingScore}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-amber-600 flex items-center font-medium">
+                                <span className="inline-block h-2 w-2 rounded-full bg-amber-500 ml-1"></span>
+                                قيد المراجعة
+                              </span>
+                            )
+                          ) : (
+                            <Button
+                              onClick={() => router.push(`/course/${params.id}/video/${params.video}/assignment/${assignment.id}`)}
+                              className="rounded-md bg-primary px-4 py-2 text-sm text-white transition-colors hover:bg-[#0057c0]"
+                              disabled={!apiCompletionStatus}
+                            >
+                              بدء الواجب
+                            </Button>
+                          )}
                         </div>
                       </div>
-                      <div className="ml-4">
-                        {assignment.hasSubmitted ? (
-                          assignment.submission ? (
-                            <div className="flex flex-col items-end">
-                              <span className="text-[#61B846] flex items-center">
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                تم التسليم
-                              </span>
-                              {assignment.submission.status === "GRADED" && (
-                                <span className="text-sm mt-1">
-                                  الدرجة: {assignment.submission.grade}/{assignment.passingScore}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-yellow-500 flex items-center">
-                              <span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-1"></span>
-                              قيد المراجعة
-                            </span>
-                          )
-                        ) : (
-                          <Button
-                            onClick={() => router.push(`/course/${params.id}/video/${params.video}/assignment/${assignment.id}`)}
-                            className="rounded-md bg-primary px-4 py-2 text-sm text-white transition-colors hover:bg-[#0057c0]"
-                            disabled={!apiCompletionStatus}
-                          >
-                            بدء الواجب
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              )}
+              
+              {/* Video Completion Button */}
+              <div className="mt-6 flex justify-center border-t border-outline-variant/60 pt-6">
+                <Button
+                  onClick={handleCompleteVideo}
+                  disabled={completingVideo || videoCompleted || apiCompletionStatus || isNotEnrolled}
+                  className="rounded-md bg-primary px-8 py-6 text-lg text-white transition-all hover:bg-[#0057c0] disabled:opacity-70"
+                >
+                  {completingVideo ? (
+                    <>
+                      <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                      جاري التحميل...
+                    </>
+                  ) : videoCompleted || apiCompletionStatus ? (
+                    <>
+                      <CheckCircle className="ml-2 h-5 w-5" />
+                      تم إكمال المحاضرة
+                    </>
+                  ) : (
+                    'أكملت مشاهدة المحاضرة؟'
+                  )}
+                </Button>
               </div>
-            )}
-            
-            {/* Video Completion Button */}
-            <div className="mt-6 flex justify-center">
-              <Button
-                onClick={handleCompleteVideo}
-                disabled={completingVideo || videoCompleted || apiCompletionStatus}
-                className="rounded-md bg-primary px-8 py-6 text-lg text-white transition-all hover:bg-[#0057c0] disabled:opacity-70"
-              >
-                {completingVideo ? (
-                  <>
-                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] ml-2"></span>
-                    جاري التحميل...
-                  </>
-                ) : videoCompleted || apiCompletionStatus ? (
-                  <>
-                    <CheckCircle className="mr-2 h-5 w-5" />
-                    تم إكمال الفيديو
-                  </>
-                ) : (
-                  'أكملت الفيديو؟'
-                )}
-              </Button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <aside className="space-y-4 xl:sticky xl:top-24">
-        <div className="rounded-lg bg-white p-5 shadow-level-2">
-          <div className="flex items-center justify-between text-sm font-semibold text-on-surface"><span>التقدم الكلي</span><span>{Math.round(progressPercent)}%</span></div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-container"><div className="h-full rounded-full bg-secondary-color transition-[width] duration-300" style={{ width: `${progressPercent}%` }} /></div>
-        </div>
-        <div className="overflow-hidden rounded-lg bg-white shadow-level-2">
-          <div className="flex items-center gap-2 border-b border-outline-variant/60 p-5"><ListVideo className="h-5 w-5 text-primary" /><h2 className="font-bold text-on-surface">محتوى الدورة</h2></div>
-          <div className="p-3">
-            <div className="rounded-md bg-[#e8f2ff] p-4 text-primary">
-              <div className="flex items-center justify-between"><BookOpenCheck className="h-5 w-5" /><span className="rounded-full bg-white px-2 py-1 text-caption font-bold">01</span></div>
-              <p className="mt-3 text-sm font-bold leading-6">{videoData.title || 'المحاضرة الحالية'}</p>
-              <p className="mt-1 text-caption text-secondary-color">{formatTime(currentTime)} / {formatTime(duration)}</p>
+        {/* Sidebar */}
+        <aside className="space-y-4 xl:sticky xl:top-24">
+          <div className="overflow-hidden rounded-lg bg-white shadow-level-2">
+            <div className="flex items-center gap-2 border-b border-outline-variant/60 p-5">
+              <ListVideo className="h-5 w-5 text-primary" />
+              <h2 className="font-bold text-on-surface">محتوى الدورة</h2>
             </div>
+            <div className="p-3">
+              <div className="rounded-md bg-[#e8f2ff] p-4 text-primary">
+                <div className="flex items-center justify-between">
+                  <BookOpenCheck className="h-5 w-5" />
+                  <span className="rounded-full bg-white px-2 py-1 text-caption font-bold">
+                    Bunny Stream
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-bold leading-6 text-on-surface">{videoTitle}</p>
+                {videoDurationFormatted && (
+                  <p className="mt-1 text-caption text-primary font-medium">{videoDurationFormatted}</p>
+                )}
+              </div>
+            </div>
+            <button 
+              onClick={() => router.push(`/course/${params.id}`)} 
+              className="flex w-full items-center justify-center gap-2 border-t border-outline-variant/60 px-4 py-4 text-sm font-bold text-primary transition-colors hover:bg-[#e8f2ff]/60"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              العودة إلى الدورة
+            </button>
           </div>
-          <button onClick={() => router.push(`/course/${params.id}`)} className="flex w-full items-center justify-center gap-2 border-t border-outline-variant/60 px-4 py-4 text-sm font-bold text-primary transition-colors hover:bg-[#e8f2ff]/60"><ArrowLeft className="h-4 w-4" />العودة إلى الدورة</button>
-        </div>
-      </aside>
+        </aside>
       </div>
 
       {/* Quiz Confirmation Dialog */}
       {showQuizConfirmation && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl text-center">
+            <h3 className="text-xl font-bold text-on-surface mb-4">
               اختبار متاح!
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6 text-center">
-              يوجد اختبار متاح لهذا الفيديو. هل تريد أخذ الاختبار الآن أم لاحقاً؟
+            <p className="text-on-surface-variant mb-6 leading-relaxed">
+              يوجد اختبار متاح لهذه المحاضرة. هل ترغب في بدء الاختبار الآن أم المتابعة لاحقاً؟
             </p>
             <div className="flex gap-3 justify-center">
               <Button
                 onClick={handleTakeQuizNow}
-                className="bg-[#61B846] hover:bg-[#61B846]/90 text-white px-6 py-2 rounded-lg transition-colors"
+                className="bg-[#16a34a] hover:bg-[#15803d] text-white px-6 py-2 rounded-lg transition-colors"
               >
                 أخذ الاختبار الآن
               </Button>
               <Button
                 onClick={handleTakeQuizLater}
                 variant="outline"
-                className="border-gray-300 text-gray-700 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 px-6 py-2 rounded-lg transition-colors"
+                className="border-outline-variant text-on-surface hover:bg-surface-container px-6 py-2 rounded-lg transition-colors"
               >
                 لاحقاً
               </Button>
