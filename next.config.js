@@ -22,21 +22,28 @@ const nextConfig = {
         port: '3005',
         pathname: '/**',
       },
-
-
-      // YouTube thumbnails
       {
-        protocol: 'https',
-        hostname: 'i.ytimg.com',
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '3005',
         pathname: '/**',
       },
-
-      // Example — replace with your real production API/CDN host(s):
-      // {
-      //   protocol: 'https',
-      //   hostname: 'api.yourdomain.com',
-      //   pathname: '/**',
-      // },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+        pathname: '/**',
+      },
+      // Bunny Stream CDN — thumbnails served from vz-*.b-cdn.net subdomains
+      {
+        protocol: 'https',
+        hostname: '**.b-cdn.net',
+        pathname: '/**',
+      },
     ],
   },
 };
