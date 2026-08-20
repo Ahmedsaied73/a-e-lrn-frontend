@@ -142,17 +142,6 @@ export const mockAssignments: Assignment[] = [
   },
 ];
 
-export function getMockVideoStream(videoId: string | number) {
-  const video = mockCourse.videos?.find((v) => v.id === Number(videoId));
-  return {
-    isYoutube: true,
-    url: 'https://www.youtube.com/watch?v=7DjsD-jQPFw',
-    embedHtml:
-      '<iframe src="https://www.youtube.com/embed/7DjsD-jQPFw?rel=0&modestbranding=1"></iframe>',
-    title: video?.title ?? 'محاضرة الكيمياء',
-  };
-}
-
 export function getMockVideoProgress(videoId: string | number): VideoProgress {
   return {
     videoId,
