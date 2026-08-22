@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
-import type { CourseConsolidatedPayload } from '@/services/courseService';
 import {
   fetchQuizzesByCourse as svcFetchQuizzesByCourse,
   fetchQuizById as svcFetchQuizById,
@@ -81,8 +80,7 @@ export const fetchQuizById = createAsyncThunk(
 
 /**
  * Mark a video as completed.
- * Calls POST /progress/mark { videoId, completed: true }
- * (replaces the old POST /progress/complete { videoId })
+ * Calls POST /progress/complete { videoId }
  */
 export const completeVideo = createAsyncThunk(
   'quiz/completeVideo',
@@ -171,6 +169,17 @@ export const quizSlice = createSlice({
     resetSubmitState: (state) => {
       state.submitting = false;
       state.submitSuccess = false;
+    },
+    /**
+     * Bulk-set video progress from the aggregate GET /courses/:id response's
+     * `progress` array. Replaces the old per-video fetchVideoProgress loop
+     * during Course-page init — same state shape, populated in one dispatch
+     * instead of N thunks.
+     */
+    hydrateVideoProgress: (state, action: PayloadAction<VideoProgress[]>) => {
+      action.payload.forEach(({ videoId, completed, watchedAt }) => {
+        state.videoProgressMap[String(videoId)] = { completed, watchedAt };
+      });
     },
   },
   extraReducers: (builder) => {
@@ -264,25 +273,7 @@ export const quizSlice = createSlice({
       .addCase(fetchVideoProgress.fulfilled, (state, action) => {
         const { videoId, completed, watchedAt } = action.payload;
         state.videoProgressMap[String(videoId)] = { completed, watchedAt };
-      })
-
-      // Cross-slice: hydrate videoProgressMap when consolidated course fetch resolves.
-      // Using string action type avoids a circular import between quizSlice <-> courseSlice.
-      .addCase(
-        'courses/fetchCourseById/fulfilled' as string,
-        (state, action: PayloadAction<CourseConsolidatedPayload>) => {
-          const progressArr = action.payload?.progress;
-          if (!Array.isArray(progressArr)) return;
-          for (const vp of progressArr) {
-            if (vp && vp.videoId !== undefined && vp.videoId !== null) {
-              state.videoProgressMap[String(vp.videoId)] = {
-                completed: !!vp.completed,
-                watchedAt: vp.watchedAt ?? null,
-              };
-            }
-          }
-        },
-      );
+      });
   },
 });
 
@@ -290,7 +281,7 @@ export const quizSlice = createSlice({
 // Exports
 // ---------------------------------------------------------------------------
 
-export const { setVideoCompleted, setSelectedAnswer, resetQuizState, resetSubmitState } =
+export const { setVideoCompleted, setSelectedAnswer, resetQuizState, resetSubmitState, hydrateVideoProgress } =
   quizSlice.actions;
 
 export const selectQuizState = (state: RootState) => state.quiz;

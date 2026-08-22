@@ -8,6 +8,7 @@
 import { apiClient } from '@/lib/api-client';
 import { isMockCourse, mockCourse, MOCK_COURSE_ID } from '@/lib/mock/course';
 import { PaginationMeta } from '@/types/api';
+import type { VideoProgress } from '@/services/quizService';
 
 export { MOCK_COURSE_ID };
 
@@ -24,6 +25,24 @@ export interface CourseListItem {
   grade?: string;
 }
 
+/**
+ * The authenticated user's own enrollment row for a course, as returned
+ * inline by GET /courses/:id — never another user's.
+ */
+export interface CourseEnrollment {
+  id: number;
+  userId: number;
+  courseId: number;
+  isPaid: boolean;
+  paymentDate?: string | null;
+  progress: number;
+  startedAt: string;
+  completedAt: string | null;
+  isCompleted: boolean;
+  lastAccess: string;
+  createdAt: string;
+}
+
 export interface CourseDetail extends CourseListItem {
   description_short?: string;
   duration?: string;
@@ -38,7 +57,12 @@ export interface CourseDetail extends CourseListItem {
     thumbnail?: string;
     duration?: number;
     description?: string;
+    position?: number;
   }>;
+  /** The authenticated user's enrollment for this course, or null if not enrolled. */
+  enrollment?: CourseEnrollment | null;
+  /** The authenticated user's video progress, scoped to this course's videos. */
+  progress?: VideoProgress[];
 }
 
 export interface CoursesPage {
@@ -50,18 +74,7 @@ export interface EnrollmentResult {
   courseId: number | string;
   enrolled: boolean;
   isPaid?: boolean;
-}
-
-/** Shape returned by the consolidated GET /courses/:id endpoint (inside data envelope).
- *  ponytail: videos are assumed ordered by position ASC from the backend.
- *  Add sort by position here only if ordering ever appears wrong in the UI.
- */
-export interface CourseConsolidatedPayload {
-  course: CourseDetail;
-  videos: NonNullable<CourseDetail['videos']>;
-  enrollment: { id: number; userId: number; courseId: number; isPaid: boolean } | null;
-  progress: Array<{ videoId: number | string; completed: boolean; watchedAt: string | null }>;
-}
+};
 
 // ---------------------------------------------------------------------------
 // Response shapes — backend may return flat or wrapped
@@ -108,56 +121,30 @@ export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage
 
 /**
  * Fetch a single course by its ID.
- * Returns the consolidated 4-field payload: { course, videos, enrollment, progress }.
- * Legacy shape (course object as data root) is gracefully unwrapped via fallback branch.
+ *
+ * Backend response is the aggregate shape `{ success, data: { course, videos,
+ * enrollment, progress } }` — course, the authenticated user's videos,
+ * enrollment, and video progress all come back in this one call, so the
+ * Course page never needs separate enrollment-status or per-video progress
+ * requests to initialize.
  */
-export async function fetchCourseById(courseId: string | number): Promise<CourseConsolidatedPayload> {
-  if (isMockCourse(courseId)) {
-    // ponytail: dev mock path — keep enrolled=false to show subscribe CTA so the card is still testable.
-    // Switch to a fake enrollment object below if you want the "already enrolled" mock view.
-    return {
-      course: mockCourse,
-      videos: mockCourse.videos ?? [],
-      enrollment: null,
-      progress: [],
-    };
-  }
+export async function fetchCourseById(courseId: string | number): Promise<CourseDetail> {
+  if (isMockCourse(courseId)) return mockCourse;
+
   const raw = await apiClient.get<unknown>(`/courses/${courseId}`);
-  const envelope = extractData<
-    | {
-        course: CourseDetail;
-        videos?: CourseDetail['videos'];
-        enrollment?: CourseConsolidatedPayload['enrollment'];
-        progress?: CourseConsolidatedPayload['progress'];
-      }
-    | CourseDetail
-  >(raw);
+  const payload = extractData<{
+    course: CourseListItem & Record<string, unknown>;
+    videos?: CourseDetail['videos'];
+    enrollment?: CourseEnrollment | null;
+    progress?: VideoProgress[];
+  }>(raw);
 
-  // Guard: detect new consolidated shape (has both `course` and `videos` keys at envelope root)
-  // vs legacy shape where `envelope` IS the CourseDetail directly.
-  if (envelope && typeof envelope === 'object' && 'course' in envelope && envelope.course && typeof envelope.course === 'object' && 'id' in envelope.course) {
-    const consolidated = envelope as {
-      course: CourseDetail;
-      videos?: CourseDetail['videos'];
-      enrollment?: CourseConsolidatedPayload['enrollment'];
-      progress?: CourseConsolidatedPayload['progress'];
-    };
-    return {
-      course: consolidated.course,
-      videos: consolidated.videos ?? consolidated.course.videos ?? [],
-      enrollment: consolidated.enrollment ?? null,
-      progress: consolidated.progress ?? [],
-    };
-  }
-
-  // Legacy fallback — envelope IS the course object.
-  const legacyCourse = envelope as CourseDetail;
   return {
-    course: legacyCourse,
-    videos: legacyCourse.videos ?? [],
-    enrollment: null,
-    progress: [],
-  };
+    ...(payload.course as object),
+    videos: payload.videos ?? [],
+    enrollment: payload.enrollment ?? null,
+    progress: payload.progress ?? [],
+  } as CourseDetail;
 }
 
 /**

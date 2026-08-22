@@ -7,7 +7,6 @@ import {
   enrollInCourse as courseSvcEnroll,
   CourseDetail,
   CourseListItem,
-  CourseConsolidatedPayload,
 } from '@/services/courseService';
 
 // ---------------------------------------------------------------------------
@@ -67,7 +66,7 @@ export const fetchCourses = createAsyncThunk(
 );
 
 export const fetchCourseById = createAsyncThunk<
-  CourseConsolidatedPayload,
+  CourseDetail,
   string
 >(
   'courses/fetchCourseById',
@@ -151,13 +150,14 @@ const courseSlice = createSlice({
       .addCase(fetchCourseById.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
-        const { course, enrollment } = action.payload;
+        const course = action.payload;
+        const enrollment = action.payload.enrollment;
         state.currentCourse = course;
 
         // Upsert enrollment status from consolidated payload
         const courseId = course?.id;
         if (courseId !== undefined) {
-          const enrolled = enrollment !== null;
+          const enrolled = enrollment !== null && enrollment !== undefined;
           const isPaid = enrollment?.isPaid ?? false;
           const idx = state.enrollments.findIndex(
             (e) => String(e.courseId) === String(courseId),

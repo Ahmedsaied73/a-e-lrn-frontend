@@ -1,0 +1,346 @@
+From e07278db40fd848311d496eb3aa450803c4d926c Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.com>
+Date: Thu, 13 Aug 2026 15:16:55 +0000
+Subject: [PATCH] feat: consolidate Course page init into single GET
+ /courses/:id call
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Wires the Course page to the new aggregate backend response
+{ course, videos, enrollment, progress } instead of three separate
+requests + a per-video loop. Only data-fetching changed — no UI,
+layout, or unrelated (quiz/assignment) logic touched.
+
+- services/courseService.ts: fetchCourseById now parses the aggregate
+  shape and flattens it into CourseDetail (course fields spread at
+  top level for backward compat with existing courseData.* access,
+  plus new enrollment/progress/videos[].position fields). Added
+  CourseEnrollment type; reused VideoProgress from quizService instead
+  of inventing a new shape.
+- lib/mock/course.ts: mockCourse gets enrollment + progress fields so
+  the mock-course path (isMockCourse) matches the new CourseDetail
+  shape and preserves its previous 'always enrolled' demo behavior.
+- store/slices/quizSlice.ts: added hydrateVideoProgress, a plain
+  reducer that bulk-sets videoProgressMap from progress[] in one
+  dispatch. Same state shape consumers already read (videoProgressMap,
+  getVideoProgress) — no new store/slice.
+- app/course/[id]/page.tsx:
+  - Removed the checkEnrollmentStatus call from Course init; isEnrolled
+    now comes from data.enrollment on the aggregate response.
+  - Removed the per-video dispatch(fetchVideoProgress(videoId)) inside
+    checkVideoAndQuizStatus; replaced with one
+    dispatch(hydrateVideoProgress(data.progress)) after course load.
+    Quiz-status and assignment-status per-video fetches are untouched
+    (out of scope).
+  - Added a useRef guard so a duplicate GET /courses/:id can't fire for
+    the same courseId if the init effect re-runs.
+- components/enrollment-card.tsx: removed its own independent
+  checkEnrollmentStatus call (a second, previously-unnoticed source of
+  redundant enrollment requests on every Course page load) — it now
+  just uses the isEnrolled prop from the parent, which already carries
+  the aggregate response's enrollment data.
+
+Net result on Course page load: exactly one network request for
+course + videos + enrollment + progress (verified by reading the
+call graph — enrollment-card.tsx was the second hidden source of a
+duplicate request). Quiz/assignment fetches (out of scope) unchanged.
+No N+1: all four are read from the same single course-controller
+Prisma query on the backend.
+
+Verified with tsc --noEmit (clean) and next lint (clean on all
+touched files). Full 'next build' hits an unrelated sandbox network
+restriction (Google Fonts fetch), not a compile error in this change.
+---
+ app/course/[id]/page.tsx       | 42 +++++++++++++++++++------------
+ components/enrollment-card.tsx | 11 +++------
+ lib/mock/course.ts             | 18 ++++++++++++++
+ services/courseService.ts      | 45 +++++++++++++++++++++++++++++++++-
+ store/slices/quizSlice.ts      | 13 +++++++++-
+ 5 files changed, 104 insertions(+), 25 deletions(-)
+
+diff --git a/app/course/[id]/page.tsx b/app/course/[id]/page.tsx
+index 18008f0..b23c28b 100644
+--- a/app/course/[id]/page.tsx
++++ b/app/course/[id]/page.tsx
+@@ -1,6 +1,6 @@
+ 'use client';
+ 
+-import { useEffect, useState, useCallback } from 'react';
++import { useEffect, useRef, useState, useCallback } from 'react';
+ import Image from 'next/image';
+ import { toast } from 'react-hot-toast';
+ import { EnrollmentCard } from '@/components/enrollment-card';
+@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
+ import { 
+   fetchQuizzesByCourse, 
+   selectQuizzes, 
+-  fetchVideoProgress, 
++  hydrateVideoProgress,
+   fetchQuizStatus,
+   selectVideoProgress,
+   selectQuizStatus
+@@ -22,7 +22,7 @@ import {
+   fetchAssignmentsByCourse // Added import
+ } from '@/store/slices/assignmentSlice';
+ 
+-import { fetchCourseById, checkEnrollmentStatus } from '@/services/courseService';
++import { fetchCourseById } from '@/services/courseService';
+ 
+ export default function Page({ params }: { params: { id: string } }) {
+   const dispatch = useAppDispatch();
+@@ -130,11 +130,12 @@ export default function Page({ params }: { params: { id: string } }) {
+     setTotalQuestions(totalQuestionsCount);
+   }, [formatDuration]);
+ 
+-  // Check video progress, quiz status, and assignment status when needed
++  // Check quiz status and assignment status when needed.
++  // (Video progress is no longer fetched per-video here — it arrives already
++  // scoped to this course's videos in the GET /courses/:id response and is
++  // hydrated into the store once via hydrateVideoProgress in the init effect
++  // below.)
+   const checkVideoAndQuizStatus = useCallback(async (videoId: string | number) => {
+-    // Fetch video progress
+-    dispatch(fetchVideoProgress(videoId));
+-    
+     // Find if there's a quiz for this video
+     const quiz = findQuizForVideo(videoId);
+     if (quiz) {
+@@ -166,13 +167,30 @@ export default function Page({ params }: { params: { id: string } }) {
+     return assignmentStatusMap[assignmentId] || null;
+   };
+ 
++  // Guards against a duplicate GET /courses/:id request for the same course
++  // (e.g. an effect re-run) — Course-page init should fire exactly one.
++  const fetchedCourseIdRef = useRef<string | null>(null);
++
+   useEffect(() => {
++    if (fetchedCourseIdRef.current === params.id) return;
++    fetchedCourseIdRef.current = params.id;
++
+     const loadCourseAndEnrollment = async () => {
+       try {
+         setIsLoading(true);
++        // Single request: course + videos + this user's enrollment + this
++        // user's video progress all come back together.
+         const data = await fetchCourseById(params.id);
+         setCourseData(data);
+-        
++
++        // Enrollment is already scoped to the authenticated user in the
++        // response — no separate enrollment-status request needed.
++        setIsEnrolled(!!data.enrollment);
++
++        // Hydrate video progress from the same response (one dispatch,
++        // not one fetchVideoProgress call per video).
++        dispatch(hydrateVideoProgress(data.progress ?? []));
++
+         // Initialize all videos as closed
+         if (data.videos && data.videos.length > 0) {
+           const initialOpenState: Record<string, boolean> = {};
+@@ -184,14 +202,6 @@ export default function Page({ params }: { params: { id: string } }) {
+           // Fetch all assignments for the course
+           dispatch(fetchAssignmentsByCourse({ courseId: params.id, videoIds: data.videos.map((video: any) => video.id) }));
+         }
+-        
+-        // Check if user is enrolled in this course
+-        try {
+-          const status = await checkEnrollmentStatus(params.id);
+-          setIsEnrolled(status.enrolled);
+-        } catch (enrollErr) {
+-          console.error('Error checking enrollment status:', enrollErr);
+-        }
+       } catch (err) {
+         setError(err instanceof Error ? err.message : 'An error occurred');
+       } finally {
+diff --git a/components/enrollment-card.tsx b/components/enrollment-card.tsx
+index b01b9e5..181c7aa 100644
+--- a/components/enrollment-card.tsx
++++ b/components/enrollment-card.tsx
+@@ -1,11 +1,9 @@
+ 'use client';
+ 
+-import { useEffect, useState } from 'react';
+ import { toast } from 'react-hot-toast';
+ import { CircleHelp, Clock } from 'lucide-react';
+ import { useRouter } from 'next/navigation';
+ import { cn } from '@/lib/utils';
+-import { checkEnrollmentStatus } from '@/services/courseService';
+ 
+ interface EnrollmentCardProps {
+   courseId: string;
+@@ -20,11 +18,10 @@ interface EnrollmentCardProps {
+ 
+ export function EnrollmentCard({ courseId, isEnrolled, courseTitle, coursePrice, courseDuration, questionsCount, className }: EnrollmentCardProps) {
+   const router = useRouter();
+-  const [enrolled, setEnrolled] = useState(isEnrolled);
+-
+-  useEffect(() => {
+-    checkEnrollmentStatus(courseId).then((result) => setEnrolled(result.enrolled)).catch(() => undefined);
+-  }, [courseId]);
++  // Enrollment now comes from the Course page's single aggregate
++  // GET /courses/:id request (see app/course/[id]/page.tsx) instead of a
++  // separate checkEnrollmentStatus call made by this component.
++  const enrolled = isEnrolled;
+ 
+   const handleEnrollment = () => {
+     if (enrolled) return toast.success('أنت مشترك بالفعل في هذا الكورس');
+diff --git a/lib/mock/course.ts b/lib/mock/course.ts
+index 2ca8c5f..c2d757e 100644
+--- a/lib/mock/course.ts
++++ b/lib/mock/course.ts
+@@ -42,20 +42,38 @@ export const mockCourse: CourseDetail = {
+       title: 'مقدمة في الكيمياء العضوية',
+       description: 'تعريف بالكيمياء العضوية والروابط الكربونية',
+       duration: 720,
++      position: 1,
+     },
+     {
+       id: 9002,
+       title: 'التفاعلات الكيميائية',
+       description: 'أنواع التفاعلات وموازنة المعادلات',
+       duration: 900,
++      position: 2,
+     },
+     {
+       id: 9003,
+       title: 'التحليل الكيميائي',
+       description: 'طرق التحليل الكمي والنوعي',
+       duration: 840,
++      position: 3,
+     },
+   ],
++  // Mirrors the previous mock behavior (checkEnrollmentStatus returned enrolled: true for mock courses)
++  enrollment: {
++    id: 0,
++    userId: 0,
++    courseId: 0,
++    isPaid: true,
++    paymentDate: null,
++    progress: 0,
++    startedAt: new Date().toISOString(),
++    completedAt: null,
++    isCompleted: false,
++    lastAccess: new Date().toISOString(),
++    createdAt: new Date().toISOString(),
++  },
++  progress: [],
+ };
+ 
+ export const mockQuizzes: Quiz[] = [
+diff --git a/services/courseService.ts b/services/courseService.ts
+index d6c4fc4..0af246f 100644
+--- a/services/courseService.ts
++++ b/services/courseService.ts
+@@ -8,6 +8,7 @@
+ import { apiClient } from '@/lib/api-client';
+ import { isMockCourse, mockCourse, MOCK_COURSE_ID } from '@/lib/mock/course';
+ import { PaginationMeta } from '@/types/api';
++import type { VideoProgress } from '@/services/quizService';
+ 
+ export { MOCK_COURSE_ID };
+ 
+@@ -24,6 +25,24 @@ export interface CourseListItem {
+   grade?: string;
+ }
+ 
++/**
++ * The authenticated user's own enrollment row for a course, as returned
++ * inline by GET /courses/:id — never another user's.
++ */
++export interface CourseEnrollment {
++  id: number;
++  userId: number;
++  courseId: number;
++  isPaid: boolean;
++  paymentDate?: string | null;
++  progress: number;
++  startedAt: string;
++  completedAt: string | null;
++  isCompleted: boolean;
++  lastAccess: string;
++  createdAt: string;
++}
++
+ export interface CourseDetail extends CourseListItem {
+   description_short?: string;
+   duration?: string;
+@@ -38,7 +57,12 @@ export interface CourseDetail extends CourseListItem {
+     thumbnail?: string;
+     duration?: number;
+     description?: string;
++    position?: number;
+   }>;
++  /** The authenticated user's enrollment for this course, or null if not enrolled. */
++  enrollment?: CourseEnrollment | null;
++  /** The authenticated user's video progress, scoped to this course's videos. */
++  progress?: VideoProgress[];
+ }
+ 
+ export interface CoursesPage {
+@@ -97,11 +121,30 @@ export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage
+ 
+ /**
+  * Fetch a single course by its ID.
++ *
++ * Backend response is the aggregate shape `{ success, data: { course, videos,
++ * enrollment, progress } }` — course, the authenticated user's videos,
++ * enrollment, and video progress all come back in this one call, so the
++ * Course page never needs separate enrollment-status or per-video progress
++ * requests to initialize.
+  */
+ export async function fetchCourseById(courseId: string | number): Promise<CourseDetail> {
+   if (isMockCourse(courseId)) return mockCourse;
++
+   const raw = await apiClient.get<unknown>(`/courses/${courseId}`);
+-  return extractData<CourseDetail>(raw);
++  const payload = extractData<{
++    course: CourseListItem & Record<string, unknown>;
++    videos?: CourseDetail['videos'];
++    enrollment?: CourseEnrollment | null;
++    progress?: VideoProgress[];
++  }>(raw);
++
++  return {
++    ...(payload.course as object),
++    videos: payload.videos ?? [],
++    enrollment: payload.enrollment ?? null,
++    progress: payload.progress ?? [],
++  } as CourseDetail;
+ }
+ 
+ /**
+diff --git a/store/slices/quizSlice.ts b/store/slices/quizSlice.ts
+index fa37eb6..06a35e5 100644
+--- a/store/slices/quizSlice.ts
++++ b/store/slices/quizSlice.ts
+@@ -171,6 +171,17 @@ export const quizSlice = createSlice({
+       state.submitting = false;
+       state.submitSuccess = false;
+     },
++    /**
++     * Bulk-set video progress from the aggregate GET /courses/:id response's
++     * `progress` array. Replaces the old per-video fetchVideoProgress loop
++     * during Course-page init — same state shape, populated in one dispatch
++     * instead of N thunks.
++     */
++    hydrateVideoProgress: (state, action: PayloadAction<VideoProgress[]>) => {
++      action.payload.forEach(({ videoId, completed, watchedAt }) => {
++        state.videoProgressMap[String(videoId)] = { completed, watchedAt };
++      });
++    },
+   },
+   extraReducers: (builder) => {
+     builder
+@@ -271,7 +282,7 @@ export const quizSlice = createSlice({
+ // Exports
+ // ---------------------------------------------------------------------------
+ 
+-export const { setVideoCompleted, setSelectedAnswer, resetQuizState, resetSubmitState } =
++export const { setVideoCompleted, setSelectedAnswer, resetQuizState, resetSubmitState, hydrateVideoProgress } =
+   quizSlice.actions;
+ 
+ export const selectQuizState = (state: RootState) => state.quiz;
+-- 
+2.43.0
+

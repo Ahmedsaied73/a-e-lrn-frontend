@@ -177,18 +177,16 @@ export async function fetchVideoProgress(videoId: string | number): Promise<Vide
 }
 
 /**
- * POST /progress/mark { videoId, completed: true }
+ * POST /progress/complete { videoId }
  * Mark a video as completed.
- * (Previously: POST /progress/complete { videoId })
  */
 export async function markVideoComplete(videoId: string | number): Promise<VideoProgress> {
   const numericId = Number(videoId);
   if (isMockVideoId(numericId)) {
     return { videoId: numericId, completed: true, watchedAt: new Date().toISOString() };
   }
-  const raw = await apiClient.post<unknown>('/progress/mark', {
+  const raw = await apiClient.post<unknown>('/progress/complete', {
     videoId: numericId,
-    completed: true,
   });
   return unwrap<VideoProgress>(raw);
 }
