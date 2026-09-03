@@ -17,12 +17,14 @@ import {
   RotateCcw 
 } from "lucide-react";
 import { AppDispatch } from "@/store/store";
-import { completeVideo, fetchQuizzesByCourse, selectQuizzes, selectVideoCompleted, setVideoCompleted } from "@/store/slices/quizSlice";
 import { addNotification } from "@/store/slices/uiSlice";
 import { fetchAssignmentsByVideo, selectAssignments } from "@/store/slices/assignmentSlice";
-import { fetchVideoProgress } from '@/services/quizService';
+import { fetchQuizMeta } from "@/store/slices/quizSlice";
+import QuizIntroCard from "@/components/quiz/QuizIntroCard";
 import { fetchBunnyPlaybackUrl, BunnyVideoError, fetchBunnyCourseVideos, formatBunnyDuration } from '@/services/bunnyVideoService';
+import { fetchCourseById } from '@/services/courseService';
 import type { BunnyPlaybackData, BunnyVideo } from '@/types/bunny';
+import type { QuizGate403 } from '@/types/quiz';
 
 export default function VideoPage({ params }: { params: { id: string; video: string } }) {
   const router = useRouter();
@@ -31,12 +33,14 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   // Bunny playback and video metadata
   const [playbackData, setPlaybackData] = useState<BunnyPlaybackData | null>(null);
   const [bunnyVideo, setBunnyVideo] = useState<BunnyVideo | null>(null);
+  const [progressVideoId, setProgressVideoId] = useState<number | null>(null);
   
   // Loading & error states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isNotEnrolled, setIsNotEnrolled] = useState(false);
   const [isNotReady, setIsNotReady] = useState(false);
+  const [quizGate, setQuizGate] = useState<QuizGate403 | null>(null);
   
   // Video completion states
   const [completingVideo, setCompletingVideo] = useState(false);
@@ -44,13 +48,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   const [completionDate, setCompletionDate] = useState<string | null>(null);
 
   // Redux store selections
-  const quizzes = useSelector(selectQuizzes);
-  const videoCompleted = useSelector(selectVideoCompleted);
   const assignments = useSelector(selectAssignments);
-
-  // Quiz confirmation modal state
-  const [showQuizConfirmation, setShowQuizConfirmation] = useState(false);
-  const [pendingQuiz, setPendingQuiz] = useState<any>(null);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 1. Fetch Video Playback URL & Metadata (Bunny Stream)
@@ -61,25 +59,46 @@ export default function VideoPage({ params }: { params: { id: string; video: str
       setError(null);
       setIsNotEnrolled(false);
       setIsNotReady(false);
+      setQuizGate(null);
 
-      const [playback, courseVideos] = await Promise.all([
-        fetchBunnyPlaybackUrl(params.video),
-        fetchBunnyCourseVideos(params.id).catch(() => [] as BunnyVideo[])
+      // The playback records and progress records use different video tables.
+      // Load both so progress is written against the legacy Video.id expected by /progress.
+      const [courseData, courseVideos] = await Promise.all([
+        fetchCourseById(params.id).catch(() => null),
+        fetchBunnyCourseVideos(params.id).catch(() => [] as BunnyVideo[]),
       ]);
 
-      setPlaybackData(playback);
-      const foundVideo = courseVideos.find(v => v.id === Number(params.video));
+      // Find matching video by numeric ID or Bunny GUID string
+      const foundVideo = courseVideos.find(
+        v => v.id === Number(params.video) || (v as any).bunnyVideoId === params.video
+      );
+
       if (foundVideo) {
         setBunnyVideo(foundVideo);
       }
 
-      // Fetch associated course quizzes & video assignments
-      dispatch(fetchQuizzesByCourse(params.id));
-      dispatch(fetchAssignmentsByVideo(params.video));
+      const foundIndex = foundVideo ? courseVideos.indexOf(foundVideo) : -1;
+      const legacyVideo = courseData?.videos?.find((video) => video.title === foundVideo?.title)
+        ?? (foundIndex >= 0 ? courseData?.videos?.[foundIndex] : undefined);
+      setProgressVideoId(legacyVideo?.id ?? (foundVideo ? null : Number(params.video)));
+
+      // Determine target ID to request playback token for (prefer numeric ID, fallback to param)
+      const targetVideoId = foundVideo ? foundVideo.id : params.video;
+
+      const playback = await fetchBunnyPlaybackUrl(targetVideoId);
+      setPlaybackData(playback);
+
+      // Fetch video assignments
+      dispatch(fetchAssignmentsByVideo(String(targetVideoId)));
     } catch (err: any) {
       if (err instanceof BunnyVideoError) {
         if (err.code === 'VIDEO_ACCESS_DENIED') {
-          setIsNotEnrolled(true);
+          const body = err.body;
+          if (body && typeof body === 'object' && 'quizId' in body) {
+            setQuizGate(body as QuizGate403);
+          } else {
+            setIsNotEnrolled(true);
+          }
           return;
         } else if (err.code === 'VIDEO_NOT_READY') {
           setIsNotReady(true);
@@ -128,13 +147,18 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   // ─────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     const checkVideoCompletion = async () => {
+      const videoId = progressVideoId ?? Number(params.video);
+      if (!Number.isFinite(videoId)) return;
+
       try {
-        const data = await fetchVideoProgress(params.video);
+        const { apiClient } = await import('@/lib/api-client');
+        const data = await apiClient.get<{ videoId: number | string; completed: boolean; watchedAt: string | null }>(
+          `/progress/${videoId}`
+        );
         if (data) {
           setApiCompletionStatus(data.completed);
           if (data.completed) {
             setCompletionDate(data.watchedAt);
-            dispatch(setVideoCompleted(true));
           }
         }
       } catch (err) {
@@ -143,42 +167,40 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     };
     
     checkVideoCompletion();
-  }, [params.video, dispatch]);
+  }, [params.video, progressVideoId]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 4. Handle Video Completion
   // ─────────────────────────────────────────────────────────────────────────────
   const handleCompleteVideo = useCallback(async () => {
     if (apiCompletionStatus) {
-      const videoQuiz = quizzes.find(quiz => quiz.videoId === Number(params.video));
-      if (videoQuiz) {
-        setPendingQuiz(videoQuiz);
-        setShowQuizConfirmation(true);
-      } else {
-        dispatch(addNotification({
-          type: 'info',
-          message: 'لا يوجد اختبار متاح لهذا الفيديو'
-        }));
-      }
+      dispatch(addNotification({
+        type: 'info',
+        message: 'لقد أكملت هذا الفيديو مسبقاً'
+      }));
       return;
     }
     
     try {
       setCompletingVideo(true);
-      await dispatch(completeVideo({ videoId: params.video })).unwrap();
+      const { apiClient } = await import('@/lib/api-client');
+      const videoId = progressVideoId ?? Number(params.video);
+      if (!Number.isFinite(videoId)) {
+        throw new Error('تعذر تحديد المحاضرة لتحديث التقدم');
+      }
+      await apiClient.post<{ videoId: number | string; completed: boolean; watchedAt: string | null }>(
+        '/progress/complete',
+        { videoId }
+      );
       setApiCompletionStatus(true);
       setCompletionDate(new Date().toISOString());
-      
-      const videoQuiz = quizzes.find(quiz => quiz.videoId === Number(params.video));
-      if (videoQuiz) {
-        setPendingQuiz(videoQuiz);
-        setShowQuizConfirmation(true);
-      } else {
-        dispatch(addNotification({
-          type: 'success',
-          message: 'تم إكمال المحاضرة بنجاح!'
-        }));
-      }
+      // Refresh quiz availability immediately after completion so the card does
+      // not depend on a page reload or stale metadata.
+      void dispatch(fetchQuizMeta(videoId));
+      dispatch(addNotification({
+        type: 'success',
+        message: 'تم إكمال المحاضرة بنجاح!'
+      }));
     } catch (err: any) {
       dispatch(addNotification({
         type: 'error',
@@ -187,21 +209,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     } finally {
       setCompletingVideo(false);
     }
-  }, [apiCompletionStatus, quizzes, params.video, dispatch]);
-
-  // Handle taking the quiz immediately
-  const handleTakeQuizNow = () => {
-    if (pendingQuiz) {
-      setShowQuizConfirmation(false);
-      router.push(`/course/${params.id}/video/${params.video}/quiz/${pendingQuiz.id}`);
-    }
-  };
-
-  // Handle continuing without taking the quiz
-  const handleTakeQuizLater = () => {
-    setShowQuizConfirmation(false);
-    setPendingQuiz(null);
-  };
+  }, [apiCompletionStatus, params.video, progressVideoId, dispatch]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 5. Render Video Player or State Placeholders
@@ -213,6 +221,30 @@ export default function VideoPage({ params }: { params: { id: string; video: str
       <div className="w-full aspect-video rounded-lg bg-surface-container-low flex flex-col items-center justify-center text-on-surface-variant">
         <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
         <p className="text-sm font-medium">جاري تحميل مشغل الفيديو...</p>
+      </div>
+    );
+  } else if (quizGate) {
+    const blockingVideoId = quizGate.previousVideoId ?? quizGate.currentVideoId;
+    playerContent = (
+      <div className="w-full aspect-video rounded-lg bg-amber-50 border border-amber-200 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 mb-4 shadow-sm">
+          <Lock className="w-8 h-8" />
+        </div>
+        <h3 className="text-xl font-bold text-amber-800 mb-2">هذه المحاضرة غير متاحة بعد</h3>
+        <p className="text-sm text-amber-900/80 max-w-md mb-3 leading-relaxed">
+          {quizGate.message}
+        </p>
+        <p className="text-sm font-semibold text-amber-900 mb-6">
+          نتيجتك: {quizGate.yourScore ?? 'لم تحاول بعد'} / المطلوب: {quizGate.requiredScore ?? '--'}%
+        </p>
+        {blockingVideoId != null && (
+          <Button
+            onClick={() => router.push(`/course/${params.id}/video/${blockingVideoId}/quiz`)}
+            className="rounded-md bg-[#207bff] px-6 py-2.5 text-base font-semibold text-white transition-colors hover:bg-[#1a66d9]"
+          >
+            الانتقال إلى الاختبار
+          </Button>
+        )}
       </div>
     );
   } else if (isNotEnrolled) {
@@ -298,6 +330,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   const videoDurationFormatted = bunnyVideo?.duration != null 
     ? formatBunnyDuration(bunnyVideo.duration) 
     : null;
+  const canTrackProgress = progressVideoId != null;
 
   return (
     <div className="mx-auto min-h-[80vh] w-full max-w-7xl px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
@@ -407,7 +440,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
               <div className="mt-6 flex justify-center border-t border-outline-variant/60 pt-6">
                 <Button
                   onClick={handleCompleteVideo}
-                  disabled={completingVideo || videoCompleted || apiCompletionStatus || isNotEnrolled}
+                  disabled={completingVideo || apiCompletionStatus || isNotEnrolled || !canTrackProgress}
                   className="rounded-md bg-primary px-8 py-6 text-lg text-white transition-all hover:bg-[#0057c0] disabled:opacity-70"
                 >
                   {completingVideo ? (
@@ -415,16 +448,29 @@ export default function VideoPage({ params }: { params: { id: string; video: str
                       <Loader2 className="ml-2 h-5 w-5 animate-spin" />
                       جاري التحميل...
                     </>
-                  ) : videoCompleted || apiCompletionStatus ? (
+                  ) : apiCompletionStatus ? (
                     <>
                       <CheckCircle className="ml-2 h-5 w-5" />
                       تم إكمال المحاضرة
                     </>
                   ) : (
-                    'أكملت مشاهدة المحاضرة؟'
+                    canTrackProgress ? 'أكملت مشاهدة المحاضرة؟' : 'لا يمكن تسجيل إكمال هذه المحاضرة حالياً'
                   )}
                 </Button>
               </div>
+
+              {!canTrackProgress && (
+                <p className="mt-3 text-center text-sm text-amber-700">
+                  هذه المحاضرة غير مرتبطة بسجل التقدم والاختبار بعد.
+                </p>
+              )}
+
+              {/* Quiz Section — QuizIntroCard fetches its own metadata and renders nothing when absent. */}
+              {apiCompletionStatus && (
+                <div className="border-t border-outline-variant/60 pt-5">
+                  <QuizIntroCard videoId={progressVideoId ?? params.video} courseId={params.id} />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -460,35 +506,6 @@ export default function VideoPage({ params }: { params: { id: string; video: str
           </div>
         </aside>
       </div>
-
-      {/* Quiz Confirmation Dialog */}
-      {showQuizConfirmation && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl text-center">
-            <h3 className="text-xl font-bold text-on-surface mb-4">
-              اختبار متاح!
-            </h3>
-            <p className="text-on-surface-variant mb-6 leading-relaxed">
-              يوجد اختبار متاح لهذه المحاضرة. هل ترغب في بدء الاختبار الآن أم المتابعة لاحقاً؟
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Button
-                onClick={handleTakeQuizNow}
-                className="bg-[#16a34a] hover:bg-[#15803d] text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                أخذ الاختبار الآن
-              </Button>
-              <Button
-                onClick={handleTakeQuizLater}
-                variant="outline"
-                className="border-outline-variant text-on-surface hover:bg-surface-container px-6 py-2 rounded-lg transition-colors"
-              >
-                لاحقاً
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
