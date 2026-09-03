@@ -26,6 +26,7 @@ export class BunnyVideoError extends Error {
     public readonly code: BunnyErrorCode,
     message: string,
     public readonly httpStatus: number,
+    public readonly body?: unknown,
   ) {
     super(message);
     this.name = 'BunnyVideoError';
@@ -133,6 +134,7 @@ export async function fetchBunnyPlaybackUrl(
         'VIDEO_ACCESS_DENIED',
         'يجب أن تكون مشتركًا في هذا الكورس لمشاهدة الفيديوهات',
         403,
+        err.body,
       );
     }
     if (err instanceof NotFoundError) {

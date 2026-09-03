@@ -4,14 +4,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { EnrollmentCard } from '@/components/enrollment-card';
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Play, Check, CheckCircle, Award, Clock, Loader2, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Play, Check, CheckCircle, Clock, Loader2, AlertTriangle } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { 
-  fetchQuizzesByCourse, 
-  selectQuizzes, 
-  hydrateVideoProgress,
-  fetchQuizStatus,
-} from '@/store/slices/quizSlice';
+// Quiz metadata is loaded on the video page after completion.
 import {
   fetchAssignmentStatus,
   selectAssignments,
@@ -19,6 +14,7 @@ import {
 } from '@/store/slices/assignmentSlice';
 
 import { fetchCourseById } from '@/services/courseService';
+import type { VideoProgress } from '@/services/courseService';
 import { fetchBunnyCourseVideos, formatBunnyDuration } from '@/services/bunnyVideoService';
 import type { BunnyVideo } from '@/types/bunny';
 
@@ -31,17 +27,10 @@ export default function Page({ params }: { params: { id: string } }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [openVideoIds, setOpenVideoIds] = useState<Record<string, boolean>>({});
   const [courseDuration, setCourseDuration] = useState<string>('0');
-  const [totalQuestions, setTotalQuestions] = useState<number>(0);
+  const [videoProgressMap, setVideoProgressMap] = useState<Record<string, VideoProgress>>({});
   
   // Bunny Stream videos for this course
   const [bunnyVideos, setBunnyVideos] = useState<BunnyVideo[]>([]);
-  
-  // Get quizzes from Redux store
-  const quizzes = useAppSelector(selectQuizzes);
-  
-  // Get all video progress and quiz statuses
-  const videoProgressMap = useAppSelector(state => state.quiz.videoProgressMap);
-  const quizStatusMap = useAppSelector(state => state.quiz.quizStatuses);
   
   // Get assignments from Redux store
   const assignments = useAppSelector(selectAssignments);
@@ -85,12 +74,6 @@ export default function Page({ params }: { params: { id: string } }) {
       : `${index + 1}`;
   };
 
-  // Helper function to find a quiz for a specific video
-  const findQuizForVideo = useCallback((videoId: number | string) => {
-    const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
-    return quizzes.find(quiz => quiz.videoId === videoIdNum) || null;
-  }, [quizzes]);
-  
   // Helper function to find assignments for a specific video
   const findAssignmentsForVideo = useCallback((videoId: number | string) => {
     const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
@@ -115,42 +98,28 @@ export default function Page({ params }: { params: { id: string } }) {
   }, []);
 
   // Helper function to calculate total course duration and questions
-  const calculateCourseStats = useCallback((courseData: any, bunnyVids: BunnyVideo[], quizzesList: any[]) => {
+  const calculateCourseStats = useCallback((courseData: any, bunnyVids: BunnyVideo[]) => {
     const totalDurationInSeconds = (bunnyVids && bunnyVids.length > 0)
       ? bunnyVids.reduce((total, bv) => total + (bv.duration || 0), 0)
       : (courseData?.videos?.reduce((total: number, video: any) => total + (video.duration || 0), 0) || 0);
 
-    const totalQuestionsCount = quizzesList.reduce((total, quiz) => {
-      return total + (quiz.questionCount || 0);
-    }, 0);
-    
     setCourseDuration(formatDuration(totalDurationInSeconds));
-    setTotalQuestions(totalQuestionsCount);
   }, [formatDuration]);
 
-  // Check quiz status and assignment status when needed.
-  const checkVideoAndQuizStatus = useCallback(async (videoId: string | number) => {
-    const quiz = findQuizForVideo(videoId);
-    if (quiz) {
-      dispatch(fetchQuizStatus(quiz.id));
-    }
-    
+  // Assignment status is loaded from the course overview; quiz metadata is
+  // loaded by the video page after the video is completed.
+  const checkVideoStatus = useCallback(async (videoId: string | number) => {
     const videoAssignments = findAssignmentsForVideo(videoId);
     if (videoAssignments.length > 0) {
       videoAssignments.forEach(assignment => {
         dispatch(fetchAssignmentStatus(assignment.id));
       });
     }
-  }, [dispatch, findQuizForVideo, findAssignmentsForVideo]);
+  }, [dispatch, findAssignmentsForVideo]);
 
   // Helper function to get video progress
   const getVideoProgress = (videoId: string | number) => {
-    return videoProgressMap[videoId] || { completed: false, watchedAt: null };
-  };
-
-  // Helper function to get quiz status
-  const getQuizStatus = (quizId: number) => {
-    return quizStatusMap[quizId] || null;
+    return videoProgressMap[String(videoId)] || { videoId, completed: false, watchedAt: null };
   };
   
   // Helper function to get assignment status
@@ -172,11 +141,28 @@ export default function Page({ params }: { params: { id: string } }) {
           fetchBunnyCourseVideos(params.id),
         ]);
         setCourseData(data);
-        setBunnyVideos(bunnyData);
+        setVideoProgressMap(Object.fromEntries(
+          (data.progress ?? []).map((progress) => [String(progress.videoId), progress]),
+        ));
+
+        // Unenrolled students cannot access the Bunny catalog endpoint, but the
+        // course endpoint still exposes public video metadata and thumbnails.
+        const visibleVideos = bunnyData.length > 0
+          ? bunnyData
+          : (data.videos ?? []).map((video, index) => ({
+              id: video.id,
+              courseId: Number(params.id),
+              title: video.title,
+              status: 'READY' as const,
+              duration: video.duration ?? null,
+              width: null,
+              height: null,
+              thumbnailUrl: video.thumbnail ?? null,
+              createdAt: video.position != null ? String(video.position) : String(index),
+            }));
+        setBunnyVideos(visibleVideos);
 
         setIsEnrolled(!!data.enrollment);
-        dispatch(hydrateVideoProgress(data.progress ?? []));
-
         // Initialize video accordions
         const initialOpenState: Record<string, boolean> = {};
         bunnyData.forEach((bv: BunnyVideo) => {
@@ -196,24 +182,23 @@ export default function Page({ params }: { params: { id: string } }) {
     };
 
     loadCourseAndEnrollment();
-    dispatch(fetchQuizzesByCourse(params.id));
   }, [params.id, dispatch]);
   
   // Fetch status for videos when course data is loaded and user is enrolled
   useEffect(() => {
     if (isEnrolled && bunnyVideos.length > 0) {
       bunnyVideos.forEach((bv) => {
-        checkVideoAndQuizStatus(bv.id);
+        checkVideoStatus(bv.id);
       });
     }
-  }, [bunnyVideos, isEnrolled, checkVideoAndQuizStatus]);
+  }, [bunnyVideos, isEnrolled, checkVideoStatus]);
 
-  // Calculate course statistics when course data and quizzes are loaded
+  // Calculate course statistics when course data and videos are loaded.
   useEffect(() => {
-    if (courseData && quizzes.length >= 0) {
-      calculateCourseStats(courseData, bunnyVideos, quizzes);
+    if (courseData) {
+      calculateCourseStats(courseData, bunnyVideos);
     }
-  }, [courseData, bunnyVideos, quizzes, calculateCourseStats]);
+  }, [courseData, bunnyVideos, calculateCourseStats]);
 
   if (isLoading) return <div className="text-center p-8">جاري التحميل...</div>;
   if (error) return <div className="text-center p-8 text-red-500">خطأ: {error}</div>;
@@ -241,7 +226,7 @@ export default function Page({ params }: { params: { id: string } }) {
                     فيديوهات {totalVideosCount} +
                   </span>
                   <span className="bg-white/20 text-white px-4 py-1 rounded-full text-sm">
-                    امتحانات {quizzes.length || 0} +
+                    امتحانات {courseData.exams_count || 0} +
                   </span>
                 </div>
               </div>
@@ -265,8 +250,6 @@ export default function Page({ params }: { params: { id: string } }) {
                   const isProcessing = bv.status === 'PROCESSING' || bv.status === 'UPLOADING' || bv.status === 'PENDING';
                   const isFailed = bv.status === 'FAILED';
                   const videoProgress = getVideoProgress(bv.id);
-                  const quiz = findQuizForVideo(bv.id);
-                  const quizStatus = quiz ? getQuizStatus(quiz.id) : null;
                   const videoAssignments = findAssignmentsForVideo(bv.id);
 
                   return (
@@ -384,65 +367,6 @@ export default function Page({ params }: { params: { id: string } }) {
                                 )}
                               </div>
                             </div>
-
-                            {/* Quiz Card - if there's a quiz for this video */}
-                            {quiz && (
-                              <div className={`flex items-center justify-between p-3 rounded-md
-                                ${quizStatus?.passed 
-                                  ? "bg-green-50 dark:bg-green-900/20 border-green-500" 
-                                  : quizStatus?.taken 
-                                  ? "bg-red-50 dark:bg-red-900/20 border-red-500" 
-                                  : "bg-gray-50 dark:bg-gray-700 border-gray-400"}`}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {quizStatus?.passed ? (
-                                    <Award size={16} className="text-green-600" />
-                                  ) : quizStatus?.taken ? (
-                                    <Clock size={16} className="text-red-500" />
-                                  ) : (
-                                    <Award size={16} className="text-gray-500" />
-                                  )}
-                                  <span className="font-medium">{quiz.title}</span>
-                                  
-                                  {quizStatus?.taken && (
-                                    <span className={`text-xs ${quizStatus?.passed ? "text-green-500" : "text-red-500"}`}>
-                                      {quizStatus?.passed 
-                                        ? `نجاح - ${quizStatus.score}%` 
-                                        : `رسوب - ${quizStatus.score}%`}
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                {isEnrolled && videoProgress.completed && (
-                                  <Link
-                                    href={`/course/${params.id}/video/${bv.id}/quiz/${quiz.id}`}
-                                    className={`hover:underline text-sm flex items-center gap-1
-                                      ${quizStatus?.passed 
-                                        ? "text-green-600" 
-                                        : quizStatus?.taken 
-                                        ? "text-red-500" 
-                                        : "text-[#61B846]"}`}
-                                  >
-                                    {quizStatus?.passed ? (
-                                      <>
-                                        <Check size={16} />
-                                        عرض النتيجة
-                                      </>
-                                    ) : quizStatus?.taken ? (
-                                      <>
-                                        <Clock size={16} />
-                                        إعادة الاختبار
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Award size={16} />
-                                        بدء الاختبار
-                                      </>
-                                    )}
-                                  </Link>
-                                )}
-                              </div>
-                            )}
 
                             {/* Assignment Cards - if there are assignments for this video */}
                             {videoAssignments.map(assignment => {
@@ -571,7 +495,7 @@ export default function Page({ params }: { params: { id: string } }) {
             courseTitle={courseData.title}
             coursePrice={courseData.price || "مجاني"}
             courseDuration={courseDuration}
-            questionsCount={totalQuestions.toString()}
+            questionsCount={String(courseData.questions_count || 0)}
             className="sticky top-24"
             onEnrollSuccess={() => setIsEnrolled(true)}
           />

@@ -7,11 +7,18 @@
  *  - Automatically handles 401 Unauthorized by attempting a silent token refresh (/auth/refresh-token or /auth/refresh)
  *  - Formats network failures (TypeError: Failed to fetch) into readable Arabic error messages
  *  - Standardizes parsing for `{ success: boolean, data: any, message?: string, error?: string }`
+ *
+ * Phase 1b changes:
+ *  - Parse JSON body BEFORE branching on 403/404/409 so callers can read structured error payloads
+ *    (e.g., quiz gate 403s carry quizId, yourScore, requiredScore in their body)
+ *  - Added explicit 409 branch (ConflictError) for "attempt already graded" responses
+ *  - 401 silent-refresh flow unchanged; only the final thrown AuthError now also carries body
  */
 
 import {
   ApiError,
   AuthError,
+  ConflictError,
   ForbiddenError,
   NotFoundError,
   RateLimitError,
@@ -99,6 +106,18 @@ async function attemptSilentRefresh(): Promise<boolean> {
   return false;
 }
 
+/**
+ * Safely attempt to parse a JSON response body.
+ * Returns `null` if the body is empty or cannot be parsed as JSON.
+ */
+async function safeParseJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
 async function request<T>(
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   path: string,
@@ -126,7 +145,7 @@ async function request<T>(
     );
   }
 
-  // Handle 429 Too Many Requests
+  // Handle 429 Too Many Requests (no body needed)
   if (response.status === 429) {
     const retryAfter = response.headers.get('Retry-After');
     const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : null;
@@ -141,6 +160,8 @@ async function request<T>(
   }
 
   // Handle 401 Unauthorized (Silent Token Refresh Interceptor)
+  // NOTE: We do NOT parse body here before the refresh attempt — if the silent
+  // refresh succeeds we never need the error body. Only parse after final failure.
   if (response.status === 401) {
     const isRefreshPath = path.includes('/auth/refresh');
     if (!isRefreshPath && !_isRetry) {
@@ -151,6 +172,8 @@ async function request<T>(
       }
     }
 
+    // Final 401 — parse body for any extra context, then throw
+    const errBody = await safeParseJson(response);
     clearAccessToken();
     if (typeof window !== 'undefined') {
       document.cookie = 'isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
@@ -160,18 +183,33 @@ async function request<T>(
         window.location.replace('/login');
       }
     }
-    throw new AuthError();
+    throw new AuthError(undefined, errBody);
   }
 
+  // For 403/404/409 — parse JSON body FIRST so callers can read structured payloads
+  // (e.g., quiz gate 403: { message, quizId, yourScore, requiredScore })
   if (response.status === 403) {
-    throw new ForbiddenError();
+    const errBody = await safeParseJson(response);
+    const errObj = errBody as { message?: string; error?: string } | null;
+    const errMsg = errObj?.message || errObj?.error || 'ليس لديك صلاحية للوصول إلى هذا المورد.';
+    throw new ForbiddenError(errMsg, errBody);
   }
 
   if (response.status === 404) {
-    throw new NotFoundError();
+    const errBody = await safeParseJson(response);
+    const errObj = errBody as { message?: string; error?: string } | null;
+    const errMsg = errObj?.message || errObj?.error || 'لم يتم العثور على المورد المطلوب.';
+    throw new NotFoundError(errMsg, errBody);
   }
 
-  // Parse JSON response body
+  if (response.status === 409) {
+    const errBody = await safeParseJson(response);
+    const errObj = errBody as { message?: string; error?: string } | null;
+    const errMsg = errObj?.error || errObj?.message || 'تعارض في العملية.';
+    throw new ConflictError(errMsg, errBody);
+  }
+
+  // Parse JSON response body for all other statuses
   let resBody: unknown;
   try {
     resBody = await response.json();
@@ -187,7 +225,7 @@ async function request<T>(
     const errObj = resBody as { success?: boolean; error?: string; message?: string };
     const errMsg =
       errObj?.error || errObj?.message || `خطأ من الخادم (status ${response.status})`;
-    throw new ApiError(errMsg, response.status);
+    throw new ApiError(errMsg, response.status, resBody);
   }
 
   // Unwrap `{ success: true, data: T }` envelope if present

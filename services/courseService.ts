@@ -8,7 +8,6 @@
 import { apiClient } from '@/lib/api-client';
 import { isMockCourse, mockCourse, MOCK_COURSE_ID } from '@/lib/mock/course';
 import { PaginationMeta } from '@/types/api';
-import type { VideoProgress } from '@/services/quizService';
 
 export { MOCK_COURSE_ID };
 
@@ -41,6 +40,12 @@ export interface CourseEnrollment {
   isCompleted: boolean;
   lastAccess: string;
   createdAt: string;
+}
+
+export interface VideoProgress {
+  videoId: number | string;
+  completed: boolean;
+  watchedAt: string | null;
 }
 
 export interface CourseDetail extends CourseListItem {

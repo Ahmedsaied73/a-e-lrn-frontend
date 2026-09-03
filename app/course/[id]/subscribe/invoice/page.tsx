@@ -4,21 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Play, Check, CheckCircle, Award, Clock, ArrowLeft, Shield, CreditCard } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { 
-  fetchQuizzesByCourse, 
-  selectQuizzes, 
-  fetchVideoProgress, 
-  fetchQuizStatus,
-  selectVideoProgress,
-  selectQuizStatus
-} from '@/store/slices/quizSlice';
+import { ChevronDown, ChevronUp, Play, Clock, ArrowLeft, Shield, CreditCard } from 'lucide-react';
+import { useAppSelector } from '@/store/hooks';
+// Quiz metadata is loaded on the video page after completion.
 import {
-  fetchAssignmentsByVideo,
-  fetchAssignmentStatus,
   selectAssignments,
-  fetchAssignmentsByCourse
 } from '@/store/slices/assignmentSlice';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,26 +18,16 @@ import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 
 export default function Page({ params }: { params: { id: string } }) {
-  const dispatch = useAppDispatch();
   const router = useRouter();
   const [courseData, setCourseData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
   const [openVideoIds, setOpenVideoIds] = useState<Record<string, boolean>>({});
   
-  // Get quizzes from Redux store
-  const quizzes = useAppSelector(selectQuizzes);
-  
-  // Get all video progress and quiz statuses
-  const videoProgressMap = useAppSelector(state => state.quiz.videoProgressMap);
-  const quizStatusMap = useAppSelector(state => state.quiz.quizStatuses);
-  
   // Get assignments from Redux store
   const assignments = useAppSelector(selectAssignments);
-  const assignmentStatusMap = useAppSelector(state => state.assignment.assignmentStatuses);
 
   // Function to toggle a specific video dropdown
   const toggleVideo = (videoId: string) => {
@@ -87,12 +67,6 @@ export default function Page({ params }: { params: { id: string } }) {
       : `${index + 1}`;
   };
 
-  // Helper function to find a quiz for a specific video
-  const findQuizForVideo = useCallback((videoId: number | string) => {
-    const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
-    return quizzes.find(quiz => quiz.videoId === videoIdNum) || null;
-  }, [quizzes]);
-  
   // Helper function to find assignments for a specific video
   const findAssignmentsForVideo = useCallback((videoId: number | string) => {
     const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
@@ -100,20 +74,6 @@ export default function Page({ params }: { params: { id: string } }) {
   }, [assignments]);
 
   // Helper function to get assignment status
-  const getAssignmentStatus = useCallback((assignmentId: number) => {
-    return assignmentStatusMap[assignmentId] || { taken: false, passed: false, score: 0 };
-  }, [assignmentStatusMap]);
-
-  // Helper function to get video progress
-  const getVideoProgress = useCallback((videoId: string | number) => {
-    return videoProgressMap[videoId] || { completed: false, watchedAt: null };
-  }, [videoProgressMap]);
-
-  // Helper function to get quiz status
-  const getQuizStatus = useCallback((quizId: number) => {
-    return quizStatusMap[quizId] || { taken: false, passed: false, score: 0 };
-  }, [quizStatusMap]);
-
   useEffect(() => {
     const loadCourseData = async () => {
       try {
@@ -146,10 +106,7 @@ export default function Page({ params }: { params: { id: string } }) {
     };
 
     loadCourseData();
-    
-    // Fetch quizzes for this course
-    dispatch(fetchQuizzesByCourse(params.id));
-  }, [params.id, dispatch, router]);
+  }, [params.id, router]);
 
   const handleSubscription = async () => {
     if (isEnrolled) {
@@ -209,7 +166,7 @@ export default function Page({ params }: { params: { id: string } }) {
               </div>
               <div className="flex justify-between">
                 <span>عدد الامتحانات:</span>
-                <span>{quizzes.length || 0}</span>
+                <span>{courseData.exams_count || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span>عدد الواجبات:</span>
@@ -291,7 +248,7 @@ export default function Page({ params }: { params: { id: string } }) {
                     فيديوهات {courseData.videos?.length || 0} +
                   </span>
                   <span className="bg-white/20 text-white px-4 py-1 rounded-full text-sm">
-                    امتحانات {quizzes.length || 0} +
+                    امتحانات {courseData.exams_count || 0} +
                   </span>
                 </div>
               </div>
@@ -308,9 +265,6 @@ export default function Page({ params }: { params: { id: string } }) {
             <div className="divide-y dark:divide-gray-700">
               {courseData.videos && courseData.videos.length > 0 ? (
                 courseData.videos.map((video: any, index: number) => {
-                  // Find the quiz for this video
-                  const quiz = findQuizForVideo(video.id);
-                  
                   return (
                     <div key={video.id} className="transition-colors">
                       <div 
@@ -345,19 +299,6 @@ export default function Page({ params }: { params: { id: string } }) {
                                 متاح بعد الاشتراك
                               </span>
                             </div>
-                            
-                            {/* Quiz Card - if there's a quiz for this video */}
-                            {quiz && (
-                              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-gray-400">
-                                <div className="flex items-center gap-2">
-                                  <Award size={16} className="text-gray-500" />
-                                  <span className="font-medium">{quiz.title}</span>
-                                </div>
-                                <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
-                                  متاح بعد الاشتراك
-                                </span>
-                              </div>
-                            )}
                             
                             {/* Assignment Cards - if there are assignments for this video */}
                             {findAssignmentsForVideo(video.id).map(assignment => {

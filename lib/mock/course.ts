@@ -1,6 +1,48 @@
-import type { CourseDetail } from '@/services/courseService';
-import type { Quiz, QuizResult, QuizStatus, VideoProgress } from '@/services/quizService';
+import type { CourseDetail, VideoProgress } from '@/services/courseService';
 import type { Assignment, AssignmentStatus } from '@/services/assignmentService';
+
+interface MockQuizQuestion {
+  id: number;
+  text: string;
+  options: string[];
+  points: number;
+}
+
+interface MockQuiz {
+  id: number;
+  title: string;
+  description: string;
+  isFinal: boolean;
+  passingScore: number;
+  videoId: number;
+  videoTitle: string;
+  questionCount: number;
+  createdAt: string;
+  questions?: MockQuizQuestion[];
+}
+
+interface MockQuizStatus {
+  quizId: number;
+  title: string;
+  taken: boolean;
+  status: string | null;
+  score: number | null;
+  passingScore: number;
+  passed: boolean;
+  submittedAt: string | null;
+}
+
+interface MockQuizResult {
+  quizId: number;
+  title: string;
+  correctAnswers: number;
+  totalQuestions: number;
+  score: number;
+  passingScore: number;
+  passed: boolean;
+  submittedAt: string;
+  results: unknown[];
+}
 
 export const MOCK_COURSE_ID = 'mock';
 
@@ -58,7 +100,7 @@ export const mockCourse: CourseDetail = {
   ],
 };
 
-export const mockQuizzes: Quiz[] = [
+export const mockQuizzes: MockQuiz[] = [
   {
     id: 9001,
     title: 'اختبار الكيمياء العضوية',
@@ -83,7 +125,7 @@ export const mockQuizzes: Quiz[] = [
   },
 ];
 
-export const mockQuizDetails: Record<number, Quiz> = {
+export const mockQuizDetails: Record<number, MockQuiz> = {
   9001: {
     ...mockQuizzes[0],
     questions: [
@@ -150,7 +192,7 @@ export function getMockVideoProgress(videoId: string | number): VideoProgress {
   };
 }
 
-export function getMockQuizStatus(quizId: number): QuizStatus {
+export function getMockQuizStatus(quizId: number): MockQuizStatus {
   const quiz = mockQuizzes.find((q) => q.id === quizId);
   return {
     quizId,
@@ -177,7 +219,7 @@ export function getMockAssignmentStatus(assignmentId: number): AssignmentStatus 
   };
 }
 
-export function getMockQuizResult(quizId: number): QuizResult {
+export function getMockQuizResult(quizId: number): MockQuizResult {
   const quiz = mockQuizDetails[quizId];
   const total = quiz?.questions?.length ?? 0;
   return {
