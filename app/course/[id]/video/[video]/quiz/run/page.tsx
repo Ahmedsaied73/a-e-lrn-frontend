@@ -12,6 +12,15 @@ interface PageProps {
   params: { id: string; video: string };
 }
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return fallback;
+}
+
 export default function QuizRunPage({ params }: PageProps) {
   const dispatch = useDispatch<AppDispatch>();
   const activeAttempt = useSelector(selectActiveAttempt);
@@ -33,8 +42,8 @@ export default function QuizRunPage({ params }: PageProps) {
       try {
         const data = await dispatch(startQuizAttempt(params.video)).unwrap();
         if (!cancelled) setStartData(data);
-      } catch (err: any) {
-        if (!cancelled) setErrorMsg(err?.message || "تعذر بدء الاختبار");
+      } catch (err: unknown) {
+        if (!cancelled) setErrorMsg(getErrorMessage(err, "تعذر بدء الاختبار"));
       }
     };
 
