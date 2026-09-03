@@ -85,6 +85,34 @@ export interface SaveQuizData {
   saved: boolean;
 }
 
+export interface AdminQuizAttempt {
+  id: number;
+  quizId: number;
+  userId: number;
+  attemptNumber: number;
+  status: AttemptStatus;
+  startedAt: string;
+  submittedAt: string | null;
+  scorePercent: number | null;
+  earnedPoints: number | null;
+  totalPoints: number | null;
+  autoSubmitted: boolean;
+  user?: { id: number; name: string | null; email: string };
+}
+
+export interface UpsertQuizInput {
+  title: string;
+  timeLimitSec: number | null;
+  passingScore: number;
+  surveyJson: Record<string, unknown>;
+  answerKey: Record<string, unknown>;
+}
+
+export interface GradeAttemptInput {
+  essayScores: Record<string, number>;
+  essayFeedback?: Record<string, string>;
+}
+
 // ---------------------------------------------------------------------------
 // POST /quizzes/attempts/:id/submit
 // ---------------------------------------------------------------------------

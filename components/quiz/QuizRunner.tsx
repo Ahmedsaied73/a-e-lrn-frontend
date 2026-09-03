@@ -76,8 +76,8 @@ function isSafeHtmlUrl(value: string): boolean {
 }
 
 /** Keep authored display HTML useful while preventing script and event-handler injection. */
-function sanitizeQuizHtml(html: string): string {
-  if (typeof window === "undefined" || typeof DOMParser === "undefined") {
+function sanitizeQuizHtml(html: string, allowDomParser: boolean): string {
+  if (!allowDomParser || typeof window === "undefined" || typeof DOMParser === "undefined") {
     return html.replace(/[&<>\"']/g, (character) => ({
       "&": "&amp;",
       "<": "&lt;",
@@ -151,7 +151,12 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const submitLockRef = useRef(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const { isSaving, saveError } = useQuizAutosave({
     attemptId: startData.attemptId,
@@ -343,8 +348,21 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
       return (
         <div
           className="prose prose-slate max-w-none text-slate-700"
-          dangerouslySetInnerHTML={{ __html: sanitizeQuizHtml(q.html ?? "") }}
+          dangerouslySetInnerHTML={{ __html: sanitizeQuizHtml(q.html ?? "", isHydrated) }}
         />
+      );
+    }
+
+    if (q.type === "image") {
+      const imageLink = typeof q.imageLink === "string" && isSafeHtmlUrl(q.imageLink)
+        ? q.imageLink
+        : null;
+      return imageLink ? (
+        <img src={imageLink} alt={q.title ?? "صورة السؤال"} className="mx-auto max-h-96 rounded-xl object-contain" />
+      ) : (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-sm text-amber-800">
+          تعذر عرض صورة السؤال.
+        </div>
       );
     }
 
