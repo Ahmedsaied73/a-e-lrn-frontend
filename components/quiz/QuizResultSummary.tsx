@@ -100,7 +100,7 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
   const correctCount = mcqQuestions.filter((q) => q.isCorrect).length;
   const wrongCount = mcqQuestions.filter((q) => !q.isCorrect).length;
   const timeTaken = formatDuration(result.startedAt, result.submittedAt);
-  const percent = result.scorePercent ?? 0;
+  const percent = result.scorePercent;
   const passed = result.passed;
 
   const handleRetake = async () => {
@@ -151,7 +151,7 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
 
       {/* Score ring */}
       <div className="mt-6 flex flex-col items-center justify-center">
-        <ScoreRing percent={percent} earnedPoints={result.earnedPoints} totalPoints={result.totalPoints} />
+        <ScoreRing percent={percent ?? 0} earnedPoints={result.earnedPoints} totalPoints={result.totalPoints} />
       </div>
 
       {/* Success/fail notification banner */}

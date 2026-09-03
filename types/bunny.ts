@@ -31,6 +31,8 @@ export interface BunnyVideo {
   id: number;
   courseId: number;
   title: string;
+  /** Bunny's remote GUID, used only to resolve legacy GUID-based links. */
+  bunnyVideoId?: string;
   status: BunnyVideoStatus;
 
   /** Video duration in seconds. Null until the video reaches READY status. */

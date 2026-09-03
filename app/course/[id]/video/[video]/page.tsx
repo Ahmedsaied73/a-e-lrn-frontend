@@ -26,6 +26,15 @@ import { fetchCourseById } from '@/services/courseService';
 import type { BunnyPlaybackData, BunnyVideo } from '@/types/bunny';
 import type { QuizGate403 } from '@/types/quiz';
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+  return fallback;
+}
+
 export default function VideoPage({ params }: { params: { id: string; video: string } }) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -70,7 +79,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
 
       // Find matching video by numeric ID or Bunny GUID string
       const foundVideo = courseVideos.find(
-        v => v.id === Number(params.video) || (v as any).bunnyVideoId === params.video
+        v => v.id === Number(params.video) || v.bunnyVideoId === params.video
       );
 
       if (foundVideo) {
@@ -90,7 +99,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
 
       // Fetch video assignments
       dispatch(fetchAssignmentsByVideo(String(targetVideoId)));
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof BunnyVideoError) {
         if (err.code === 'VIDEO_ACCESS_DENIED') {
           const body = err.body;
@@ -105,8 +114,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
           return;
         }
       }
-      const message = err?.message || "حدث خطأ أثناء تحميل مشغل الفيديو";
-      setError(message);
+      setError(getErrorMessage(err, "حدث خطأ أثناء تحميل مشغل الفيديو"));
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +140,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
 
     const timer = setTimeout(async () => {
       try {
-        const refreshed = await fetchBunnyPlaybackUrl(params.video);
+        const refreshed = await fetchBunnyPlaybackUrl(bunnyVideo?.id ?? params.video);
         setPlaybackData(refreshed);
       } catch (err) {
         console.warn('Failed to silently refresh Bunny video playback token:', err);
@@ -140,7 +148,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [playbackData?.expiresAt, params.video]);
+  }, [bunnyVideo?.id, playbackData?.expiresAt, params.video]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 3. Check Video Completion Status
@@ -201,10 +209,10 @@ export default function VideoPage({ params }: { params: { id: string; video: str
         type: 'success',
         message: 'تم إكمال المحاضرة بنجاح!'
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       dispatch(addNotification({
         type: 'error',
-        message: err.message || 'حدث خطأ أثناء تحديث حالة الفيديو'
+        message: getErrorMessage(err, 'حدث خطأ أثناء تحديث حالة الفيديو')
       }));
     } finally {
       setCompletingVideo(false);
