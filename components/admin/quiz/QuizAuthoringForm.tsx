@@ -51,6 +51,8 @@ function errorMessage(error: unknown): string {
 function parseChoices(value: string) {
   return value
     .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
     .map((line, index) => {
       const [rawValue, ...rawText] = line.split("|");
       const choiceValue = rawValue.trim() || String(index + 1);

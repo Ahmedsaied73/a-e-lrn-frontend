@@ -158,6 +158,7 @@ const quizSlice = createSlice({
     builder
       .addCase(fetchQuizMeta.pending, (state) => {
         state.metaStatus = 'loading';
+        state.meta = null;
         state.error = null;
       })
       .addCase(fetchQuizMeta.fulfilled, (state, action) => {
