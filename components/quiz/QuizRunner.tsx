@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { submitQuizAttempt, fetchQuizResult, selectActiveAttempt, selectSubmitResult } from "@/store/slices/quizSlice";
 import { useQuizTimer } from "@/hooks/useQuizTimer";
+import { useQuizAutosave } from "@/hooks/useQuizAutosave";
 import { ApiError } from "@/lib/errors";
 import type { StartQuizData } from "@/types/quiz";
 import { Flag, ChevronRight, ChevronLeft, CheckCircle, Clock, Loader2, AlertTriangle } from "lucide-react";
@@ -145,12 +146,35 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
 
   const questions = extractQuestions(startData.quiz.surveyJson);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [answers, setAnswers] = useState<Record<string, unknown>>(() => startData.responses ?? {});
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const submitLockRef = useRef(false);
+
+  const { isSaving, saveError } = useQuizAutosave({
+    attemptId: startData.attemptId,
+    responses: answers,
+    enabled: startData.status === "IN_PROGRESS" && !isSubmitting,
+  });
+
+  useEffect(() => {
+    if (!startData.resumed) return;
+    setAnswers(startData.responses ?? {});
+  }, [startData.attemptId, startData.resumed, startData.responses]);
+
+  useEffect(() => {
+    if (startData.status !== "IN_PROGRESS") return;
+
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [startData.status]);
 
   // Prevent double submission
   const doSubmit = useCallback(async (auto: boolean) => {
@@ -375,6 +399,12 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
               </div>
             )}
 
+            {startData.status === "IN_PROGRESS" && (
+              <span className="text-xs text-slate-500 hidden sm:inline">
+                {isSaving ? "جاري حفظ الإجابات..." : "يتم حفظ الإجابات تلقائياً"}
+              </span>
+            )}
+
             {/* Submit button */}
             <button
               onClick={() => setShowConfirm(true)}
@@ -424,10 +454,17 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
       {/* ─── Main Question Area ─── */}
       <main className="flex-grow py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          {submitError && (
+           {submitError && (
             <div className="mb-4 flex items-center gap-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-4 py-3">
               <AlertTriangle className="w-5 h-5 shrink-0" />
               <p className="text-sm font-medium">{submitError}</p>
+             </div>
+           )}
+
+          {saveError && (
+            <div className="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              <p className="text-sm font-medium">{saveError} سيُعاد الحفظ تلقائياً عند تعديل الإجابات.</p>
             </div>
           )}
 
