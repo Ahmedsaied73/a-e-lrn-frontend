@@ -84,17 +84,20 @@ async function attemptSilentRefresh(): Promise<boolean> {
       });
 
       if (res.ok) {
-        let body: any = null;
+        let body: unknown = null;
         try {
           body = await res.json();
         } catch {
           // Response body might be empty or non-JSON if cookies were set directly
         }
 
-        if (body?.token) {
-          setAccessToken(body.token);
-        } else if (body?.data?.token) {
-          setAccessToken(body.data.token);
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          const parsedBody = body as { token?: unknown; data?: { token?: unknown } };
+          if (typeof parsedBody.token === 'string' && parsedBody.token) {
+            setAccessToken(parsedBody.token);
+          } else if (typeof parsedBody.data?.token === 'string' && parsedBody.data.token) {
+            setAccessToken(parsedBody.data.token);
+          }
         }
         return true;
       }
@@ -137,7 +140,7 @@ async function request<T>(
       credentials: 'include', // ⚠️ MANDATORY: Enables HttpOnly Cookie transmission
       signal,
     });
-  } catch (netErr: any) {
+  } catch (_netErr: unknown) {
     // Friendly error for CORS failures, server down, or offline status
     throw new ApiError(
       'تعذر الاتصال بالخادم، يرجى التأكد من تشغيل الخادم والتأكد من الاتصال بالشبكة.',
