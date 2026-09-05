@@ -139,3 +139,52 @@ The user plans to REMOVE/replace the admin sites. Keep the `app/admin/layout.tsx
 - Verify with `npx tsc --noEmit`.
 - Messages: keep the legacy `'quizId' in body` fallback ONLY for older backend tolerance.
 - The legacy `Video`/assignments gate checks on the backend remain — they do NOT render in FE (Bunny flow). Do not "fix" the backend gate from the FE side.
+
+---
+
+## 9. Quiz-fix round (backend changes the FE now depends on)
+
+Committed on backend `Dev` (quiz/exams fix round). Read before editing anything in `components/quiz/*`, `store/slices/quizSlice.ts`, or the achievements pages.
+
+### 9.1 `GET /quizzes/videos/:videoId/meta` — always carries real totals
+
+New **required** fields (always present when `exists: true`): `totalQuestions`, `totalPoints` (computed from the SurveyJS JSON). `types/quiz.ts` marks them required — do not make optional again. The intro card renders them (`2 سؤال` / `100 درجة`) plus a live `الدرجة الحالية {bestScore}%` badge with a `ناجح` / `لم يُجتز بعد` chip.
+
+### 9.2 Start-block 409 codes
+
+`POST /quizzes/videos/:videoId/start` can return 409 with these `code` values (error body keeps `{ success: false, error, code }`):
+
+| code | Meaning | FE handling |
+|------|---------|-------------|
+| `ALREADY_PASSED` | best GRADED score ≥ passing | `QuizIntroCard` catches → refetches meta → success state (`اجتزت الاختبار بنجاح`, PartyPopper) |
+| `MAX_ATTEMPTS_REACHED` | attempts exhausted by a non-passing student | refetch meta → exhausted state (`انتهت المحاولات`) |
+| (403) `NOT_ENROLLED` / `SEQUENTIAL_GATE` | pre-start gate checks | unchanged |
+
+Passed always **outranks** exhausted in `QuizIntroCard`'s CTA priority (`isLocked → hasPassed → hasInProgress → hasAttempted → outOfAttempts`). Passing with the LAST allowed attempt must show SUCCESS, never "استنفدت".
+
+Admins bypass the passed-block (`bypassPassedCheck`) — they can retake anytime.
+
+### 9.3 Attempt submit/save contract (do not regress)
+
+- `POST /quizzes/attempts/:id/submit` — body `{ answers: {<qName>: value}, autoSubmitted?: true }`. Response: `{ attemptId, status, earnedPoints, totalPoints, scorePercent, hasEssays, perQuestion }`. **No `passed` field** in the submit response — derive from the meta result.
+- `PATCH /quizzes/attempts/:id/save` — interim save body `{ responses: {<qName>: value} }` (NOT `answers`).
+- `QuizRunner` auto-submits on leave via `fetch(API_BASE_URL + ..., { keepalive: true, credentials: 'include' })` with `autoSubmitted: true` on `beforeunload`/`pagehide`/unmount. The backend's **stale-attempt finalize** (`STALE_ATTEMPT_MS = 30min`) is the server-side backstop for untimed quizzes: any `IN_PROGRESS` untimed attempt older than 30 min is auto-graded from saved responses on the next start, then a fresh attempt is created. EXPIRED attempts never burn a retake.
+
+### 9.4 `GET /user/me/achievements` — new endpoint
+
+Shape (mounted under `/user` → full path `/user/me/achievements`, authenticated):
+
+```
+{ totals: { coursesEnrolled, coursesCompleted, videosWatched, videosTotal,
+            examsTaken, examsPassed, averageScore: number (0–100) },
+  courses: [ { course: { id, title, description, thumbnail, grade },
+               progress: { watched, total, percent, completed },
+               exams: [ { videoId, videoTitle, quizId, quizTitle, passingScore,
+                          timeLimitSec, maxAttempts, bestScore, passed, attemptsUsed } ] } ] }
+```
+
+FE: `services/achievementsService.ts` → `app/me/user/achievements/page.tsx` ("انجازاتي", dark account theme, totals tiles + per-course cards + `فتح الاختبار` links). Navbar `إنجازاتي` → `/me/user/achievements`.
+
+### 9.5 Enrolled courses — wired through the service
+
+`/courses/enrolled` rows nest `{ course }`; `services/courseService.ts::getEnrolledCourses()` flattens. `app/me/user/subscriptions` + `app/me/user/courses` both use it. Don't call the endpoint raw from pages.
