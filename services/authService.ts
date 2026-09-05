@@ -3,7 +3,7 @@
  * Centralizes all authentication-related API calls
  */
 
-import { apiClient, setAccessToken, clearAccessToken } from '@/lib/api-client';
+import { apiClient, clearAccessToken } from '@/lib/api-client';
 import { User } from '@/types/api';
 
 interface LoginCredentials {
@@ -19,41 +19,31 @@ interface RegisterData {
   password: string;
 }
 
-interface AuthResponse {
-  message: string;
-  token: string;
-}
-
 /**
- * Login user with email and password
+ * Login user with email and password (cookie-only auth).
+ * Tokens live in HttpOnly cookies; the middleware `isLoggedIn` flag is set
+ * only after the server confirms authentication (via /user/me).
  */
 export const loginUser = async (credentials: LoginCredentials): Promise<{ user: User }> => {
-  const response = await apiClient.post<AuthResponse>('/auth/login', credentials, { authenticated: false });
-  
-  if (response.token) {
-    setAccessToken(response.token);
-    // Store non-sensitive flag for middleware
-    if (typeof document !== 'undefined') {
-      document.cookie = "isLoggedIn=true; path=/; max-age=604800; SameSite=Strict";
-    }
+  await apiClient.post('/auth/login', credentials, { authenticated: false });
+
+  if (typeof document !== 'undefined') {
+    document.cookie = "isLoggedIn=true; path=/; max-age=604800; SameSite=Strict";
   }
 
-  // Fetch current user immediately to populate Redux
+  // Fetch current user immediately to populate Redux and confirm the session works
   const user = await getCurrentUser();
   return { user };
 };
 
 /**
- * Register a new user
+ * Register a new user (cookie-only auth, same model as login)
  */
 export const registerUser = async (userData: RegisterData): Promise<{ user: User }> => {
-  const response = await apiClient.post<AuthResponse>('/auth/register', userData, { authenticated: false });
-  
-  if (response.token) {
-    setAccessToken(response.token);
-    if (typeof document !== 'undefined') {
-      document.cookie = "isLoggedIn=true; path=/; max-age=604800; SameSite=Strict";
-    }
+  await apiClient.post('/auth/register', userData, { authenticated: false });
+
+  if (typeof document !== 'undefined') {
+    document.cookie = "isLoggedIn=true; path=/; max-age=604800; SameSite=Strict";
   }
 
   const user = await getCurrentUser();

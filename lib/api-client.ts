@@ -13,7 +13,11 @@
  *    (e.g., quiz gate 403s carry quizId, yourScore, requiredScore in their body)
  *  - Added explicit 409 branch (ConflictError) for "attempt already graded" responses
  *  - 401 silent-refresh flow unchanged; only the final thrown AuthError now also carries body
- */
+ *
+ * Phase 1c (cookie-only auth):
+ *  - Tokens are NEVER returned in response bodies; the server sets HttpOnly
+ *    cookies. The in-memory Bearer store is kept as a compatibility shim but is
+ *    no longer populated by login/refresh flows — requests authenticate via cookies. */
 
 import {
   ApiError,
@@ -84,21 +88,8 @@ async function attemptSilentRefresh(): Promise<boolean> {
       });
 
       if (res.ok) {
-        let body: unknown = null;
-        try {
-          body = await res.json();
-        } catch {
-          // Response body might be empty or non-JSON if cookies were set directly
-        }
-
-        if (body && typeof body === 'object' && !Array.isArray(body)) {
-          const parsedBody = body as { token?: unknown; data?: { token?: unknown } };
-          if (typeof parsedBody.token === 'string' && parsedBody.token) {
-            setAccessToken(parsedBody.token);
-          } else if (typeof parsedBody.data?.token === 'string' && parsedBody.data.token) {
-            setAccessToken(parsedBody.data.token);
-          }
-        }
+        // Cookie-only auth: the refresh endpoint re-issues HttpOnly access +
+        // refresh cookies. Nothing to read from the body.
         return true;
       }
     } catch {
