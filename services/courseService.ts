@@ -6,10 +6,7 @@
  */
 
 import { apiClient } from '@/lib/api-client';
-import { isMockCourse, mockCourse, MOCK_COURSE_ID } from '@/lib/mock/course';
 import { PaginationMeta } from '@/types/api';
-
-export { MOCK_COURSE_ID };
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,6 +37,16 @@ export interface CourseEnrollment {
   isCompleted: boolean;
   lastAccess: string;
   createdAt: string;
+}
+
+/**
+ * A single element of GET /courses/enrolled — an enrollment row with the
+ * course object nested on it.
+ */
+export interface EnrolledCourseEntry {
+  id: number;
+  createdAt: string;
+  course: CourseListItem & Record<string, unknown>;
 }
 
 export interface VideoProgress {
@@ -134,8 +141,6 @@ export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage
  * requests to initialize.
  */
 export async function fetchCourseById(courseId: string | number): Promise<CourseDetail> {
-  if (isMockCourse(courseId)) return mockCourse;
-
   const raw = await apiClient.get<unknown>(`/courses/${courseId}`);
   const payload = extractData<{
     course: CourseListItem & Record<string, unknown>;
@@ -159,9 +164,6 @@ export async function fetchCourseById(courseId: string | number): Promise<Course
 export async function checkEnrollmentStatus(
   courseId: string | number,
 ): Promise<EnrollmentResult> {
-  if (isMockCourse(courseId)) {
-    return { courseId, enrolled: true, isPaid: false };
-  }
   const raw = await apiClient.post<unknown>('/enroll/status', { courseId });
   const data = extractData<{ enrolled?: boolean; isPaid?: boolean }>(raw);
   return {
@@ -176,9 +178,6 @@ export async function checkEnrollmentStatus(
  * POST /enroll/  { courseId }
  */
 export async function enrollInCourse(courseId: string | number): Promise<EnrollmentResult> {
-  if (isMockCourse(courseId)) {
-    return { courseId, enrolled: true, isPaid: false };
-  }
   const raw = await apiClient.post<unknown>('/enroll/', { courseId });
   const data = extractData<{ enrollment?: { isPaid?: boolean } }>(raw);
   return {
@@ -186,4 +185,21 @@ export async function enrollInCourse(courseId: string | number): Promise<Enrollm
     enrolled: true,
     isPaid: data.enrollment?.isPaid ?? false,
   };
+}
+
+/**
+ * Fetch the authenticated user's enrolled courses.
+ * GET /courses/enrolled
+ *
+ * Backend returns `{ success, data: [{ id: enrollmentId, createdAt, course }] }`
+ * — this unwraps the nested course objects into a flat CourseListItem[].
+ */
+export async function getEnrolledCourses(): Promise<CourseListItem[]> {
+  const raw = await apiClient.get<unknown>('/courses/enrolled');
+  const data = extractData<EnrolledCourseEntry[]>(raw);
+
+  if (!Array.isArray(data)) return [];
+  return data
+    .map((entry) => entry.course)
+    .filter((course): course is (CourseListItem & Record<string, unknown>) => !!course);
 }

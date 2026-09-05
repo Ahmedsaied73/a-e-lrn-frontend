@@ -6,7 +6,7 @@ import { BookOpen, ArrowLeft, Clock, BookOpenCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { apiClient } from '@/lib/api-client';
+import { getEnrolledCourses } from '@/services/courseService';
 import { CourseListItem } from '@/services/courseService';
 
 export default function UserCoursesPage() {
@@ -17,7 +17,7 @@ export default function UserCoursesPage() {
   useEffect(() => {
     const fetchEnrolledCourses = async () => {
       try {
-        const data = await apiClient.get<CourseListItem[]>('/courses/enrolled');
+        const data = await getEnrolledCourses();
         setCourses(Array.isArray(data) ? data : []);
       } catch (err: any) {
         console.error('خطأ في جلب الكورسات المسجلة:', err);
