@@ -5,8 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { AppDispatch } from "@/store/store";
 import { fetchQuizMeta, startQuizAttempt, selectQuizMeta, selectQuizMetaStatus, selectQuizError } from "@/store/slices/quizSlice";
-import { useQuizTimer } from "@/hooks/useQuizTimer";
-import { Loader2, Lock, CheckCircle, Clock, FileQuestion, Award, Zap, ChevronLeft, RotateCcw } from "lucide-react";
+import { Lock, CheckCircle, Clock, FileQuestion, Award, Zap, ChevronLeft, RotateCcw, PartyPopper } from "lucide-react";
 
 interface QuizIntroCardProps {
   videoId: number | string;
@@ -18,12 +17,6 @@ function formatSeconds(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return s > 0 ? `${m}د ${s}ث` : `${m} دقيقة`;
-}
-
-function formatTimer(sec: number): string {
-  const m = Math.floor(sec / 60).toString().padStart(2, "0");
-  const s = (sec % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
 }
 
 /** Skeleton shown while meta is loading */
@@ -41,19 +34,6 @@ function QuizIntroSkeleton() {
         <div className="bg-slate-100 rounded-xl h-12 w-2/3 mx-auto" />
       </div>
     </div>
-  );
-}
-
-/** Inline countdown for an in-progress attempt */
-function InProgressCountdown({ deadlineAt }: { deadlineAt: string | null }) {
-  const { remainingSec } = useQuizTimer(deadlineAt, () => {});
-  if (remainingSec === null) return null;
-  const urgent = remainingSec < 300;
-  return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border ${urgent ? "bg-rose-50 border-rose-200 text-rose-700" : "bg-amber-50 border-amber-200 text-amber-700"}`}>
-      <Clock className="w-3 h-3" />
-      {formatTimer(remainingSec)}
-    </span>
   );
 }
 
@@ -95,9 +75,9 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
   }
 
   // From here: meta.exists === true
-  const timeLimitDisplay = meta.timeLimitSec ? formatSeconds(meta.timeLimitSec) : "--";
-  const totalQuestionsDisplay = meta.totalQuestions != null ? `${meta.totalQuestions} سؤال` : "--";
-  const totalPointsDisplay = meta.totalPoints != null ? `${meta.totalPoints} درجة` : "--";
+  const timeLimitDisplay = meta.timeLimitSec ? formatSeconds(meta.timeLimitSec) : "بدون";
+  const totalQuestionsDisplay = `${meta.totalQuestions} سؤال`;
+  const totalPointsDisplay = `${meta.totalPoints} درجة`;
   const passingDisplay = `${meta.passingScore}%`;
   const attemptsDisplay = `${meta.attemptsUsed} من ${meta.maxAttempts}`;
 
@@ -106,7 +86,10 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
       await dispatch(startQuizAttempt(videoId)).unwrap();
       router.push(`/course/${courseId}/video/${videoId}/quiz/run`);
     } catch {
-      // Error handled in slice
+      // Error handled in slice. On 409 ALREADY_PASSED the meta refresh below
+      // shows the success state; on MAX_ATTEMPTS_REACHED it shows the
+      // exhausted state.
+      dispatch(fetchQuizMeta(videoId));
     }
   };
 
@@ -116,11 +99,14 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
   const hasPassed = meta.passed;
   const outOfAttempts = meta.atMaxAttempts;
 
-  // Determine button label and state
+  // Determine button label and state — passed outranks exhausted (the user
+  // passed with their last attempt; that's a success, not a dead end).
   let btnLabel = "بدء الاختبار الآن";
   let btnIcon = <ChevronLeft className="w-5 h-5" />;
   if (isLocked) {
     btnLabel = "الاختبار مقفل";
+  } else if (hasPassed) {
+    btnLabel = "اجتزت الاختبار بنجاح";
   } else if (hasInProgress) {
     btnLabel = "متابعة الاختبار";
   } else if (hasAttempted) {
@@ -144,7 +130,7 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
           <div className="flex flex-col items-center justify-center bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm">
             <span className="text-xs font-medium text-slate-500 mb-0.5">الدرجة الحالية</span>
             <span className="text-xl font-extrabold text-slate-900 tracking-tight" dir="ltr">
-              {currentScore} / {meta.totalPoints ?? "--"}
+              {currentScore}%
             </span>
             {hasPassed && (
               <span className="inline-flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md mt-1 border border-emerald-100">
@@ -252,6 +238,20 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
                 <Lock className="w-5 h-5" />
               </button>
             </div>
+          ) : hasPassed ? (
+            <div className="w-full sm:w-2/3 flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-3 w-full justify-center">
+                <PartyPopper className="w-5 h-5" />
+                <span className="font-bold text-sm">لقد اجتزت هذا الاختبار بنجاح بنسبة {currentScore}% — لا حاجة لإعادة المحاولة</span>
+              </div>
+              <button
+                disabled
+                className="w-full py-3.5 px-6 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-base flex items-center justify-center gap-3 cursor-not-allowed"
+              >
+                <span>{btnLabel}</span>
+                <CheckCircle className="w-5 h-5" />
+              </button>
+            </div>
           ) : outOfAttempts ? (
             <div className="w-full sm:w-2/3 flex flex-col items-center gap-3">
               <div className="flex items-center gap-2 text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-5 py-3 w-full justify-center">
@@ -268,14 +268,6 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
             </div>
           ) : (
             <div className="w-full sm:w-2/3 flex flex-col items-center gap-3">
-              {/* In-progress timer badge */}
-              {hasInProgress && (
-                <div className="flex items-center gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 w-full justify-center">
-                  <span className="text-sm font-semibold">محاولة قيد التنفيذ — الوقت المتبقي:</span>
-                  <InProgressCountdown deadlineAt={meta.inProgressAttempt!.deadlineAt} />
-                </div>
-              )}
-
               <button
                 onClick={handleStartOrResume}
                 className="w-full py-3.5 px-6 rounded-xl bg-[#207bff] hover:bg-[#1a66d9] active:bg-[#1451b2] text-white font-bold text-base flex items-center justify-center gap-3 transition-all shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/30"
@@ -284,11 +276,9 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
                 {btnIcon}
               </button>
 
-              {!hasInProgress && (
-                <p className="text-xs text-slate-400 font-medium text-center">
-                  بالضغط على بدء الاختبار، فإنك توافق بالالتزام بقواعد المنظومة الأكاديمية
-                </p>
-              )}
+              <p className="text-xs text-slate-400 font-medium text-center">
+                بالضغط على بدء الاختبار، فإنك توافق بالالتزام بقواعد المنظومة الأكاديمية
+              </p>
             </div>
           )}
         </div>

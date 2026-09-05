@@ -4,7 +4,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { submitQuizAttempt, fetchQuizResult, selectActiveAttempt, selectSubmitResult } from "@/store/slices/quizSlice";
+import { submitQuizAttempt, fetchQuizMeta, fetchQuizResult, selectActiveAttempt, selectSubmitResult } from "@/store/slices/quizSlice";
+import { API_BASE_URL } from "@/lib/api-client";
 import { useQuizTimer } from "@/hooks/useQuizTimer";
 import { useQuizAutosave } from "@/hooks/useQuizAutosave";
 import { ApiError } from "@/lib/errors";
@@ -153,10 +154,19 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
   const [showConfirm, setShowConfirm] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const submitLockRef = useRef(false);
+  // Auto-submit-on-leave refs
+  const leaveSubmittedRef = useRef(false);
+  const mountedAtRef = useRef(Date.now());
+  const answersRef = useRef<Record<string, unknown>>(answers);
 
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  // Keep a live ref of the latest answers for the keepalive leave-submit.
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
 
   const { isSaving, saveError } = useQuizAutosave({
     attemptId: startData.attemptId,
@@ -169,22 +179,58 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
     setAnswers(startData.responses ?? {});
   }, [startData.attemptId, startData.resumed, startData.responses]);
 
+  /**
+   * Best-effort submit while the page is going away (navigation/unload).
+   * Uses fetch with `keepalive` (Fired during beforeunload/pagehide).
+   * No redirect, no UI — the result page fetch handles the aftermath.
+   * The server's stale-finalize backstop catches any attempt that never
+   * reaches the server here.
+   */
+  const fireKeepaliveSubmit = useCallback(() => {
+    if (startData.status !== "IN_PROGRESS") return;
+    if (leaveSubmittedRef.current) return;
+    if (Date.now() - mountedAtRef.current < 2000) return; // StrictMode remount guard
+    leaveSubmittedRef.current = true;
+    try {
+      const payload = JSON.stringify({ answers: answersRef.current, autoSubmitted: true });
+      fetch(`${API_BASE_URL}/quizzes/attempts/${startData.attemptId}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        credentials: "include",
+        keepalive: true,
+      }).catch(() => {
+        // Best-effort — the stale-finalize backstop will handle it
+      });
+    } catch {
+      // ignore
+    }
+  }, [startData.status, startData.attemptId]);
+
+  // Auto-submit on leave: full-page unload (beforeunload/pagehide) AND
+  // in-app route unmount. Replaces the old "are you sure?" warning blocker,
+  // which was what left exams stuck in IN_PROGRESS forever.
   useEffect(() => {
     if (startData.status !== "IN_PROGRESS") return;
 
-    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
+    const handleUnload = () => fireKeepaliveSubmit();
+    window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("pagehide", handleUnload);
 
-    window.addEventListener("beforeunload", warnBeforeUnload);
-    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
-  }, [startData.status]);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      window.removeEventListener("pagehide", handleUnload);
+      fireKeepaliveSubmit();
+    };
+  }, [startData.status, fireKeepaliveSubmit]);
 
   // Prevent double submission
   const doSubmit = useCallback(async (auto: boolean) => {
     if (submitLockRef.current) return;
     submitLockRef.current = true;
+    // A manual/timer submit means the exam is being handed in — the later
+    // route-unmount must not fire a redundant keepalive submit.
+    leaveSubmittedRef.current = true;
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -199,6 +245,7 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
 
       // Route based on grading status
       if (result.status === "GRADED" || result.status === "GRADING") {
+        await dispatch(fetchQuizMeta(videoId)).unwrap();
         router.push(`/course/${courseId}/video/${videoId}/quiz/result/${startData.attemptId}`);
       }
     } catch (err: unknown) {
@@ -212,11 +259,13 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
         } catch (recoveryError: unknown) {
           setSubmitError(getErrorMessage(recoveryError, "تعذر تحميل حالة محاولة الاختبار."));
           submitLockRef.current = false;
+          leaveSubmittedRef.current = false;
           return;
         }
       }
       setSubmitError(getErrorMessage(err, "تعذر تسليم الاختبار، يرجى المحاولة مرة أخرى."));
       submitLockRef.current = false;
+      leaveSubmittedRef.current = false;
     } finally {
       setIsSubmitting(false);
     }
@@ -226,7 +275,7 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
     void doSubmit(true);
   }, [doSubmit]);
 
-  const { remainingSec } = useQuizTimer(startData.deadlineAt, handleAutoSubmit);
+  const { remainingSec } = useQuizTimer(isSubmitting ? null : startData.deadlineAt, handleAutoSubmit);
 
   const timerUrgent = remainingSec !== null && remainingSec < 300;
 

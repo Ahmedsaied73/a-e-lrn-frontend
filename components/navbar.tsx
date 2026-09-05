@@ -12,9 +12,8 @@ import { selectIsAuthenticated, selectUser, logout } from "@/store/slices/authSl
 const NAV_LINKS = [
   { href: "/", label: "الرئيسية" },
   { href: "/grades/1", label: "الدورات" },
-  { href: "/grades/2", label: "إنجازاتي" },
+  { href: "/me/user/achievements", label: "إنجازاتي" },
   { href: "/me/user/subscriptions", label: "اشتراكاتي" },
-  { href: "/me/user/exam-results", label: "بنك الأسئلة" },
 ];
 
 export function Navbar() {

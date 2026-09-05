@@ -51,10 +51,8 @@ export interface QuizMetaExists {
   passed: boolean;
   bestScore: number | null;
   inProgressAttempt: InProgressAttemptInfo | null;
-  // NOTE: totalQuestions / totalPoints are not yet in the backend response.
-  // Gate UI tiles behind these being non-null; show '--' when absent.
-  totalQuestions?: number | null;
-  totalPoints?: number | null;
+  totalQuestions: number;
+  totalPoints: number;
 }
 
 export type QuizMeta = QuizMetaNoQuiz | QuizMetaExists;
@@ -216,4 +214,57 @@ export interface QuizGate403 {
   quizId?: number;
   yourScore?: number | null;
   requiredScore?: number;
+}
+
+// ---------------------------------------------------------------------------
+// GET /user/me/achievements
+// ---------------------------------------------------------------------------
+
+export interface AchievementCourse {
+  id: number;
+  title: string;
+  description: string | null;
+  thumbnail: string | null;
+  grade: string | null;
+}
+
+export interface AchievementProgress {
+  watched: number;
+  total: number;
+  percent: number;
+  completed: boolean;
+}
+
+export interface AchievementExam {
+  videoId: number;
+  videoTitle: string;
+  quizId: number;
+  quizTitle: string;
+  passingScore: number;
+  timeLimitSec: number | null;
+  maxAttempts: number;
+  bestScore: number | null;
+  passed: boolean;
+  attemptsUsed: number;
+}
+
+export interface AchievementCourseEntry {
+  course: AchievementCourse;
+  progress: AchievementProgress;
+  exams: AchievementExam[];
+}
+
+export interface AchievementsTotals {
+  coursesEnrolled: number;
+  coursesCompleted: number;
+  videosWatched: number;
+  videosTotal: number;
+  examsTaken: number;
+  examsPassed: number;
+  averageScore: number | null;
+}
+
+export interface AchievementsData {
+  totals: AchievementsTotals;
+  courses: AchievementCourseEntry[];
 }

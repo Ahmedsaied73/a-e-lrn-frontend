@@ -221,13 +221,15 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
           <FileText className="w-5 h-5" />
           <span>مراجعة الإجابات النموذجية</span>
         </button>
-        <button
-          onClick={handleRetake}
-          className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-6 rounded-xl border border-slate-300 shadow-sm transition duration-150 active:scale-[0.99]"
-        >
-          <RotateCcw className="w-5 h-5 text-slate-500" />
-          <span>إعادة الاختبار</span>
-        </button>
+        {!passed && (
+          <button
+            onClick={handleRetake}
+            className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-6 rounded-xl border border-slate-300 shadow-sm transition duration-150 active:scale-[0.99]"
+          >
+            <RotateCcw className="w-5 h-5 text-slate-500" />
+            <span>إعادة الاختبار</span>
+          </button>
+        )}
       </div>
 
       <div className="mt-5">
