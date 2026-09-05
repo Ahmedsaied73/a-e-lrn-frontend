@@ -11,7 +11,7 @@ The application is built using Next.js 14 with the App Router, providing a moder
 1. **Component-Based Structure**: UI is composed of reusable components
 2. **Client-Side Navigation**: Fast page transitions with Next.js Link component
 3. **Server Components**: Leveraging Next.js server components where appropriate
-4. **Responsive Design**: Mobile-first approach with Tailwind CSS
+4. **Responsive Design**: Mobile-first approach with Tailwind CSS & RTL logical utility properties (`start/end`, `ms/me`, `ps/pe`)
 
 ## State Management
 
@@ -23,132 +23,38 @@ The application uses Redux Toolkit for global state management. The implementati
 
 The Redux store is configured in `store/store.ts` with the following slices:
 
-- **Auth Slice**: Manages authentication state (user data, login status)
-- **Course Slice**: Handles course-related state (available courses, enrollment status)
+- **Auth Slice**: Manages authentication state (user profile, login status)
+- **Course Slice**: Handles course-related state (available courses, enrollment status, pagination metadata)
 - **UI Slice**: Manages UI-related state (theme, notifications, loading states)
-- **Quiz Slice**: Manages quiz-related state (quiz data, submissions, results)
-  - Quiz attempt tracking
-  - Video completion status
-  - Quiz results and history
-  - Performance analytics
+- **Quiz Slice**: Manages quiz-related state (quiz data, submissions, results, video progress)
+- **Assignment Slice**: Manages assignments and user submission history
 
-#### Redux Best Practices
+## Authentication Flow & Security
 
-1. **Use Redux Toolkit**: Simplifies store setup and reduces boilerplate
-2. **TypeScript Integration**: Full type safety for actions and state
-3. **Normalized State**: Store complex data in normalized form
-4. **Selective State Access**: Use selectors to access specific parts of state
-5. **Async Logic**: Use createAsyncThunk for API calls and async operations
+The authentication system relies on **Dual HttpOnly Cookie Authentication** (`accessToken` & `refreshToken`) supported by silent token refresh:
 
-### Local vs. Global State
+1. **Cookie Transmission**: `credentials: 'include'` is set globally on all API requests in `lib/api-client.ts`.
+2. **Token Store**: Zero access or refresh tokens are stored in `localStorage` or `sessionStorage`, protecting the application against XSS token extraction.
+3. **Silent Token Refresh Interceptor**: When an API request receives a 401 Unauthorized status, `apiClient` automatically triggers a silent refresh call to `/auth/refresh-token` (or `/auth/refresh`) and retries the original request seamlessly.
+4. **Protected Routes**: Server-side Next.js `middleware.ts` checks the `isLoggedIn` cookie flag to enforce route protection.
 
-Guidelines for state management:
+## API Integration & Response Envelope
 
-- **Use Redux for**:
-  - User authentication data
-  - Course enrollment status
-  - Data needed across multiple components
-  - Data that persists across page navigation
-
-- **Use Local State for**:
-  - UI state specific to a single component
-  - Form input values during form completion
-  - Temporary visual states (expanded/collapsed, etc.)
-
-## Authentication Flow
-
-The authentication system uses JWT tokens with the following flow:
-
-1. **Login/Registration**: User credentials sent to API
-2. **Token Storage**: JWT stored in localStorage
-3. **Auth State**: User data stored in Redux
-4. **Protected Routes**: Check auth state before rendering
-5. **Token Refresh**: Automatic refresh of expired tokens
-
-## API Integration
-
-API calls follow these patterns:
-
-1. **Centralized API Services**: API calls are organized in service files
-2. **Error Handling**: Consistent error handling across all API calls
-3. **Loading States**: Track loading state for all async operations
-4. **Data Transformation**: Transform API responses before storing in Redux
-
-## Performance Optimizations
-
-1. **Code Splitting**: Automatic code splitting with Next.js
-2. **Lazy Loading**: Components and images loaded only when needed
-3. **Memoization**: Use React.memo, useMemo, and useCallback to prevent unnecessary re-renders
-4. **Image Optimization**: Next.js Image component for optimized images
-
-## Best Practices
-
-### Quiz System Architecture
-
-1. **Quiz Flow**:
-   - Video completion tracking
-   - Quiz availability based on video completion
-   - Real-time answer submission
-   - Immediate feedback and scoring
-   - Detailed results view
-
-2. **Results Management**:
-   - Individual quiz results storage
-   - Performance analytics
-   - Historical data tracking
-   - Score aggregation
-
-3. **Components**:
-   - QuizResultsDialog: Displays quiz completion feedback
-   - Video completion tracking
-   - Quiz submission interface
-   - Results visualization
-
-### Code Organization
-
-1. **Feature-Based Structure**: Group related components and logic
-2. **Consistent Naming**: Follow consistent naming conventions
-3. **Component Composition**: Build complex UIs from simple components
-4. **Custom Hooks**: Extract reusable logic into custom hooks
-
-### Form Handling
-
-1. **React Hook Form**: Efficient form state management
-2. **Zod Validation**: Schema-based form validation
-3. **Error Messages**: Clear, user-friendly error messages
-4. **Submission Handling**: Consistent form submission patterns
-
-### Styling
-
-1. **Tailwind CSS**: Utility-first CSS framework
-2. **Theme Variables**: Custom CSS variables for theming
-3. **Responsive Design**: Mobile-first approach
-4. **Component Library**: Shadcn UI components for consistent design
-
-### Accessibility
-
-1. **Semantic HTML**: Use appropriate HTML elements
-2. **ARIA Attributes**: Add ARIA attributes where needed
-3. **Keyboard Navigation**: Ensure keyboard accessibility
-4. **Color Contrast**: Maintain sufficient color contrast
-
-## Future Improvements
-
-1. **Server-Side Rendering**: Increase use of SSR for better SEO
-2. **Testing**: Add comprehensive test coverage
-3. **Internationalization**: Support for multiple languages
-4. **PWA Features**: Add Progressive Web App capabilities
-5. **Analytics**: Implement usage analytics
-6. **Caching Strategy**: Implement more sophisticated data caching
-
-## Development Workflow
-
-1. **Feature Branches**: Develop new features in separate branches
-2. **Code Reviews**: Peer review before merging
-3. **Linting**: ESLint for code quality
-4. **Type Safety**: TypeScript for type checking
-5. **Documentation**: Keep documentation updated with code changes
+1. **Centralized HTTP Client**: `lib/api-client.ts` standardizes API interaction across all services.
+2. **Response Envelope Unwrapping**: Automatically unwraps `{ success: boolean, data: T, message?: string, error?: string }` while supporting flat payload fallbacks.
+3. **Arabic Error Formatting**: Handles network errors (`TypeError: Failed to fetch`) and HTTP 429 rate limits with clear, user-facing Arabic error messages.
 
 ---
 
-This documentation is intended to be a living document. As the application evolves, this documentation should be updated to reflect the current state and best practices of the codebase.
+## 🎯 Verification & Acceptance Summary
+
+### 1. Refactored Modules
+- **Core API Client**: `lib/api-client.ts` updated with `credentials: 'include'`, silent 401 token refresh interceptor, and formatted Arabic error handling.
+- **Auth Module**: `services/authService.ts`, `app/login/page.tsx`, `app/register/page.tsx`, `components/navbar.tsx` refactored to use HttpOnly cookies and `getCurrentUser()`.
+- **Courses Module**: `services/courseService.ts`, `store/slices/courseSlice.ts`, `app/course/[id]/page.tsx`, `app/grades/*`, `components/enrollment-card.tsx` refactored to remove all direct `localStorage` token reads.
+- **Quizzes & Video Progress Module**: `services/quizService.ts`, `store/slices/quizSlice.ts`, `app/course/[id]/video/[video]/page.tsx` updated for `/progress/mark` and `/quizzes/submit`.
+- **User Dashboard & Subscriptions**: `services/userService.ts`, `app/me/user/*`, `app/course/[id]/subscribe/invoice/page.tsx` synchronized with backend schemas.
+
+### 2. Next Action Items
+- Run end-to-end user testing with live backend (`http://localhost:3005`).
+- Deploy updated frontend build to staging environment.

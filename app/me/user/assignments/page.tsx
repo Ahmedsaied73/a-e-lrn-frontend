@@ -38,6 +38,8 @@ interface Submission {
   assignment: Assignment;
 }
 
+import { apiClient } from '@/lib/api-client';
+
 interface SubmissionsResponse {
   submissionsCount: number;
   submissions: Submission[];
@@ -51,31 +53,17 @@ export default function AssignmentsPage() {
 
   const fetchSubmissions = async (signal?: AbortSignal) => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        throw new Error('يرجى تسجيل الدخول أولاً');
+      const data = await apiClient.get<any>('/assignments/user/submissions', { signal });
+      if (Array.isArray(data)) {
+        return { submissionsCount: data.length, submissions: data };
       }
-
-      const response = await fetch('http://localhost:3005/assignments/user/submissions', {
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`
-        },
-        signal: signal
-      });
-
-      if (!response.ok) {
-        throw new Error('فشل في جلب الواجبات المقدمة');
-      }
-
-      const data = await response.json();
       return data;
-    } catch (err) {
-      // تجاهل أخطاء إلغاء الطلب (AbortError)
+    } catch (err: any) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         console.log('تم إلغاء طلب جلب الواجبات');
         return null;
       }
-      throw err; // إعادة رمي الأخطاء الأخرى
+      throw err;
     }
   };
 
@@ -138,7 +126,7 @@ export default function AssignmentsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="account-page">
         <Card className="bg-[#111827] border-[#1f2937] text-white mb-8">
           <CardHeader>
             <CardTitle className="text-center">
@@ -157,7 +145,7 @@ export default function AssignmentsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="account-page">
         <Card className="bg-[#111827] border-[#1f2937] text-white">
           <CardHeader>
             <CardTitle className="text-center text-red-500">خطأ</CardTitle>
@@ -175,7 +163,7 @@ export default function AssignmentsPage() {
 
   if (!submissionsData || submissionsData.submissions?.length === 0) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="account-page">
         <Card className="bg-[#111827] border-[#1f2937] text-white">
           <CardHeader>
             <CardTitle className="text-center">لا توجد واجبات مقدمة</CardTitle>
@@ -291,7 +279,7 @@ export default function AssignmentsPage() {
 
   // Main render function
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="account-page">
       <Card className="bg-[#111827] border-[#1f2937] text-white mb-8">
         <CardHeader>
           <CardTitle className="text-center">

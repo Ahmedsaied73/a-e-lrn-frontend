@@ -12,7 +12,7 @@ export default function MePage() {
   }, [router]);
 
   return (
-    <div className="container mx-auto py-10 px-4 flex items-center justify-center">
+    <div className="account-page flex items-center justify-center">
       <div className="text-white text-xl">جاري التحميل...</div>
     </div>
   );

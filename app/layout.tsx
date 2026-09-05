@@ -3,15 +3,15 @@ import type { Metadata } from 'next';
 import { Cairo } from 'next/font/google';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
-import { ThemeProvider } from '@/components/theme-provider';
 import { ReduxProvider } from '@/store/provider';
+import { AuthInitializer } from '@/store/auth-initializer';
 import { Toaster } from '@/components/ui/toaster';
 
 const cairo = Cairo({ subsets: ['arabic'] });
 
 export const metadata: Metadata = {
-  title: 'الأستاذ لطفي زهران | مدرس الرياضيات',
-  description: 'تعلم الرياضيات بأسهل الطرق مع الأستاذ لطفي زهران',
+  title: 'الأستاذ عبد الهادي موسى | مدرس الكيمياء',
+  description: 'تعلم الكيمياء بأسهل الطرق مع الأستاذ عبد الهادي موسى',
 };
 
 export default function RootLayout({
@@ -21,21 +21,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
-      <body className={`${cairo.className} geometric-background min-h-screen bg-[#0A0F1C] flex flex-col`}>
+      <body className={`${cairo.className} min-h-screen bg-background flex flex-col`}>
         <ReduxProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
+          <AuthInitializer>
             <Navbar />
-            <main className="flex-grow pt-20">
+            <main className="flex-grow pt-16">
               {children}
             </main>
             <Footer />
             <Toaster />
-          </ThemeProvider>
+          </AuthInitializer>
         </ReduxProvider>
       </body>
     </html>

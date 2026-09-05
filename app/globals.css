@@ -2,21 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --primary: 97, 184, 70;
-  --secondary: 245, 101, 57;
+/* -------------------------------------------------------
+   Base layer — light theme, Cairo font, RTL
+------------------------------------------------------- */
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background-color: #f7f9fc;
+    color: #191c1e;
+    direction: rtl;
+    overscroll-behavior: none;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f2f4f7;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #c1c6d7;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #727786;
+  }
 }
 
+/* -------------------------------------------------------
+   Legacy gradient utilities (kept for inner pages)
+------------------------------------------------------- */
 .primary-gradient {
-  background: linear-gradient(90deg, rgb(var(--primary)) 0%, rgb(var(--secondary)) 100%);
+  background: linear-gradient(135deg, #207bff 0%, #4ea5ff 100%);
 }
 
 .primary-text-gradient {
-  background: linear-gradient(90deg, rgb(var(--primary)) 0%, rgb(var(--secondary)) 100%);
+  background: linear-gradient(135deg, #207bff 0%, #4ea5ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.geometric-background {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+/* -------------------------------------------------------
+   Dot-grid hero background (used on homepage)
+------------------------------------------------------- */
+.dot-grid-bg {
+  background-image: radial-gradient(circle at 2px 2px, #207bff22 1px, transparent 0);
+  background-size: 32px 32px;
+}
+
+/* -------------------------------------------------------
+   Smooth transitions for interactive elements
+------------------------------------------------------- */
+.interactive {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Shared treatment for the authenticated learning workspace. */
+@layer components {
+  .lesson-body .text-white { color: #191c1e !important; }
+  .lesson-body .text-gray-300,
+  .lesson-body .text-gray-400 { color: #414754 !important; }
+  .lesson-body .border-gray-700 { border-color: #c1c6d7 !important; }
+
+  .account-page {
+    @apply mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12 lg:py-16;
+  }
+
+  .account-page [class*='bg-[#111827]'] {
+    background-color: #ffffff !important;
+    border-color: #e1e8f0 !important;
+    box-shadow: 0 4px 20px rgb(0 0 0 / 0.04);
+  }
+
+  .account-page [class*='bg-[#1f2937]'] {
+    background-color: #f2f4f7 !important;
+    border-color: #e1e8f0 !important;
+  }
+
+  .account-page :is(button, input)[class*='bg-[#111827]'] {
+    background-color: #ffffff !important;
+    color: #191c1e !important;
+    border-color: #c1c6d7 !important;
+  }
+
+  .account-page [class*='bg-gray-800'] { background-color: #f2f4f7 !important; }
+
+  .account-page :is(div, h1, h2, h3, h4, p, span, td, th)[class*='text-white'] {
+    color: #191c1e !important;
+  }
+
+  .account-page [class*='text-gray-400'] { color: #414754 !important; }
+  .account-page [class*='text-gray-300'] { color: #414754 !important; }
+  .account-page [class*='border-gray-700'],
+  .account-page [class*='border-[#374151]'] { border-color: #c1c6d7 !important; }
 }

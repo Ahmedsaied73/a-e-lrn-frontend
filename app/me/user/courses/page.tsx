@@ -6,46 +6,19 @@ import { BookOpen, ArrowLeft, Clock, BookOpenCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { getEnrolledCourses } from '@/services/courseService';
+import { CourseListItem } from '@/services/courseService';
 
 export default function UserCoursesPage() {
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEnrolledCourses = async () => {
       try {
-        // Get refresh token from localStorage
-        let refreshToken;
-        
-        try {
-          refreshToken = localStorage.getItem('refreshToken');
-        } catch (e) {
-          console.error('Error accessing localStorage:', e);
-        }
-        
-        if (!refreshToken) {
-          setError('لم يتم العثور على رمز التحقق. يرجى تسجيل الدخول مرة أخرى.');
-          setLoading(false);
-          return;
-        }
-
-        // Fetch enrolled courses
-        const response = await fetch('http://localhost:3005/courses/enrolled', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${refreshToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`فشل في الحصول على الكورسات: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Received data:', data);
-        setCourses(data);
+        const data = await getEnrolledCourses();
+        setCourses(Array.isArray(data) ? data : []);
       } catch (err: any) {
         console.error('خطأ في جلب الكورسات المسجلة:', err);
         setError(err.message || 'حدث خطأ أثناء جلب الكورسات المسجلة');
@@ -58,7 +31,7 @@ export default function UserCoursesPage() {
   }, []);
 
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="account-page">
       {/* Header with courses icon */}
       <div className="flex flex-col items-center justify-center mb-8">
         <div className="bg-blue-500 rounded-full p-3 mb-2">
@@ -97,32 +70,27 @@ export default function UserCoursesPage() {
           ) : courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
-                <Link href={`/course/${course.course.id}`} key={course.id}>
+                <Link href={`/course/${course.id}`} key={course.id}>
                   <div className="bg-[#1f2937] rounded-lg p-4 h-full hover:bg-[#2d3748] transition-colors cursor-pointer">
                     <div className="relative w-full h-40 mb-4 overflow-hidden rounded-md group">
                       <Image 
-                        src={course.course.thumbnail} 
-                        alt={course.course.title} 
+                        src={course.thumbnail || '/placeholder.jpg'} 
+                        alt={course.title || 'Course'} 
                         fill 
                         className="object-cover transition-transform group-hover:scale-105" 
                       />
-                      {course.course.videos && course.course.videos.length > 0 && (
-                        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-                          {course.course.videos.length} فيديو
-                        </div>
-                      )}
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-blue-400 line-clamp-1">{course.title}</h3>
-                    <p className="text-gray-300 mb-3 line-clamp-2 h-12">{course.course.description}</p>
+                    <p className="text-gray-300 mb-3 line-clamp-2 h-12">{course.description}</p>
                     <div className="flex items-center justify-between mt-auto">
                       <div className="flex items-center text-gray-400">
                         <Clock className="h-4 w-4 ml-1" />
-                        <span>{course.course.price > 0 ? `${course.course.price} ج.م` : 'مجاني'}</span>
+                        <span>{course.price && course.price > 0 ? `${course.price} ج.م` : 'مجاني'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center text-gray-400">
                           <BookOpenCheck className="h-4 w-4 ml-1" />
-                          <span className="text-sm">{course.course.grade}</span>
+                          <span className="text-sm">{course.grade}</span>
                         </div>
                       </div>
                     </div>

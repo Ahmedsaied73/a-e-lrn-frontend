@@ -1,138 +1,115 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
+import {
+  fetchAllCourses as courseSvcFetchAll,
+  fetchCourseById as courseSvcFetchById,
+  checkEnrollmentStatus as courseSvcCheckEnrollment,
+  enrollInCourse as courseSvcEnroll,
+  CourseDetail,
+  CourseListItem,
+} from '@/services/courseService';
 
-// Define types for course data
-export interface Course {
-  id: string;
-  title: string;
-  description?: string;
-  price?: string;
-  duration?: string;
-  files_count?: number;
-  videos_count?: number;
-  exams_count?: number;
-  questions_count?: string;
-  videos?: Array<{
-    id: string;
-    title: string;
-    url?: string;
-  }>;
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface Course extends CourseDetail {
+  // Re-exported for backwards compatibility with components
 }
 
 export interface EnrollmentStatus {
-  courseId: string;
+  courseId: string | number;
   enrolled: boolean;
+  isPaid?: boolean;
 }
 
-// Define the state structure
 export interface CourseState {
-  courses: Course[];
-  currentCourse: Course | null;
+  courses: CourseListItem[];
+  currentCourse: CourseDetail | null;
   enrollments: EnrollmentStatus[];
   loading: boolean;
   error: string | null;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  } | null;
 }
 
+// ---------------------------------------------------------------------------
 // Initial state
+// ---------------------------------------------------------------------------
+
 const initialState: CourseState = {
   courses: [],
   currentCourse: null,
   enrollments: [],
   loading: false,
   error: null,
+  pagination: null,
 };
 
-// Async thunks for API calls
+// ---------------------------------------------------------------------------
+// Async thunks — delegate to courseService (no inline fetch)
+// ---------------------------------------------------------------------------
+
 export const fetchCourses = createAsyncThunk(
   'courses/fetchCourses',
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 20 }: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return rejectWithValue('Not authenticated');
-      }
-
-      const response = await fetch('http://localhost:3005/courses', {
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch courses');
-      }
-
-      const data = await response.json();
-      return data;
+      return await courseSvcFetchAll(page, limit);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
     }
-  }
+  },
 );
 
-export const fetchCourseById = createAsyncThunk(
+export const fetchCourseById = createAsyncThunk<
+  CourseDetail,
+  string
+>(
   'courses/fetchCourseById',
   async (courseId: string, { rejectWithValue }) => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return rejectWithValue('Not authenticated');
-      }
-
-      const response = await fetch(`http://localhost:3005/courses/${courseId}`, {
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch course data');
-      }
-
-      const data = await response.json();
-      return data;
+      return await courseSvcFetchById(courseId);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
     }
-  }
+  },
 );
 
 export const checkEnrollmentStatus = createAsyncThunk(
   'courses/checkEnrollmentStatus',
-  async ({ userId, courseId }: { userId: string; courseId: string }, { rejectWithValue }) => {
+  async (courseId: string, { rejectWithValue }) => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return rejectWithValue('Not authenticated');
-      }
-
-      const response = await fetch('http://localhost:3005/enroll/api/enrollment-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${refreshToken}`
-        },
-        body: JSON.stringify({ userId, courseId })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to check enrollment status');
-      }
-
-      const data = await response.json();
-      return { courseId, enrolled: !!data.enrolled };
+      return await courseSvcCheckEnrollment(courseId);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
     }
-  }
+  },
 );
 
-// Create the slice
+export const enrollInCourse = createAsyncThunk(
+  'courses/enrollInCourse',
+  async (courseId: string, { rejectWithValue }) => {
+    try {
+      return await courseSvcEnroll(courseId);
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Slice
+// ---------------------------------------------------------------------------
+
 const courseSlice = createSlice({
   name: 'courses',
   initialState,
   reducers: {
-    setCurrentCourse: (state, action: PayloadAction<Course>) => {
+    setCurrentCourse: (state, action: PayloadAction<CourseDetail>) => {
       state.currentCourse = action.payload;
     },
     clearCurrentCourse: (state) => {
@@ -140,68 +117,98 @@ const courseSlice = createSlice({
     },
     updateEnrollmentStatus: (state, action: PayloadAction<EnrollmentStatus>) => {
       const { courseId, enrolled } = action.payload;
-      const existingIndex = state.enrollments.findIndex(e => e.courseId === courseId);
-      
-      if (existingIndex >= 0) {
-        state.enrollments[existingIndex].enrolled = enrolled;
+      const idx = state.enrollments.findIndex((e) => String(e.courseId) === String(courseId));
+      if (idx >= 0) {
+        state.enrollments[idx] = action.payload;
       } else {
-        state.enrollments.push({ courseId, enrolled });
+        state.enrollments.push(action.payload);
       }
     },
   },
   extraReducers: (builder) => {
-    // Handle fetchCourses
     builder
+      // fetchCourses
       .addCase(fetchCourses.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchCourses.fulfilled, (state, action) => {
         state.loading = false;
-        state.courses = action.payload;
+        state.courses = action.payload.data;
+        state.pagination = action.payload.meta;
       })
       .addCase(fetchCourses.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
-    
-    // Handle fetchCourseById
-    builder
+
+      // fetchCourseById
       .addCase(fetchCourseById.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchCourseById.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentCourse = action.payload;
+        state.error = null;
+        const course = action.payload;
+        const enrollment = action.payload.enrollment;
+        state.currentCourse = course;
+
+        // Upsert enrollment status from consolidated payload
+        const courseId = course?.id;
+        if (courseId !== undefined) {
+          const enrolled = enrollment !== null && enrollment !== undefined;
+          const isPaid = enrollment?.isPaid ?? false;
+          const idx = state.enrollments.findIndex(
+            (e) => String(e.courseId) === String(courseId),
+          );
+          if (idx >= 0) {
+            state.enrollments[idx] = { courseId, enrolled, isPaid };
+          } else {
+            state.enrollments.push({ courseId, enrolled, isPaid });
+          }
+        }
       })
       .addCase(fetchCourseById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
-    
-    // Handle checkEnrollmentStatus
-    builder
+
+      // checkEnrollmentStatus
       .addCase(checkEnrollmentStatus.fulfilled, (state, action) => {
-        const { courseId, enrolled } = action.payload;
-        const existingIndex = state.enrollments.findIndex(e => e.courseId === courseId);
-        
-        if (existingIndex >= 0) {
-          state.enrollments[existingIndex].enrolled = enrolled;
+        const { courseId, enrolled, isPaid } = action.payload;
+        const idx = state.enrollments.findIndex((e) => String(e.courseId) === String(courseId));
+        if (idx >= 0) {
+          state.enrollments[idx] = { courseId, enrolled, isPaid };
         } else {
-          state.enrollments.push({ courseId, enrolled });
+          state.enrollments.push({ courseId, enrolled, isPaid });
+        }
+      })
+
+      // enrollInCourse
+      .addCase(enrollInCourse.fulfilled, (state, action) => {
+        const { courseId, enrolled, isPaid } = action.payload;
+        const idx = state.enrollments.findIndex((e) => String(e.courseId) === String(courseId));
+        if (idx >= 0) {
+          state.enrollments[idx] = { courseId, enrolled, isPaid };
+        } else {
+          state.enrollments.push({ courseId, enrolled, isPaid });
         }
       });
   },
 });
 
-// Export actions and selectors
+// ---------------------------------------------------------------------------
+// Exports
+// ---------------------------------------------------------------------------
+
 export const { setCurrentCourse, clearCurrentCourse, updateEnrollmentStatus } = courseSlice.actions;
 
 export const selectAllCourses = (state: RootState) => state.courses.courses;
 export const selectCurrentCourse = (state: RootState) => state.courses.currentCourse;
-export const selectEnrollmentStatus = (courseId: string) => (state: RootState) => 
-  state.courses.enrollments.find(e => e.courseId === courseId)?.enrolled || false;
+export const selectCoursePagination = (state: RootState) => state.courses.pagination;
+export const selectEnrollmentStatus = (courseId: string | number) => (state: RootState) =>
+  state.courses.enrollments.find((e) => String(e.courseId) === String(courseId))?.enrolled ?? false;
 export const selectCoursesLoading = (state: RootState) => state.courses.loading;
 export const selectCoursesError = (state: RootState) => state.courses.error;
 

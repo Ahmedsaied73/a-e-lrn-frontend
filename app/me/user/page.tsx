@@ -8,59 +8,39 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { User, Lock, BookOpen, CreditCard, Clock, Video, CheckCircle } from 'lucide-react';
-import { checkAuthResponse } from '@/utils/auth-utils';
+import { useAppSelector } from '@/store/hooks';
+import { selectUser, selectAuth } from '@/store/slices/authSlice';
 
 export default function UserProfilePage() {
   const [activeTab, setActiveTab] = useState('profile');
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // No independent fetch here anymore — this was one of the two places
+  // (this page + Navbar) both calling getCurrentUser() on their own,
+  // which is what produced the duplicate "/user/me" requests. Auth is now
+  // fetched exactly once by AuthInitializer on app load and shared via
+  // Redux, so this page just reads the result.
+  const user = useAppSelector(selectUser);
+  const { initialized, isAuthenticated } = useAppSelector(selectAuth);
+  // Show the spinner until the app-level auth check has completed at least
+  // once. Gating on `initialized` (not `loading`) matters here: this page's
+  // effect can fire before AuthInitializer's effect even runs (React fires
+  // child effects before parent effects on mount), so checking `loading`
+  // alone could redirect to /login before the real check ever started.
+  const isLoading = !initialized;
 
-  const fetchData = async (refreshToken: string) => {
-    try {
-      const response = await fetch('http://localhost:3005/user/me', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${refreshToken}`,
-        },
-      });
-      
-      // Use helper function to check response status
-      if (checkAuthResponse(response)) {
-        return null;
-      }
-      
-      const data = await response.json();
-      return data;
-    }
-    catch (error) {
-      console.error('Error fetching user data:', error);
-      return null;
-    }
-  }
-  
   useEffect(() => {
-    const loadUserData = async () => {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        const userData = await fetchData(refreshToken);
-        if (userData) {
-          setUser(userData);
-        }
-      } else {
-        // If there is no token, redirect user to login page
-        window.location.href = '/login';
-        return;
-      }
-      setIsLoading(false);
-    };
-    
-    loadUserData();
-  }, []);
+    // Belt-and-suspenders: middleware already redirects unauthenticated
+    // visitors away from /me/* before this page renders, and apiClient's
+    // 401 interceptor redirects on session expiry. This just covers the
+    // brief window where hydration has finished and genuinely found no
+    // authenticated session (e.g. cookie present but session invalid).
+    if (initialized && !isAuthenticated) {
+      window.location.replace('/login');
+    }
+  }, [initialized, isAuthenticated]);
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 px-4 flex items-center justify-center min-h-screen">
+      <div className="account-page flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
           <p className="mt-4 text-white">جاري تحميل البيانات...</p>
@@ -70,7 +50,7 @@ export default function UserProfilePage() {
   }
   
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className="account-page">
       {/* Header with user icon */}
       <div className="flex flex-col items-center justify-center mb-8">
         <div className="bg-blue-500 rounded-full p-3 mb-2">
@@ -134,16 +114,10 @@ export default function UserProfilePage() {
                 الاشتراكات
               </Button>
             </Link>
-            <Link href="/me/user/all-exam-results" className="w-full">
+            <Link href="/me/user/achievements" className="w-full">
               <Button variant="outline" className="w-full justify-start text-white border-[#1f2937] bg-[#111827] hover:bg-[#1f2937]">
                 <CheckCircle className="mr-2 h-4 w-4" />
-                نتائج الامتحانات
-              </Button>
-            </Link>
-            <Link href="/me/user/assignments" className="w-full">
-              <Button variant="outline" className="w-full justify-start text-white border-[#1f2937] bg-[#111827] hover:bg-[#1f2937]">
-                <CheckCircle className="mr-2 h-4 w-4" />
-                نتائج الواجب
+                الانجازات والنتائج
               </Button>
             </Link>
           </div>

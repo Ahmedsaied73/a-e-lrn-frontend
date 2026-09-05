@@ -1,416 +1,229 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import type { RootState } from '../store';
+/**
+ * Quiz Redux slice — store/slices/quizSlice.ts
+ *
+ * State management for the quiz/exam flow.
+ * Follows the same conventions as assignmentSlice.ts / courseSlice.ts.
+ */
 
-// Types
-export interface QuizQuestion {
-  id: number;
-  text: string;
-  options: string[] | { id: number; text: string }[];
-  points: number;
-}
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import type { RootState } from '@/store/store';
+import { ApiError } from '@/lib/errors';
+import type {
+  QuizMeta,
+  StartQuizData,
+  SubmitQuizData,
+  QuizResultData,
+  AttemptSummary,
+} from '@/types/quiz';
+import {
+  getQuizMeta,
+  startQuiz,
+  submitQuiz,
+  getQuizResult,
+  getQuizAttempts,
+} from '@/services/quizService';
 
-export interface Quiz {
-  id: number;
-  title: string;
-  description: string;
-  isFinal: boolean;
-  passingScore: number;
-  videoId: number | null;
-  videoTitle: string | null;
-  questionCount: number;
-  createdAt: string;
-  status?: {
-    taken: boolean;
-    score: number | null;
-    passed: boolean | null;
-    submittedAt: string | null;
-  };
-  questions?: QuizQuestion[];
-}
-
-export interface QuizResult {
-  quizId: number;
-  title: string;
-  correctAnswers: number;
-  totalQuestions: number;
-  score: number;
-  passingScore: number;
-  passed: boolean;
-  submittedAt: string;
-  results: {
-    questionId: number;
-    questionText: string;
-    selectedOption: number;
-    correctOption: number;
-    isCorrect: boolean;
-    points: number;
-    explanation: string;
-  }[];
-}
-
-export interface QuizStatus {
-  quizId: number;
-  title: string;
-  taken: boolean;
-  status: 'PASSED' | 'FAILED' | null;
-  score: number | null;
-  passingScore: number;
-  passed: boolean;
-  submittedAt: string | null;
-  correctAnswers?: number;
-  totalQuestions?: number;
-}
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
 
 export interface QuizState {
-  quizzes: Quiz[];
-  currentQuiz: Quiz | null;
-  quizResults: QuizResult | null;
-  quizStatuses: Record<number, QuizStatus>;
-  loading: boolean;
+  meta: QuizMeta | null;
+  metaStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  activeAttempt: StartQuizData | null;
+  submitResult: SubmitQuizData | null;
+  result: QuizResultData | null;
+  attempts: AttemptSummary[];
   error: string | null;
-  videoCompleted: boolean;
-  videoProgressMap: Record<string, { completed: boolean; watchedAt: string | null }>;
-  selectedAnswers: Record<number, number>;
-  submitting: boolean;
-  submitSuccess: boolean;
+}
+
+export interface QuizThunkError {
+  message: string;
+  status?: number;
+  body?: unknown;
+}
+
+function toQuizThunkError(error: unknown, fallback: string): QuizThunkError {
+  if (error instanceof ApiError) {
+    return { message: error.message, status: error.status, body: error.body };
+  }
+  if (error instanceof Error) {
+    return { message: error.message };
+  }
+  return { message: fallback };
 }
 
 const initialState: QuizState = {
-  quizzes: [],
-  currentQuiz: null,
-  quizResults: null,
-  quizStatuses: {},
-  loading: false,
+  meta: null,
+  metaStatus: 'idle',
+  activeAttempt: null,
+  submitResult: null,
+  result: null,
+  attempts: [],
   error: null,
-  videoCompleted: false,
-  videoProgressMap: {},
-  selectedAnswers: {},
-  submitting: false,
-  submitSuccess: false,
 };
 
-// Async thunks
-export const fetchQuizzesByCourse = createAsyncThunk(
-  'quiz/fetchQuizzesByCourse',
-  async (courseId: string, { rejectWithValue }) => {
+// ---------------------------------------------------------------------------
+// Async Thunks
+// ---------------------------------------------------------------------------
+
+export const fetchQuizMeta = createAsyncThunk<QuizMeta, number | string, { rejectValue: QuizThunkError }>(
+  'quiz/fetchQuizMeta',
+  async (videoId, { rejectWithValue }) => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return rejectWithValue('Not authenticated');
-      }
-
-      const response = await fetch(`http://localhost:3005/quizzes/course/${courseId}`, {
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch quizzes');
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
+      return await getQuizMeta(videoId);
+    } catch (err: unknown) {
+      return rejectWithValue(toQuizThunkError(err, 'حدث خطأ أثناء تحميل بيانات الاختبار'));
     }
-  }
+  },
 );
 
-export const fetchQuizById = createAsyncThunk(
-  'quiz/fetchQuizById',
-  async (quizId: number, { rejectWithValue }) => {
+export const startQuizAttempt = createAsyncThunk<StartQuizData, number | string, { rejectValue: QuizThunkError }>(
+  'quiz/startQuizAttempt',
+  async (videoId, { rejectWithValue }) => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return rejectWithValue('Not authenticated');
-      }
-
-      const response = await fetch(`http://localhost:3005/quizzes/${quizId}`, {
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch quiz');
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
+      return await startQuiz(videoId);
+    } catch (err: unknown) {
+      return rejectWithValue(toQuizThunkError(err, 'تعذر بدء الاختبار'));
     }
-  }
+  },
 );
 
-export const completeVideo = createAsyncThunk(
-  'quiz/completeVideo',
-  async ({ videoId }: { videoId: string | number }, { rejectWithValue }) => {
-    // تحويل معرف الفيديو إلى رقم
-    const numericVideoId = Number(videoId);
-    if (isNaN(numericVideoId)) {
-      return rejectWithValue('Invalid video ID format');
-    }
+export const submitQuizAttempt = createAsyncThunk<
+  SubmitQuizData,
+  { attemptId: number; answers: Record<string, unknown>; autoSubmitted: boolean },
+  { rejectValue: QuizThunkError }
+>(
+  'quiz/submitQuizAttempt',
+  async ({ attemptId, answers, autoSubmitted }, { rejectWithValue }) => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return rejectWithValue('Not authenticated');
-      }
-
-      const response = await fetch('http://localhost:3005/progress/complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${refreshToken}`
-        },
-        body: JSON.stringify({ videoId: numericVideoId })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to mark video as completed');
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
+      return await submitQuiz(attemptId, answers, autoSubmitted);
+    } catch (err: unknown) {
+      return rejectWithValue(toQuizThunkError(err, 'تعذر تسليم الاختبار'));
     }
-  }
+  },
 );
 
-export const submitQuizAnswers = createAsyncThunk(
-  'quiz/submitQuizAnswers',
-  async ({ quizId, answers }: { quizId: number, answers: { questionId: number, selectedOption: number }[] }, { rejectWithValue }) => {
+export const fetchQuizResult = createAsyncThunk<QuizResultData, number | string, { rejectValue: QuizThunkError }>(
+  'quiz/fetchQuizResult',
+  async (attemptId, { rejectWithValue }) => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return rejectWithValue('Not authenticated');
-      }
-
-      const response = await fetch('http://localhost:3005/quizzes/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${refreshToken}`
-        },
-        body: JSON.stringify({ quizId, answers })
-      });
-
-      if (!response.ok) {
-        // Create an error message that includes the status code
-        const errorMessage = `STATUS_${response.status}: Failed to submit quiz answers`;
-        return rejectWithValue(errorMessage);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
+      return await getQuizResult(attemptId);
+    } catch (err: unknown) {
+      return rejectWithValue(toQuizThunkError(err, 'تعذر تحميل نتيجة الاختبار'));
     }
-  }
+  },
 );
 
-export const fetchQuizResults = createAsyncThunk(
-  'quiz/fetchQuizResults',
-  async (quizId: number, { rejectWithValue }) => {
+export const fetchQuizAttempts = createAsyncThunk<
+  { attempts: AttemptSummary[] },
+  number | string,
+  { rejectValue: QuizThunkError }
+>(
+  'quiz/fetchQuizAttempts',
+  async (videoId, { rejectWithValue }) => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return rejectWithValue('Not authenticated');
-      }
-
-      const response = await fetch(`http://localhost:3005/quizzes/${quizId}/results`, {
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch quiz results');
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
+      const data = await getQuizAttempts(videoId);
+      return { attempts: data.attempts };
+    } catch (err: unknown) {
+      return rejectWithValue(toQuizThunkError(err, 'تعذر تحميل سجل المحاولات'));
     }
-  }
+  },
 );
 
-export const fetchQuizStatus = createAsyncThunk(
-  'quiz/fetchQuizStatus',
-  async (quizId: number, { rejectWithValue }) => {
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return rejectWithValue('Not authenticated');
-      }
+// ---------------------------------------------------------------------------
+// Slice
+// ---------------------------------------------------------------------------
 
-      const response = await fetch(`http://localhost:3005/quizzes/${quizId}/status`, {
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch quiz status');
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
-    }
-  }
-);
-
-export const fetchVideoProgress = createAsyncThunk(
-  'quiz/fetchVideoProgress',
-  async (videoId: string | number, { rejectWithValue }) => {
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        return rejectWithValue('Not authenticated');
-      }
-
-      const response = await fetch(`http://localhost:3005/progress/${videoId}`, {
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch video progress');
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
-    }
-  }
-);
-
-export const quizSlice = createSlice({
+const quizSlice = createSlice({
   name: 'quiz',
   initialState,
   reducers: {
-    setVideoCompleted: (state, action: PayloadAction<boolean>) => {
-      state.videoCompleted = action.payload;
+    resetQuizState(state) {
+      state.meta = null;
+      state.metaStatus = 'idle';
+      state.activeAttempt = null;
+      state.submitResult = null;
+      state.result = null;
+      state.attempts = [];
+      state.error = null;
     },
-    setSelectedAnswer: (state, action: PayloadAction<{ questionId: number, optionId: number }>) => {
-      const { questionId, optionId } = action.payload;
-      state.selectedAnswers[questionId] = optionId;
+    clearActiveAttempt(state) {
+      state.activeAttempt = null;
+      state.submitResult = null;
     },
-    resetQuizState: (state) => {
-      state.currentQuiz = null;
-      state.quizResults = null;
-      state.selectedAnswers = {};
-      state.submitting = false;
-      state.submitSuccess = false;
-    },
-    resetSubmitState: (state) => {
-      state.submitting = false;
-      state.submitSuccess = false;
-    }
   },
   extraReducers: (builder) => {
+    // fetchQuizMeta
     builder
-      // fetchQuizzesByCourse
-      .addCase(fetchQuizzesByCourse.pending, (state) => {
-        state.loading = true;
+      .addCase(fetchQuizMeta.pending, (state) => {
+        state.metaStatus = 'loading';
+        state.meta = null;
         state.error = null;
       })
-      .addCase(fetchQuizzesByCourse.fulfilled, (state, action) => {
-        state.loading = false;
-        state.quizzes = action.payload;
+      .addCase(fetchQuizMeta.fulfilled, (state, action) => {
+        state.metaStatus = 'succeeded';
+        state.meta = action.payload;
       })
-      .addCase(fetchQuizzesByCourse.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // fetchQuizById
-      .addCase(fetchQuizById.pending, (state) => {
-        state.loading = true;
+      .addCase(fetchQuizMeta.rejected, (state, action) => {
+        state.metaStatus = 'failed';
+        state.error = action.payload?.message ?? action.error.message ?? 'تعذر تحميل بيانات الاختبار';
+      });
+
+    // startQuizAttempt
+    builder
+      .addCase(startQuizAttempt.pending, (state) => {
         state.error = null;
       })
-      .addCase(fetchQuizById.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentQuiz = action.payload;
+      .addCase(startQuizAttempt.fulfilled, (state, action) => {
+        state.activeAttempt = action.payload;
       })
-      .addCase(fetchQuizById.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+      .addCase(startQuizAttempt.rejected, (state, action) => {
+        state.error = action.payload?.message ?? action.error.message ?? 'تعذر بدء الاختبار';
+      });
+
+    // submitQuizAttempt
+    builder
+      .addCase(submitQuizAttempt.fulfilled, (state, action) => {
+        state.submitResult = action.payload;
+        state.activeAttempt = null;
       })
-      // completeVideo
-      .addCase(completeVideo.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+      .addCase(submitQuizAttempt.rejected, (state, action) => {
+        state.error = action.payload?.message ?? action.error.message ?? 'تعذر تسليم الاختبار';
+      });
+
+    // fetchQuizResult
+    builder
+      .addCase(fetchQuizResult.fulfilled, (state, action) => {
+        state.result = action.payload;
       })
-      .addCase(completeVideo.fulfilled, (state) => {
-        state.loading = false;
-        state.videoCompleted = true;
+      .addCase(fetchQuizResult.rejected, (state, action) => {
+        state.error = action.payload?.message ?? action.error.message ?? 'تعذر تحميل النتيجة';
+      });
+
+    // fetchQuizAttempts
+    builder
+      .addCase(fetchQuizAttempts.fulfilled, (state, action) => {
+        state.attempts = action.payload.attempts;
       })
-      .addCase(completeVideo.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // submitQuizAnswers
-      .addCase(submitQuizAnswers.pending, (state) => {
-        state.submitting = true;
-        state.error = null;
-      })
-      .addCase(submitQuizAnswers.fulfilled, (state, action) => {
-        state.submitting = false;
-        state.submitSuccess = true;
-        state.quizResults = action.payload;
-      })
-      .addCase(submitQuizAnswers.rejected, (state, action) => {
-        state.submitting = false;
-        state.error = action.payload as string;
-      })
-      // fetchQuizResults
-      .addCase(fetchQuizResults.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchQuizResults.fulfilled, (state, action) => {
-        state.loading = false;
-        state.quizResults = action.payload;
-      })
-      .addCase(fetchQuizResults.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // fetchQuizStatus
-      .addCase(fetchQuizStatus.fulfilled, (state, action) => {
-        const quizStatus = action.payload;
-        state.quizStatuses[quizStatus.quizId] = quizStatus;
-      })
-      // fetchVideoProgress
-      .addCase(fetchVideoProgress.fulfilled, (state, action) => {
-        const { videoId, completed, watchedAt } = action.payload;
-        state.videoProgressMap[videoId] = { completed, watchedAt };
+      .addCase(fetchQuizAttempts.rejected, (state, action) => {
+        state.error = action.payload?.message ?? action.error.message ?? 'تعذر تحميل سجل المحاولات';
       });
   },
 });
 
-export const { setVideoCompleted, setSelectedAnswer, resetQuizState, resetSubmitState } = quizSlice.actions;
+export const { resetQuizState, clearActiveAttempt } = quizSlice.actions;
 
+// ---------------------------------------------------------------------------
 // Selectors
-export const selectQuizState = (state: RootState) => state.quiz;
-export const selectQuizzes = (state: RootState) => state.quiz.quizzes;
-export const selectCurrentQuiz = (state: RootState) => state.quiz.currentQuiz;
-export const selectQuizResults = (state: RootState) => state.quiz.quizResults;
-export const selectVideoCompleted = (state: RootState) => state.quiz.videoCompleted;
-export const selectSelectedAnswers = (state: RootState) => state.quiz.selectedAnswers;
+// ---------------------------------------------------------------------------
 
-// New selectors
-export const selectQuizStatus = (quizId: number) => (state: RootState) => 
-  state.quiz.quizStatuses[quizId] || null;
-
-export const selectVideoProgress = (videoId: string | number) => (state: RootState) => 
-  state.quiz.videoProgressMap[videoId] || { completed: false, watchedAt: null };
+export const selectQuizMeta = (state: RootState) => state.quiz.meta;
+export const selectQuizMetaStatus = (state: RootState) => state.quiz.metaStatus;
+export const selectActiveAttempt = (state: RootState) => state.quiz.activeAttempt;
+export const selectSubmitResult = (state: RootState) => state.quiz.submitResult;
+export const selectQuizResult = (state: RootState) => state.quiz.result;
+export const selectQuizAttempts = (state: RootState) => state.quiz.attempts;
+export const selectQuizError = (state: RootState) => state.quiz.error;
 
 export default quizSlice.reducer;

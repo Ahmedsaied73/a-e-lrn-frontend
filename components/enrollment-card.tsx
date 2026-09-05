@@ -2,137 +2,85 @@
 
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
+import { CircleHelp, Clock, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { enrollInCourse } from '@/services/courseService';
 
 interface EnrollmentCardProps {
   courseId: string;
-  userId: string | null;
+  userId?: string | null;
   isEnrolled: boolean;
   courseTitle: string;
   coursePrice: string | number;
   courseDuration: string | number;
   questionsCount: string | number;
   className?: string;
+  onEnrollSuccess?: () => void;
 }
 
-export function EnrollmentCard({
-  courseId,
-  userId,
-  isEnrolled,
-  courseTitle,
-  coursePrice,
-  courseDuration,
-  questionsCount,
-  className,
-}: EnrollmentCardProps) {
+export function EnrollmentCard({ courseId, isEnrolled, courseTitle, coursePrice, courseDuration, questionsCount, className, onEnrollSuccess }: EnrollmentCardProps) {
   const router = useRouter();
-  const [enrollmentLoading, setEnrollmentLoading] = useState(false);
-  const [enrolled, setEnrolled] = useState(isEnrolled);
+  const [loading, setLoading] = useState(false);
+  const enrolled = isEnrolled;
 
-  useEffect(() => {
-    const checkEnrollmentStatus = async () => {
-      if (!userId || !courseId) return;
-      try {
-        const response = await fetch('http://localhost:3005/enroll/api/enrollment-status', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`
-          },
-          body: JSON.stringify({ userId, courseId })
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (typeof data.enrolled === 'boolean') {
-            setEnrolled(data.enrolled);
-          }
-        }
-      } catch (error) {
-        console.error('Error checking enrollment status:', error);
-      }
-    };
-    checkEnrollmentStatus();
-  }, [userId, courseId]);
-
-  /**
-   * Handles the enrollment process when the user clicks the enrollment button
-   */
   const handleEnrollment = async () => {
-    if (!userId) {
-      toast.error('يرجى تسجيل الدخول أولاً');
-      return;
+    if (enrolled) return toast.success('أنت مشترك بالفعل في هذا الكورس');
+    
+    setLoading(true);
+    try {
+      await enrollInCourse(courseId);
+      toast.success('تم الاشتراك في الكورس بنجاح!');
+      if (onEnrollSuccess) {
+        onEnrollSuccess();
+      } else {
+        router.refresh();
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'حدث خطأ أثناء الاشتراك في الكورس');
+    } finally {
+      setLoading(false);
     }
-
-    if (enrolled) {
-      // User is already enrolled, show a message
-      toast.success('أنت مشترك بالفعل في هذا الكورس');
-      return;
-    }
-
-    // Redirect to invoice page for subscription
-    router.push(`/course/${courseId}/subscribe/invoice`);
-  };
-
-  /**
-   * Enrolls a user in a course by sending a request to the enrollment API
-   * @param userId - The ID of the user to enroll
-   * @param courseId - The ID of the course to enroll in
-   * @returns The response from the enrollment API
-   */
-  const enrollUserInCourse = async (userId: string, courseId: string) => {
-    return await fetch('http://localhost:3005/enroll/api/enroll', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`
-      },
-      body: JSON.stringify({
-        userId: userId,
-        courseId: courseId,
-        isPaid: true
-      })
-    });
   };
 
   return (
-    <div className={cn('rounded-lg border border-gray-200 overflow-hidden shadow-sm', className)}>
-      <div className="relative">
-        <div className="bg-gradient-to-l from-[#61B846] to-[#61B846]/80 p-4 text-white text-center">
-          <h3 className="text-xl font-bold mb-1">{courseTitle}</h3>
-          <div className="flex justify-center items-center gap-2 mb-2">
-            <span className="text-lg font-bold">{coursePrice}</span>
-            <span className="text-sm bg-white/20 px-2 py-0.5 rounded-full">جنيها</span>
-          </div>
+    <aside className={cn('overflow-hidden rounded-lg bg-white shadow-level-2', className)}>
+      <div className="border-b border-outline-variant/60 p-5">
+        <p className="text-caption font-semibold text-secondary-color">ملخص الدورة</p>
+        <h2 className="mt-2 text-lg font-bold leading-7 text-on-surface">{courseTitle}</h2>
+        <div className="mt-4 flex items-baseline gap-2 text-primary">
+          <span className="text-2xl font-bold">{coursePrice}</span>
+          <span className="text-sm font-semibold">جنيه</span>
         </div>
       </div>
-      
-      <button
-        onClick={handleEnrollment}
-        disabled={enrollmentLoading || enrolled}
-        className={cn(
-          'w-full font-bold py-3 px-4 transition-colors text-center',
-          enrolled 
-            ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-            : 'bg-[#61B846] text-white hover:bg-[#61B846]/90'
-        )}
+      <button 
+        onClick={handleEnrollment} 
+        disabled={enrolled || loading} 
+        className={cn('m-5 flex w-[calc(100%-2.5rem)] items-center justify-center rounded-md px-4 py-3 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2', enrolled ? 'bg-[#e8f2ff] text-primary' : 'bg-primary text-white hover:bg-[#0057c0]')}
       >
-        {enrollmentLoading ? 'جاري المعالجة...' : enrolled ? 'انت مشترك في الكورس حاليا' : 'اشترك الآن!'}
+        {loading ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            جاري الاشتراك...
+          </span>
+        ) : enrolled ? (
+          'أنت مشترك في الكورس حالياً'
+        ) : (
+          'اشترك في الدورة'
+        )}
       </button>
-
-      <div className="p-4 bg-gray-50 dark:bg-gray-800">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center">
-            <p className="text-gray-600 dark:text-gray-400 text-sm">المحتوى</p>
-            <p className="text-xl font-bold">{courseDuration}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-gray-600 dark:text-gray-400 text-sm">إجمالي الأسئلة</p>
-            <p className="text-xl font-bold">{questionsCount} سؤال</p>
-          </div>
+      <div className="grid grid-cols-2 border-t border-outline-variant/60 bg-surface-container-low">
+        <div className="border-l border-outline-variant/60 p-4 text-center">
+          <Clock className="mx-auto mb-2 h-4 w-4 text-secondary-color" />
+          <p className="text-caption text-on-surface-variant">المدة</p>
+          <p className="mt-1 text-sm font-bold text-on-surface">{courseDuration}</p>
+        </div>
+        <div className="p-4 text-center">
+          <CircleHelp className="mx-auto mb-2 h-4 w-4 text-secondary-color" />
+          <p className="text-caption text-on-surface-variant">الأسئلة</p>
+          <p className="mt-1 text-sm font-bold text-on-surface">{questionsCount} سؤال</p>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }
