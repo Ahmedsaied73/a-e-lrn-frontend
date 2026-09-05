@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AppDispatch } from "@/store/store";
 import { fetchQuizMeta, startQuizAttempt, selectQuizMeta, selectQuizMetaStatus, selectQuizError } from "@/store/slices/quizSlice";
 import { useQuizTimer } from "@/hooks/useQuizTimer";
-import { Loader2, Lock, CheckCircle, Clock, FileQuestion, Award, Zap, ChevronLeft } from "lucide-react";
+import { Loader2, Lock, CheckCircle, Clock, FileQuestion, Award, Zap, ChevronLeft, RotateCcw } from "lucide-react";
 
 interface QuizIntroCardProps {
   videoId: number | string;
@@ -99,6 +99,7 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
   const totalQuestionsDisplay = meta.totalQuestions != null ? `${meta.totalQuestions} سؤال` : "--";
   const totalPointsDisplay = meta.totalPoints != null ? `${meta.totalPoints} درجة` : "--";
   const passingDisplay = `${meta.passingScore}%`;
+  const attemptsDisplay = `${meta.attemptsUsed} من ${meta.maxAttempts}`;
 
   const handleStartOrResume = async () => {
     try {
@@ -113,6 +114,7 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
   const hasInProgress = !!meta.inProgressAttempt;
   const hasAttempted = meta.attempted;
   const hasPassed = meta.passed;
+  const outOfAttempts = meta.atMaxAttempts;
 
   // Determine button label and state
   let btnLabel = "بدء الاختبار الآن";
@@ -123,6 +125,8 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
     btnLabel = "متابعة الاختبار";
   } else if (hasAttempted) {
     btnLabel = "إعادة الاختبار";
+  } else if (outOfAttempts) {
+    btnLabel = "انتهت المحاولات";
   }
 
   const currentScore = meta.bestScore != null ? meta.bestScore : null;
@@ -158,7 +162,7 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
 
       <div className="p-6 sm:p-8 space-y-8">
         {/* Metrics Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           {/* Time limit */}
           <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 text-center flex flex-col justify-center">
             <div className="w-8 h-8 rounded-lg bg-blue-100 text-[#207bff] mx-auto flex items-center justify-center mb-2">
@@ -194,6 +198,15 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
             <span className="text-xs font-semibold text-slate-500 block">نسبة النجاح</span>
             <span className="text-base font-bold text-slate-900 mt-0.5">{passingDisplay}</span>
           </div>
+
+          {/* Attempts used */}
+          <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 text-center flex flex-col justify-center">
+            <div className="w-8 h-8 rounded-lg bg-violet-100 text-violet-600 mx-auto flex items-center justify-center mb-2">
+              <RotateCcw className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-semibold text-slate-500 block">المحاولات</span>
+            <span className="text-base font-bold text-slate-900 mt-0.5">{attemptsDisplay}</span>
+          </div>
         </div>
 
         {/* Instructions */}
@@ -218,6 +231,13 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
 
         {/* CTA Area */}
         <div className="pt-2 flex flex-col items-center gap-4">
+          {/* Start/error surface from startQuizAttempt (e.g. 409 max attempts) */}
+          {!isLocked && quizError && (
+            <div className="w-full sm:w-2/3 flex items-center gap-2 text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-5 py-3 justify-center">
+              <span className="font-bold text-sm">{quizError}</span>
+            </div>
+          )}
+
           {isLocked ? (
             <div className="w-full sm:w-2/3 flex flex-col items-center gap-3">
               <div className="flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 w-full justify-center">
@@ -230,6 +250,20 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
               >
                 <span>الاختبار مقفل</span>
                 <Lock className="w-5 h-5" />
+              </button>
+            </div>
+          ) : outOfAttempts ? (
+            <div className="w-full sm:w-2/3 flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-5 py-3 w-full justify-center">
+                <RotateCcw className="w-5 h-5" />
+                <span className="font-bold text-sm">لقد استنفدت جميع محاولات هذا الاختبار ({meta.maxAttempts})</span>
+              </div>
+              <button
+                disabled
+                className="w-full py-3.5 px-6 rounded-xl bg-slate-200 text-slate-400 font-bold text-base flex items-center justify-center gap-3 cursor-not-allowed"
+              >
+                <span>انتهت المحاولات</span>
+                <RotateCcw className="w-5 h-5" />
               </button>
             </div>
           ) : (

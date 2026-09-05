@@ -31,6 +31,8 @@ export interface BunnyVideo {
   id: number;
   courseId: number;
   title: string;
+  /** Position in the course sequence (1-based). Null for legacy rows. */
+  position: number | null;
   /** Bunny's remote GUID, used only to resolve legacy GUID-based links. */
   bunnyVideoId?: string;
   status: BunnyVideoStatus;

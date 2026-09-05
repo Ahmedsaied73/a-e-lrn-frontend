@@ -42,6 +42,9 @@ export interface QuizMetaExists {
   title: string;
   timeLimitSec: number | null;
   passingScore: number;
+  maxAttempts: number;
+  attemptsUsed: number;
+  atMaxAttempts: boolean;
   unlocked: boolean;
   attempted: boolean;
   totalAttempts: number;
@@ -66,6 +69,7 @@ export interface StudentSafeQuiz {
   title: string;
   timeLimitSec: number | null;
   passingScore: number;
+  maxAttempts: number;
   surveyJson: Record<string, unknown>;
 }
 
@@ -104,6 +108,7 @@ export interface UpsertQuizInput {
   title: string;
   timeLimitSec: number | null;
   passingScore: number;
+  maxAttempts?: number;
   surveyJson: Record<string, unknown>;
   answerKey: Record<string, unknown>;
 }
