@@ -210,6 +210,7 @@ export interface StudentAttemptsData {
 
 export interface QuizGate403 {
   message: string;
+  code?: 'SEQUENTIAL_GATE' | 'NOT_ENROLLED' | 'VIDEO_NOT_FOUND';
   previousVideoId?: number;
   currentVideoId?: number;
   quizId?: number;
