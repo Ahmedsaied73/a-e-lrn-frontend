@@ -63,9 +63,11 @@ interface RequestOptions {
   _isRetry?: boolean;
   /** Return the raw `{ success, data, meta, ... }` body instead of unwrapping `data` */
   full?: boolean;
+  /** Send a FormData body (multipart) instead of JSON. Skips the JSON Content-Type. */
+  formData?: FormData;
 }
 
-function buildHeaders(authenticated = true): HeadersInit {
+function buildHeaders(authenticated = true): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
@@ -122,16 +124,22 @@ async function request<T>(
   body?: unknown,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { authenticated = true, signal, _isRetry = false, full = false } = options;
+  const { authenticated = true, signal, _isRetry = false, full = false, formData } = options;
   const url = `${API_BASE_URL}${path}`;
+
+  const headers = buildHeaders(authenticated);
+  if (formData) {
+    // FormData sets its own multipart Content-Type with boundary; drop the JSON default.
+    delete headers['Content-Type'];
+  }
 
   let response: Response;
 
   try {
     response = await fetch(url, {
       method,
-      headers: buildHeaders(authenticated),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      headers,
+      body: formData ?? (body !== undefined ? JSON.stringify(body) : undefined),
       credentials: 'include', // ⚠️ MANDATORY: Enables HttpOnly Cookie transmission
       signal,
     });
@@ -256,6 +264,11 @@ export const apiClient = {
 
   post<T>(path: string, body: unknown, options?: RequestOptions): Promise<T> {
     return request<T>('POST', path, body, options);
+  },
+
+  /** POST with a FormData (multipart) body — used for binary/video uploads. */
+  postFormData<T>(path: string, formData: FormData, options?: RequestOptions): Promise<T> {
+    return request<T>('POST', path, undefined, { ...options, formData });
   },
 
   /** Like `get` but returns the whole `{ success, data, meta }` payload. */
