@@ -5,6 +5,36 @@
 
 import type { GradeEnum, User } from './api';
 
+export type RoleEnum = 'STUDENT' | 'ADMIN';
+
+/** Admin list row — backend safe-select adds lastLoginAt, no password/refreshToken. */
+export interface AdminUser extends Pick<User, 'id' | 'name' | 'email' | 'grade' | 'role' | 'createdAt'> {
+  lastLoginAt: string | null;
+  phoneNumber?: string | null;
+}
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AdminUserListResponse {
+  success: boolean;
+  data: AdminUser[];
+  meta: PaginationMeta;
+}
+
+export interface AdminUserFilters {
+  page?: number;
+  limit?: number;
+  role?: RoleEnum;
+  grade?: GradeEnum | '';
+  search?: string;
+  sort?: string;
+}
+
 export type VideoStatus = 'PENDING' | 'UPLOADING' | 'PROCESSING' | 'READY' | 'FAILED';
 export type AttemptStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'GRADING' | 'GRADED' | 'EXPIRED';
 

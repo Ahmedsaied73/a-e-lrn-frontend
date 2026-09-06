@@ -61,6 +61,8 @@ interface RequestOptions {
   authenticated?: boolean;
   signal?: AbortSignal;
   _isRetry?: boolean;
+  /** Return the raw `{ success, data, meta, ... }` body instead of unwrapping `data` */
+  full?: boolean;
 }
 
 function buildHeaders(authenticated = true): HeadersInit {
@@ -120,7 +122,7 @@ async function request<T>(
   body?: unknown,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { authenticated = true, signal, _isRetry = false } = options;
+  const { authenticated = true, signal, _isRetry = false, full = false } = options;
   const url = `${API_BASE_URL}${path}`;
 
   let response: Response;
@@ -224,6 +226,11 @@ async function request<T>(
     throw new ApiError(errMsg, response.status, resBody);
   }
 
+  // Full response mode: return the parsed body as-is (keeps `meta` for pagination)
+  if (full) {
+    return resBody as T;
+  }
+
   // Unwrap `{ success: true, data: T }` envelope if present
   const successBody = resBody as { success?: boolean; data?: T; message?: string } & T;
 
@@ -249,6 +256,11 @@ export const apiClient = {
 
   post<T>(path: string, body: unknown, options?: RequestOptions): Promise<T> {
     return request<T>('POST', path, body, options);
+  },
+
+  /** Like `get` but returns the whole `{ success, data, meta }` payload. */
+  getFull<T>(path: string, options?: RequestOptions): Promise<T> {
+    return request<T>('GET', path, undefined, { ...options, full: true });
   },
 
   put<T>(path: string, body: unknown, options?: RequestOptions): Promise<T> {
