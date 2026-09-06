@@ -188,3 +188,15 @@ FE: `services/achievementsService.ts` â†’ `app/me/user/achievements/page.tsx` ("
 ### 9.5 Enrolled courses â€” wired through the service
 
 `/courses/enrolled` rows nest `{ course }`; `services/courseService.ts::getEnrolledCourses()` flattens. `app/me/user/subscriptions` + `app/me/user/courses` both use it. Don't call the endpoint raw from pages.
+---
+
+## 99. Admin Console (backend agent, Sept 2026)
+
+A unified admin console is being built on top of the existing admin pages. Design system + shell + Overview shipped (commits `021f036`, `e893b27`). Read `design-system/e-learning-admin-console/MASTER.md` before writing any admin UI.
+
+- **Design tokens**: dark tech + status green palette, scoped under `.admin-console` in `app/globals.css` (shadcn token names). Student app stays light — never touch the global `:root` values.
+- **Shell**: `app/admin/layout.tsx` renders `<AdminSidebar>` (6 sections). Navbar/Footer hidden on `/admin` (early returns in those components). Admin pages go inside the shell automatically — no outer `<main>` wrappers needed.
+- **API**: new `/admin` namespace BE (`authenticateToken + authorizeAdmin`). `GET /admin/dashboard` ? `{ counts, alerts, recent }` (see `types/admin.ts`).
+- **Shared pieces**: `components/admin/` ? `StatCard`, `StatusBadge`, `AdminSidebar`; `services/adminDashboardService.ts`; `types/admin.ts`. Later phases add table/detail pages under `app/admin/*` using `@tanstack/react-table` (already a dep).
+- **Existing quiz pages** (authoring `/admin/quizzes/[videoId]`, exemptions `.../[videoId]/access`, grading `/admin/quizzes/quiz/[quizId]/attempts`) are already restyled onto the dark system. Do not revert them.
+- **Student flow**: unchanged. Any new admin endpoint must not leak `answerKey`/`password`/`refreshToken`.
