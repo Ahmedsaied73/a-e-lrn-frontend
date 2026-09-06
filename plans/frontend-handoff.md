@@ -194,9 +194,28 @@ FE: `services/achievementsService.ts` → `app/me/user/achievements/page.tsx` ("
 
 A unified admin console is being built on top of the existing admin pages. Design system + shell + Overview shipped (commits `021f036`, `e893b27`). Read `design-system/e-learning-admin-console/MASTER.md` before writing any admin UI.
 
-- **Design tokens**: dark tech + status green palette, scoped under `.admin-console` in `app/globals.css` (shadcn token names). Student app stays light � never touch the global `:root` values.
-- **Shell**: `app/admin/layout.tsx` renders `<AdminSidebar>` (6 sections). Navbar/Footer hidden on `/admin` (early returns in those components). Admin pages go inside the shell automatically � no outer `<main>` wrappers needed.
+- **Design tokens**: dark tech + status green palette, scoped under `.admin-console` in `app/globals.css` (shadcn token names). Student app stays light � never touch the global `:root` values.
+- **Shell**: `app/admin/layout.tsx` renders `<AdminSidebar>` (6 sections). Navbar/Footer hidden on `/admin` (early returns in those components). Admin pages go inside the shell automatically � no outer `<main>` wrappers needed.
 - **API**: new `/admin` namespace BE (`authenticateToken + authorizeAdmin`). `GET /admin/dashboard` ? `{ counts, alerts, recent }` (see `types/admin.ts`).
 - **Shared pieces**: `components/admin/` ? `StatCard`, `StatusBadge`, `AdminSidebar`; `services/adminDashboardService.ts`; `types/admin.ts`. Later phases add table/detail pages under `app/admin/*` using `@tanstack/react-table` (already a dep).
 - **Existing quiz pages** (authoring `/admin/quizzes/[videoId]`, exemptions `.../[videoId]/access`, grading `/admin/quizzes/quiz/[quizId]/attempts`) are already restyled onto the dark system. Do not revert them.
 - **Student flow**: unchanged. Any new admin endpoint must not leak `answerKey`/`password`/`refreshToken`.
+
+### 99.1 Students admin (P1, committed `317ad20`)
+
+- `app/admin/students/page.tsx` — TanStack (v8) DataTable, server-driven sort/filter/pagination.
+- API contract (`GET /user?role=&grade=&search=&sort=`): `{ data: AdminUser[], meta: { total, page, limit, totalPages } }`. `AdminUser` includes `lastLoginAt` (safe select), never `password`/`refreshToken`.
+- `sort` uses key with optional `-` prefix (e.g. `-createdAt`); MySQL `search` is case-insensitive (no `mode: 'insensitive'` — unsupported).
+- Edit: `PUT /user/:id { name?, email? }` → returns updated user. Delete: `DELETE /user/:id` — 409 (`ConflictError`) if the user owns a course; `apiClient` surfaces structured conflict message.
+- `apiClient.getFull<T>(path)` returns the raw body so pages can read `meta`. 
+
+### 99.2 Courses + videos admin (P2, committed `6bbd357` + `de3c58f`)
+
+- `app/admin/courses/page.tsx` — table columns incl. `_count.videos`/`_count.enrollments`, `category`, price; row Film button → `/admin/courses/[id]/videos`.
+- **`GET /courses` now supports `?search=` (title contains)** + returns `_count` + `category` — required so delete/row-targeting always runs on a filtered set (see incident log below); `POST/PUT /courses` accept optional `category`.
+- `app/admin/courses/[id]/videos/page.tsx` + `services/adminVideoService.ts`:
+  - list `GET /courses/:courseId/bunny-videos`; **admin sees all statuses incl. `failureReason`/`processingProgress`** (students only READY).
+  - create `POST /courses/:courseId/videos { title }`; upload `POST /videos/:videoId/upload` — **multipart FormData field `"video"`**, MIME allowlist mp4/mov/mkv/avi/webm (Busboy, 5GB cap). Uses the new `apiClient.postFormData(path, formData)` (no JSON Content-Type).
+  - reorder `PUT /courses/:courseId/reorder { videoIds: number[] }` (must be exact course set, 1-based); delete `DELETE /videos/bunny/:videoId` (Bunny remote first, then DB; 404 tolerated).
+  - `StatusBadge` covers the 5 `VideoStatus` values already.
+- **⚠️ Incident:** do NOT script course/video deletes against an unfiltered list — the earlier CRUD test deleted course #1 (no server-side search then). Always search first, then target a specific row/id. Demo course was re-created as **course #8** with 3 READY videos. Quizzes on those videos were cascade-deleted and are NOT restored.
