@@ -38,8 +38,8 @@ export default function AdminEnrollmentsPage() {
   const [pageSize, setPageSize] = useState(15);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [isPaid, setIsPaid] = useState<'' | 'true' | 'false'>('');
-  const [isCompleted, setIsCompleted] = useState<'' | 'true' | 'false'>('');
+  const [isPaid, setIsPaid] = useState<'ALL' | 'true' | 'false'>('ALL');
+  const [isCompleted, setIsCompleted] = useState<'ALL' | 'true' | 'false'>('ALL');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,8 +63,8 @@ export default function AdminEnrollmentsPage() {
         page,
         limit: pageSize,
         search: search || undefined,
-        isPaid: isPaid === '' ? undefined : isPaid === 'true',
-        isCompleted: isCompleted === '' ? undefined : isCompleted === 'true',
+        isPaid: isPaid === 'ALL' ? undefined : isPaid === 'true',
+        isCompleted: isCompleted === 'ALL' ? undefined : isCompleted === 'true',
       });
       setRows(res.data);
       setTotal(res.meta.total);
@@ -242,22 +242,22 @@ export default function AdminEnrollmentsPage() {
                 className="border-slate-700 bg-slate-900/50 pr-9 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/15"
               />
             </div>
-            <Select value={isPaid} onValueChange={(v) => { setIsPaid(v as '' | 'true' | 'false'); setPage(1); }}>
+            <Select value={isPaid} onValueChange={(v) => { setIsPaid(v as 'ALL' | 'true' | 'false'); setPage(1); }}>
               <SelectTrigger className="w-36 border-slate-700 bg-slate-900/50 text-slate-100">
                 <SelectValue placeholder="الدفع" />
               </SelectTrigger>
               <SelectContent className="border-slate-700 bg-card text-slate-100">
-                <SelectItem value="">الكل</SelectItem>
+                <SelectItem value="ALL">الكل</SelectItem>
                 <SelectItem value="true">مدفوع</SelectItem>
                 <SelectItem value="false">غير مدفوع</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={isCompleted} onValueChange={(v) => { setIsCompleted(v as '' | 'true' | 'false'); setPage(1); }}>
+            <Select value={isCompleted} onValueChange={(v) => { setIsCompleted(v as 'ALL' | 'true' | 'false'); setPage(1); }}>
               <SelectTrigger className="w-36 border-slate-700 bg-slate-900/50 text-slate-100">
                 <SelectValue placeholder="الحالة" />
               </SelectTrigger>
               <SelectContent className="border-slate-700 bg-card text-slate-100">
-                <SelectItem value="">الكل</SelectItem>
+                <SelectItem value="ALL">الكل</SelectItem>
                 <SelectItem value="true">مكتمل</SelectItem>
                 <SelectItem value="false">قيد الدراسة</SelectItem>
               </SelectContent>
