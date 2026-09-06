@@ -17,11 +17,10 @@ const config: Config = {
     extend: {
       colors: {
         // Legacy (keep for backward compat)
-        primary: '#207bff',
-        secondary: '#4ea5ff',
+        primary: 'hsl(var(--primary))',
+        secondary: 'hsl(var(--secondary))',
 
         // Design System — Surface
-        background: '#f7f9fc',
         surface: '#f7f9fc',
         'surface-dim': '#d8dadd',
         'surface-bright': '#f7f9fc',
@@ -82,6 +81,27 @@ const config: Config = {
 
         // Design System — Background
         'on-background': '#191c1e',
+
+        // Shadcn token set — CSS-variable backed so the admin console can
+        // redefine them locally (`.admin-console`) without touching the
+        // student-facing light theme.
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        card: 'hsl(var(--card))',
+        'card-foreground': 'hsl(var(--card-foreground))',
+        popover: 'hsl(var(--popover))',
+        'popover-foreground': 'hsl(var(--popover-foreground))',
+        'primary-foreground': 'hsl(var(--primary-foreground))',
+        'secondary-foreground': 'hsl(var(--secondary-foreground))',
+        muted: 'hsl(var(--muted))',
+        'muted-foreground': 'hsl(var(--muted-foreground))',
+        accent: 'hsl(var(--accent))',
+        'accent-foreground': 'hsl(var(--accent-foreground))',
+        destructive: 'hsl(var(--destructive))',
+        'destructive-foreground': 'hsl(var(--destructive-foreground))',
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
       },
       spacing: {
         base: '4px',
@@ -105,6 +125,8 @@ const config: Config = {
       fontFamily: {
         sans: ['Cairo', 'sans-serif'],
         cairo: ['Cairo', 'sans-serif'],
+        mono: ['Fira Code', 'Fira Sans', 'monospace'],
+        code: ['Fira Code', 'Fira Sans', 'monospace'],
       },
       fontSize: {
         'headline-xl': ['48px', { lineHeight: '1.2', fontWeight: '700', letterSpacing: '-0.02em' }],

@@ -51,6 +51,11 @@ export function Navbar() {
 
   const initials = user?.name?.substring(0, 2)?.toUpperCase() || "م";
 
+  // Hide the site chrome inside the admin console (it has its own shell).
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <header className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100">
       <div className="flex items-center justify-between px-4 lg:px-12 h-16 w-full max-w-7xl mx-auto">

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@/store/slices/authSlice';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -28,5 +29,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  return <>{children}</>;
+  return (
+    // -mt-16 reclaims the global <main> pt-16 so the console fills the viewport.
+    <div className="admin-console -mt-16 flex min-h-screen">
+      <AdminSidebar />
+      <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
+    </div>
+  );
 }

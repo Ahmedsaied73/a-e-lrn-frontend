@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const SOCIAL_LINKS = [
   {
@@ -47,6 +50,13 @@ const SOCIAL_LINKS = [
 ];
 
 export function Footer() {
+  const pathname = usePathname();
+
+  // Hidden inside the admin console (it has its own shell).
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <footer
       className="w-full bg-[#f5f7fa] border-t border-gray-200 pt-10 pb-6 font-sans"

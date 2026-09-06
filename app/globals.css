@@ -1,6 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* -------------------------------------------------------
+   Design tokens — global light theme (shadcn-compatible names)
+   The student app renders exactly as before; only the admin
+   console overrides these beneath the `.admin-console` scope.
+------------------------------------------------------- */
+:root {
+  --background: 213 33% 97%;
+  --foreground: 218 10% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 218 10% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 218 10% 11%;
+  --primary: 214 100% 56%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 207 100% 65%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 217 14% 91%;
+  --muted-foreground: 220 14% 29%;
+  --accent: 214 100% 96%;
+  --accent-foreground: 215 25% 27%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 213 33% 91%;
+  --input: 213 33% 91%;
+  --ring: 214 100% 56%;
+  --radius: 0.5rem;
+}
+
+/* -------------------------------------------------------
+   Admin console private scope — ui-ux-pro-max “dark tech +
+   status green” palette (design-system/e-learning-admin-console).
+   Scoped here so shadcn primitives resolve dark inside admin
+   pages while the student app keeps the global light tokens.
+------------------------------------------------------- */
+.admin-console {
+  color-scheme: dark;
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 221 33% 16%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 142 71% 45%;
+  --primary-foreground: 217 33% 9%;
+  --secondary: 215 25% 27%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 221 26% 20%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 221 26% 20%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 0%;
+  --border: 215 18% 31%;
+  --input: 215 18% 31%;
+  --ring: 0 0% 100%;
+
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+.admin-console ::-webkit-scrollbar-track {
+  background: #1b2336;
+}
+.admin-console ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+.admin-console ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
 
 /* -------------------------------------------------------
    Base layer — light theme, Cairo font, RTL
