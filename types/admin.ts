@@ -172,3 +172,106 @@ export interface AdminCourseInput {
   category?: string;
   thumbnail?: string;
 }
+
+/** Admin quiz index row — GET /admin/quizzes (answerKey never present). */
+export interface AdminQuiz {
+  id: number;
+  title: string;
+  videoId: number;
+  videoTitle: string;
+  courseId: number;
+  courseTitle: string;
+  timeLimitSec: number | null;
+  passingScore: number;
+  maxAttempts: number;
+  totalAttempts: number;
+  pendingGrading: number;
+  updatedAt: string;
+}
+
+export interface AdminQuizListResponse {
+  success: boolean;
+  data: AdminQuiz[];
+  meta: PaginationMeta;
+}
+
+export interface AdminQuizFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+/** Global attempt list row — GET /admin/attempts (responses/answerKey always pruned). */
+export interface AdminGlobalAttempt {
+  id: number;
+  quizId: number;
+  quizTitle: string;
+  videoId: number;
+  videoTitle: string;
+  courseId: number;
+  courseTitle: string;
+  student: Pick<User, 'id' | 'name' | 'email' | 'grade'>;
+  attemptNumber: number;
+  status: AttemptStatus;
+  startedAt: string;
+  submittedAt: string | null;
+  mcqEarned: number | null;
+  essayEarned: number | null;
+  scorePercent: number | null;
+  passingScore: number;
+  passed: boolean | null;
+  essayGradedAt: string | null;
+}
+
+export interface AdminGlobalAttemptListResponse {
+  success: boolean;
+  data: AdminGlobalAttempt[];
+  meta: PaginationMeta;
+}
+
+export interface AdminGlobalAttemptFilters {
+  page?: number;
+  limit?: number;
+  status?: AttemptStatus | '';
+  search?: string;
+}
+
+/** Enrollment list row — GET /admin/enrollments. */
+export interface AdminEnrollment {
+  id: number;
+  student: Pick<User, 'id' | 'name' | 'email' | 'grade'>;
+  course: { id: number; title: string; grade: GradeEnum };
+  isPaid: boolean;
+  paymentDate: string | null;
+  progress: number;
+  isCompleted: boolean;
+  completedAt: string | null;
+  startedAt: string;
+  lastAccess: string;
+  createdAt: string;
+}
+
+export interface AdminEnrollmentListResponse {
+  success: boolean;
+  data: AdminEnrollment[];
+  meta: PaginationMeta;
+}
+
+export interface AdminEnrollmentFilters {
+  page?: number;
+  limit?: number;
+  userId?: number;
+  courseId?: number;
+  isPaid?: boolean | '';
+  isCompleted?: boolean | '';
+  search?: string;
+}
+
+/** Admin "add student" form → POST /auth/register (always STUDENT role). */
+export interface AdminStudentInput {
+  name: string;
+  email: string;
+  password: string;
+  phoneNumber: string;
+  grade: GradeEnum;
+}

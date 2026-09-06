@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronRight, Film, Plus, RefreshCw, Trash2, Upload } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronRight, FileQuestion, Film, Plus, RefreshCw, Trash2, Upload } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
@@ -181,6 +181,9 @@ export default function AdminCourseVideosPage() {
             <Upload className="h-3.5 w-3.5" />
           </button>
         )}
+        <button type="button" title="اختبار الفيديو" onClick={() => router.push(`/admin/quizzes/${video.id}`)} className="rounded-lg border border-sky-500/40 p-2 text-sky-300 transition-colors duration-150 hover:border-sky-400 hover:text-sky-200">
+          <FileQuestion className="h-3.5 w-3.5" />
+        </button>
         <button type="button" title="حذف" onClick={() => setDeleting(video)} className="rounded-lg border border-red-500/40 p-2 text-red-300 transition-colors duration-150 hover:border-red-400 hover:text-red-200">
           <Trash2 className="h-3.5 w-3.5" />
         </button>

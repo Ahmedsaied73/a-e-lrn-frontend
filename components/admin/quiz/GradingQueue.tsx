@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   getAdminAttemptResult,
-  gradeQuizAttempt,
   listQuizAttempts,
   resetQuizAttempt,
 } from "@/services/adminQuizService";
 import type { AdminQuizAttempt, QuizResultData } from "@/types/quiz";
+import GradingForm from "./GradingForm";
 
 interface GradingQueueProps {
   quizId: string;
@@ -22,18 +22,10 @@ function errorMessage(error: unknown): string {
   return "تعذر تنفيذ العملية.";
 }
 
-function isEssayQuestion(
-  question: QuizResultData["questions"][number],
-): question is Extract<QuizResultData["questions"][number], { type: "comment" }> {
-  return question.type === "comment";
-}
-
 export default function GradingQueue({ quizId }: GradingQueueProps) {
   const [attempts, setAttempts] = useState<AdminQuizAttempt[]>([]);
   const [selected, setSelected] = useState<QuizResultData | null>(null);
   const [selectedAttempt, setSelectedAttempt] = useState<AdminQuizAttempt | null>(null);
-  const [scores, setScores] = useState<Record<string, string>>({});
-  const [feedback, setFeedback] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,38 +53,8 @@ export default function GradingQueue({ quizId }: GradingQueueProps) {
       const result = await getAdminAttemptResult(attempt.id);
       setSelectedAttempt(attempt);
       setSelected(result);
-      const essayQuestions = result.questions.filter(isEssayQuestion);
-      setScores(Object.fromEntries(essayQuestions.map((question) => [question.name, question.earnedPoints == null ? "" : String(question.earnedPoints)])));
-      setFeedback(Object.fromEntries(essayQuestions.map((question) => [question.name, question.feedback ?? ""])));
     } catch (openError) {
       setError(errorMessage(openError));
-    } finally {
-      setWorking(false);
-    }
-  };
-
-  const submitGrade = async () => {
-    if (!selectedAttempt || !selected) return;
-    const essayScores: Record<string, number> = {};
-    for (const question of selected.questions) {
-      if (question.type !== "comment") continue;
-      const value = Number(scores[question.name]);
-      if (!Number.isFinite(value) || value < 0 || value > question.maxPoints) {
-        setError(`أدخل درجة صحيحة بين 0 و${question.maxPoints} للسؤال ${question.name}.`);
-        return;
-      }
-      essayScores[question.name] = value;
-    }
-
-    setWorking(true);
-    setError(null);
-    try {
-      await gradeQuizAttempt(selectedAttempt.id, { essayScores, essayFeedback: feedback });
-      setSelected(null);
-      setSelectedAttempt(null);
-      await loadAttempts();
-    } catch (gradeError) {
-      setError(errorMessage(gradeError));
     } finally {
       setWorking(false);
     }
@@ -132,14 +94,31 @@ export default function GradingQueue({ quizId }: GradingQueueProps) {
       </section>
 
       <section className="rounded-xl border border-slate-700/60 bg-card p-6">
-{!selected ? <p className="text-sm text-slate-400">اختر محاولة لعرض الإجابات المقالية وتصحيحها.</p> : <>
-          <h2 className="text-lg font-bold text-slate-100">تصحيح محاولة {selected.attemptNumber}</h2>
-          <div className="mt-5 space-y-5">{selected.questions.filter(isEssayQuestion).map((question) => <div key={question.name} className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-            <p className="font-bold text-slate-100">{question.name}</p><p className="mt-2 whitespace-pre-wrap rounded-lg bg-slate-900/60 p-3 text-sm text-slate-300">إجابة الطالب: {question.studentAnswer || "لم تتم الإجابة"}</p><p className="mt-2 text-sm text-slate-500">الإجابة النموذجية: {question.modelAnswer}</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-slate-200">الدرجة (الحد الأقصى {question.maxPoints})<input type="number" min="0" max={question.maxPoints} step="1" value={scores[question.name] ?? ""} onChange={(event) => setScores((current) => ({ ...current, [question.name]: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" /></label><label className="text-sm font-semibold text-slate-200">ملاحظات<textarea value={feedback[question.name] ?? ""} onChange={(event) => setFeedback((current) => ({ ...current, [question.name]: event.target.value }))} className="mt-1 min-h-20 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" /></label></div>
-          </div>)}</div>
-          <button type="button" onClick={() => void submitGrade()} disabled={working} className="mt-5 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-950 transition-colors duration-150 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed">{working ? "جاري الحفظ..." : "اعتماد التصحيح"}</button>
-        </>}
+        {!selected ? <p className="text-sm text-slate-400">اختر محاولة لعرض الإجابات المقالية وتصحيحها.</p> : (
+          <div>
+            <h2 className="text-lg font-bold text-slate-100">تصحيح محاولة {selected.attemptNumber}</h2>
+            <div className="mt-5">
+              <GradingForm
+                key={selectedAttempt?.id}
+                attempt={selectedAttempt!}
+                result={selected}
+                onGraded={async () => {
+                  setSelected(null);
+                  setSelectedAttempt(null);
+                  await loadAttempts();
+                }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => void resetAttempt(selectedAttempt!)}
+              disabled={working}
+              className="mt-4 rounded-lg border border-rose-500/40 px-3 py-2 text-sm font-semibold text-rose-300 transition-colors duration-150 hover:border-rose-400 hover:text-rose-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              إعادة المحاولة
+            </button>
+          </div>
+        )}
       </section>
       {error && <p role="alert" className="lg:col-span-2 rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-sm font-semibold text-rose-300">{error}</p>}
     </div>

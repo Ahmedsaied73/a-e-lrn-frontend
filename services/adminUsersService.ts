@@ -2,12 +2,14 @@
  * Admin Users Service — services/adminUsersService.ts
  *
  * GET /user — paginated, filterable user list (admin).
- * PUT /user/:id — update name/email/password.
+ * POST /auth/register — add a student (public endpoint, re-used by the admin console).
+ * PUT /user/:id — update name/email/password; admin may also set grade + phoneNumber.
  * DELETE /user/:id — transactional cascade delete (409 if user owns courses).
  */
 
 import { apiClient } from '@/lib/api-client';
 import type {
+  AdminStudentInput,
   AdminUser,
   AdminUserFilters,
   AdminUserListResponse,
@@ -29,7 +31,15 @@ export async function getAdminUsers(filters: AdminUserFilters = {}): Promise<Adm
   return apiClient.getFull<AdminUserListResponse>(`/user${toQuery(filters)}`);
 }
 
-export async function updateAdminUser(id: number, body: { name?: string; email?: string }): Promise<AdminUser> {
+export async function registerStudent(body: AdminStudentInput): Promise<AdminUser> {
+  const res = await apiClient.post<{ user: AdminUser }>('/auth/register', body);
+  return res.user;
+}
+
+export async function updateAdminUser(
+  id: number,
+  body: { name?: string; email?: string; grade?: string; phoneNumber?: string },
+): Promise<AdminUser> {
   return apiClient.put<AdminUser>(`/user/${id}`, body);
 }
 
