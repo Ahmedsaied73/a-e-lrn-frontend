@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronRight, FileQuestion, Film, Plus, RefreshCw, Trash2, Upload } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronRight, FileQuestion, Film, Plus, RefreshCw, Search, Trash2, Upload } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
@@ -39,6 +39,7 @@ export default function AdminCourseVideosPage() {
   const [error, setError] = useState<string | null>(null);
   const [bp, setBp] = useState(0);
   const [bpLabel, setBpLabel] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   // create dialog
   const [createOpen, setCreateOpen] = useState(false);
@@ -148,6 +149,13 @@ export default function AdminCourseVideosPage() {
   const isEditableStatus = (s: string) => s === 'PENDING' || s === 'READY';
   const isReUploadable = (s: string) => s === 'FAILED';
 
+  const visibleVideos = useMemo(() => {
+    const q = searchInput.trim().toLowerCase();
+    if (!q) return videos;
+    return videos.filter((v) => v.title.toLowerCase().includes(q));
+  }, [videos, searchInput]);
+  const showSearch = videos.length > 0;
+
   const renderRow = (video: BunnyVideo, index: number) => (
     <div key={video.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-700/60 bg-slate-900/40 p-3">
       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/10 text-sky-400">
@@ -246,9 +254,25 @@ export default function AdminCourseVideosPage() {
       ) : (
         <Card className="border-slate-700/60 bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-slate-200">قائمة الفيديوهات ({videos.length})</CardTitle>
+            <CardTitle className="text-base text-slate-200">قائمة الفيديوهات ({visibleVideos.length})</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">{videos.map(renderRow)}</CardContent>
+          <CardContent className="space-y-3">
+            {showSearch && (
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <Input
+                  dir="rtl"
+                  placeholder="ابحث باسم الفيديو..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="border-slate-700 bg-slate-900/50 pr-9 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/15"
+                />
+              </div>
+            )}
+            {visibleVideos.length === 0 ? (
+              <p className="py-6 text-center text-sm text-slate-500">لا توجد فيديوهات مطابقة للبحث.</p>
+            ) : visibleVideos.map(renderRow)}
+          </CardContent>
         </Card>
       )}
 

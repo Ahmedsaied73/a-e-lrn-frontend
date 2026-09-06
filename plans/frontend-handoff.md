@@ -219,3 +219,33 @@ A unified admin console is being built on top of the existing admin pages. Desig
   - reorder `PUT /courses/:courseId/reorder { videoIds: number[] }` (must be exact course set, 1-based); delete `DELETE /videos/bunny/:videoId` (Bunny remote first, then DB; 404 tolerated).
   - `StatusBadge` covers the 5 `VideoStatus` values already.
 - **⚠️ Incident:** do NOT script course/video deletes against an unfiltered list — the earlier CRUD test deleted course #1 (no server-side search then). Always search first, then target a specific row/id. Demo course was re-created as **course #8** with 3 READY videos. Quizzes on those videos were cascade-deleted and are NOT restored.
+
+### 99.3 Phase 3 (P3) — students add/edit/enroll, quizzes index, global grading inbox, enrollments (committed `92b237c`)
+
+All new BE admin endpoints live under `/admin` (`authenticateToken + authorizeAdmin`), plus one admin-only extension on an existing route. FE services all use `getFull`/`post`/`put`/`delete` on `apiClient` and Arabic toasts.
+
+**Quizzes + attempts (BE: `quizController.js`, FE `services/adminQuizService.ts`):**
+- `GET /admin/quizzes?page=&limit=&search=` → `{ data: AdminQuiz[], meta }`. Row = `{ id, title, videoId, videoTitle, courseId, courseTitle, timeLimitSec, passingScore, maxAttempts, totalAttempts, pendingGrading, updatedAt }`. `search` matches quiz/video/course title. **Never contains `answerKey`.**
+- `GET /admin/attempts?page=&limit=&status=&search=` → `{ data: AdminGlobalAttempt[], meta }`. Row = `{ id, quizId, quizTitle, videoId, videoTitle, courseId, courseTitle, student: {id,name,email,grade}, attemptNumber, status, startedAt, submittedAt, mcqEarned, essayEarned, scorePercent, passingScore, passed, essayGradedAt }`. Omits `status` param when showing all. **No `answers`/`answerKey`** — fetch one attempt's detail via `GET /quizzes/attempts/:id/result`.
+- `DELETE /quizzes/:quizId` (was orphaned, now wired on the quizzes index) — deletes the quiz **and all its attempts**; confirm dialog warns.
+- The per-course videos page has a per-video Quiz button → `/admin/quizzes/[videoId]` (authoring; the 1:1 upsert **is** the quiz assignment).
+
+**Enrollments (BE: `enrollmentController.js`, FE `services/adminEnrollmentsService.ts`):**
+- `GET /admin/enrollments?userId=&courseId=&isPaid=&isCompleted=&search=` → `{ data: AdminEnrollment[], meta }`. Row = `{ id, student:{id,name,email,grade}, course:{id,title,grade}, isPaid, paymentDate, progress (0-1), isCompleted, completedAt, startedAt, lastAccess, createdAt }`; `search` matches student name/email or course title.
+- `POST /admin/enrollments { userId, courseId }` → 201, **always `isPaid: true`** (payment disabled platform-wide); duplicate → 409 (`ALREADY_ENROLLED` style message); unknown user/course → 404.
+- `DELETE /admin/enrollments/:id` → hard delete (FK-safe; `Payment`/`Certificate` key on `userId`, not enrollment). No `@@unique([userId, courseId])` → the FE de-dupes via the 409.
+- **User edit extension:** `PUT /user/:id` as ADMIN may now also send `grade` (`FIRST_SECONDARY|SECOND_SECONDARY|THIRD_SECONDARY`) + `phoneNumber`; student self-edit unaffected (grade/phone ignored).
+
+**Pages (FE):**
+- `/admin/students` — added **إضافة طالب** dialog (reuses public `POST /auth/register` `{ name, email, password, phoneNumber, grade }`, always STUDENT); edit dialog now includes الصف + رقم الهاتف; new المقررات row action → dialog listing the student's enrollments with add-course (course select from `GET /courses?limit=100`) + unenroll.
+- `/admin/quizzes` — index (search, GRADING badge column, drill to authoring/access/grading, delete). Previously `/admin/quizzes` had no page.
+- `/admin/grading` — global inbox: `status` filter (default **GRADING**), search (student/quiz), pagination; right pane = shared **`GradingForm`** (`components/admin/quiz/GradingForm.tsx`), extracted from `GradingQueue` (which now reuses it). Non-GRADING attempts open read-only. Essay submissions are final only after admin grading; a perfect MCQ alone can be blocked pending grading.
+- `/admin/enrollments` — filters (paid/completed/search), تسجيل طالب dialog (student + course selects), unenroll confirm.
+
+**Demo seed (BE `scripts/seedDemoQuizzes.js`, run once):** course #8 videos **ids 4 / 5 / 9** (positions 1/2/3) have quizzes 6/7/8; `seqaccess@localhost.test` holds pre-passed GRADED attempts (gate unlocked); `grader-demo@localhost.test` (password `GraderDemo#2026`) completed v1 and left **essay attempt #87 in GRADING** — grade it in `/admin/grading` to test the inbox immediately.
+
+**Deferred (documented, no console UI — per Q1):** legacy `Video` URL CRUD (`videos.js` admin routes), assignments admin (`assignmentRoutes.js`: `POST /`, grade submission, list submissions), certificates. Role editing (student↔admin) deferred to P4.4.
+
+### 99.4 Admin console — coverage notes (T3.7)
+
+Search boxes on every admin table: students, courses, videos (client-side title filter), quizzes, grading inbox, enrollments — all `?search=` or client-side. `GET /user/:userId` admin route exists but the students list response is complete; unused. Every `/admin/**` route + every other admin-only route has a console entry or is explicitly deferred above.
