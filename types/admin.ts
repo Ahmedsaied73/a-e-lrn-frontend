@@ -137,3 +137,38 @@ export interface AdminDashboardData {
   alerts: AdminAlerts;
   recent: AdminRecent;
 }
+
+/** Admin course list row — GET /courses returns _count + category. */
+export interface AdminCourse {
+  id: number;
+  title: string;
+  description?: string | null;
+  price?: number | null;
+  thumbnail?: string | null;
+  grade: GradeEnum;
+  category?: string | null;
+  createdAt: string;
+  teacher: Pick<User, 'id' | 'name' | 'email'>;
+  _count: { videos: number; enrollments: number };
+}
+
+export interface AdminCourseListResponse {
+  success: boolean;
+  data: AdminCourse[];
+  meta: PaginationMeta;
+}
+
+export interface AdminCourseFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export interface AdminCourseInput {
+  title: string;
+  description: string;
+  price: number;
+  grade: GradeEnum;
+  category?: string;
+  thumbnail?: string;
+}
