@@ -76,6 +76,7 @@ export default function AdminGradingPage() {
       setRows(res.data);
       setTotal(res.meta.total);
       setTotalPages(res.meta.totalPages);
+      if (page > res.meta.totalPages) setPage(Math.max(1, res.meta.totalPages));
     } catch {
       setError('تعذر تحميل المحاولات. يرجى المحاولة مرة أخرى.');
     } finally {
@@ -87,7 +88,7 @@ export default function AdminGradingPage() {
     void load();
   }, [load]);
 
-  const applySearch = () => setSearch(searchInput.trim());
+  const applySearch = () => { setSearch(searchInput.trim()); setPage(1); };
 
   const openAttempt = async (attempt: AdminGlobalAttempt) => {
     setResultLoading(true);

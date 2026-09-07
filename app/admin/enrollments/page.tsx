@@ -69,6 +69,7 @@ export default function AdminEnrollmentsPage() {
       setRows(res.data);
       setTotal(res.meta.total);
       setTotalPages(res.meta.totalPages);
+      if (page > res.meta.totalPages) setPage(Math.max(1, res.meta.totalPages));
     } catch {
       setError('تعذر تحميل التسجيلات. يرجى المحاولة مرة أخرى.');
     } finally {
@@ -202,7 +203,7 @@ export default function AdminEnrollmentsPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const applySearch = () => setSearch(searchInput.trim());
+  const applySearch = () => { setSearch(searchInput.trim()); setPage(1); };
 
   const rangeLabel = total === 0 ? '0' : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)}`;
 

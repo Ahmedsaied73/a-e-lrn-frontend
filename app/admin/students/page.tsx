@@ -111,6 +111,7 @@ export default function StudentsPage() {
       setRows(res.data);
       setTotal(res.meta.total);
       setTotalPages(res.meta.totalPages);
+      if (page > res.meta.totalPages) setPage(Math.max(1, res.meta.totalPages));
     } catch {
       setError('تعذر تحميل البيانات. يرجى المحاولة مرة أخرى.');
     } finally {
@@ -189,7 +190,7 @@ export default function StudentsPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const applySearch = () => setSearch(searchInput.trim());
+  const applySearch = () => { setSearch(searchInput.trim()); setPage(1); };
 
   const saveEdit = async () => {
     if (!editing) return;

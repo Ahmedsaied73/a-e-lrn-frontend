@@ -79,6 +79,7 @@ export default function AdminCoursesPage() {
       setRows(res.data);
       setTotal(res.meta.total);
       setTotalPages(res.meta.totalPages);
+      if (page > res.meta.totalPages) setPage(Math.max(1, res.meta.totalPages));
     } catch {
       setError('تعذر تحميل الدورات. يرجى المحاولة مرة أخرى.');
     } finally {
@@ -238,7 +239,7 @@ export default function AdminCoursesPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const applySearch = () => setSearch(searchInput.trim());
+  const applySearch = () => { setSearch(searchInput.trim()); setPage(1); };
   const rangeLabel = total === 0 ? '0' : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)}`;
 
   const set = (key: keyof CourseFormState) => (e: { target: { value: string } }) =>
