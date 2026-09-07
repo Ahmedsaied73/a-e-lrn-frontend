@@ -81,8 +81,17 @@ function buildHeaders(authenticated = true): Record<string, string> {
 
 /**
  * Attempts silent token refresh when receiving a 401 status.
+ *
+ * Single-flighted: concurrent 401s (parallel requests after expiry, or several
+ * tabs) all await the SAME in-flight refresh promise instead of firing their own
+ * POST /auth/refresh-token. This matters because the backend ROTATES the
+ * refresh token on every call — two racing refreshes both submit the pre-rotation
+ * cookie value, and the loser's token would be flagged as a replay and revoke
+ * the entire refresh-token family (logout on every device).
  */
-async function attemptSilentRefresh(): Promise<boolean> {
+let _pendingRefresh: Promise<boolean> | null = null;
+
+async function doRefresh(): Promise<boolean> {
   const refreshEndpoints = ['/auth/refresh-token', '/auth/refresh'];
 
   for (const endpoint of refreshEndpoints) {
@@ -104,6 +113,16 @@ async function attemptSilentRefresh(): Promise<boolean> {
   }
 
   return false;
+}
+
+async function attemptSilentRefresh(): Promise<boolean> {
+  if (_pendingRefresh) return _pendingRefresh;
+
+  _pendingRefresh = doRefresh().finally(() => {
+    _pendingRefresh = null;
+  });
+
+  return _pendingRefresh;
 }
 
 /**
