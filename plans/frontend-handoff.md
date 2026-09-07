@@ -248,6 +248,8 @@ All new BE admin endpoints live under `/admin` (`authenticateToken + authorizeAd
 
 **Deferred (documented, no console UI — per Q1):** legacy `Video` URL CRUD (`videos.js` admin routes), assignments admin (`assignmentRoutes.js`: `POST /`, grade submission, list submissions), certificates. Role editing (student↔admin) deferred to P4.4.
 
+> **Review round (BE `1cf94e2` + FE `f3664d9`, Sept 2026):** `applySearch` on the quizzes/grading/enrollments/students/courses pages now resets `page` to 1, and every list refresh clamps `page` to `totalPages` (both via `setPage` in `load`/`applySearch` — no API contract change). Backend: `Enrollment` now has DB-level `@@unique([userId, courseId])` (dup enroll → 409), `limit` clamped to [1,100] on all admin lists, `PUT/DELETE /user/:id` → 400 on non-numeric id, duplicate email/phone on admin user-edit → 409.
+
 ### 99.4 Admin console — coverage notes (T3.7)
 
 Search boxes on every admin table: students, courses, videos (client-side title filter), quizzes, grading inbox, enrollments — all `?search=` or client-side. `GET /user/:userId` admin route exists but the students list response is complete; unused. Every `/admin/**` route + every other admin-only route has a console entry or is explicitly deferred above.
