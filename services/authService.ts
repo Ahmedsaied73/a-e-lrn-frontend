@@ -3,7 +3,8 @@
  * Centralizes all authentication-related API calls
  */
 
-import { apiClient, clearAccessToken } from '@/lib/api-client';
+import { apiClient } from '@/lib/api-client';
+import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 import { User } from '@/types/api';
 
 interface LoginCredentials {
@@ -25,7 +26,10 @@ interface RegisterData {
  * only after the server confirms authentication (via /user/me).
  */
 export const loginUser = async (credentials: LoginCredentials): Promise<{ user: User }> => {
-  await apiClient.post('/auth/login', credentials, { authenticated: false });
+  // Stale pre-cookie-auth localStorage keys from older builds are purged on
+  // every login so localStorage never looks like it holds an auth mechanism.
+  purgeLegacyAuthStorage();
+  await apiClient.post('/auth/login', credentials);
 
   if (typeof document !== 'undefined') {
     document.cookie = "isLoggedIn=true; path=/; max-age=604800; SameSite=Strict";
@@ -40,7 +44,8 @@ export const loginUser = async (credentials: LoginCredentials): Promise<{ user: 
  * Register a new user (cookie-only auth, same model as login)
  */
 export const registerUser = async (userData: RegisterData): Promise<{ user: User }> => {
-  await apiClient.post('/auth/register', userData, { authenticated: false });
+  purgeLegacyAuthStorage();
+  await apiClient.post('/auth/register', userData);
 
   if (typeof document !== 'undefined') {
     document.cookie = "isLoggedIn=true; path=/; max-age=604800; SameSite=Strict";
@@ -59,13 +64,10 @@ export const logoutUser = async (): Promise<void> => {
   } catch (err) {
     // Ignore errors on logout
   } finally {
-    clearAccessToken();
+    purgeLegacyAuthStorage();
     if (typeof document !== 'undefined') {
       document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }
-    // Also clean up any lingering local storage for safety
-    localStorage.removeItem('userData');
-    localStorage.removeItem('refreshToken');
   }
 };
 

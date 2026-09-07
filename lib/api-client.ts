@@ -3,22 +3,16 @@
  *
  * Responsibilities:
  *  - Sends `credentials: 'include'` on all requests for HttpOnly cookie management
- *  - Attaches in-memory Authorization Bearer header (if present) for backward compatibility
  *  - Automatically handles 401 Unauthorized by attempting a silent token refresh (/auth/refresh-token or /auth/refresh)
  *  - Formats network failures (TypeError: Failed to fetch) into readable Arabic error messages
  *  - Standardizes parsing for `{ success: boolean, data: any, message?: string, error?: string }`
  *
- * Phase 1b changes:
- *  - Parse JSON body BEFORE branching on 403/404/409 so callers can read structured error payloads
- *    (e.g., quiz gate 403s carry quizId, yourScore, requiredScore in their body)
- *  - Added explicit 409 branch (ConflictError) for "attempt already graded" responses
- *  - 401 silent-refresh flow unchanged; only the final thrown AuthError now also carries body
- *
- * Phase 1c (cookie-only auth):
- *  - Tokens are NEVER returned in response bodies; the server sets HttpOnly
- *    cookies. The in-memory Bearer store is kept as a compatibility shim but is
- *    no longer populated by login/refresh flows — requests authenticate via cookies. */
-
+ * Auth model:
+ *  - HttpOnly cookies are the ONLY auth mechanism. Tokens are never returned in
+ *    response bodies and never stored in JS-accessible storage (localStorage /
+ *    in-memory Bearer). The in-memory Bearer store once kept as a compat shim was
+ *    removed in the auth-unification round — requests authenticate purely via cookies.
+ */
 import {
   ApiError,
   AuthError,
@@ -27,6 +21,7 @@ import {
   NotFoundError,
   RateLimitError,
 } from './errors';
+import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -37,28 +32,9 @@ const API_BASE_URL =
 export { API_BASE_URL };
 
 // ---------------------------------------------------------------------------
-// In-memory token store (module-level singleton)
-// ---------------------------------------------------------------------------
-let _accessToken: string | null = null;
-
-export function setAccessToken(token: string): void {
-  _accessToken = token;
-}
-
-export function clearAccessToken(): void {
-  _accessToken = null;
-}
-
-export function getAccessToken(): string | null {
-  return _accessToken;
-}
-
-// ---------------------------------------------------------------------------
 // Request builder with Credentials & Silent Refresh Interceptor
 // ---------------------------------------------------------------------------
 interface RequestOptions {
-  /** Set to false for public endpoints that don't need a Bearer token */
-  authenticated?: boolean;
   signal?: AbortSignal;
   _isRetry?: boolean;
   /** Return the raw `{ success, data, meta, ... }` body instead of unwrapping `data` */
@@ -67,16 +43,10 @@ interface RequestOptions {
   formData?: FormData;
 }
 
-function buildHeaders(authenticated = true): Record<string, string> {
-  const headers: Record<string, string> = {
+function buildHeaders(): Record<string, string> {
+  return {
     'Content-Type': 'application/json',
   };
-
-  if (authenticated && _accessToken) {
-    headers['Authorization'] = `Bearer ${_accessToken}`;
-  }
-
-  return headers;
 }
 
 /**
@@ -143,10 +113,10 @@ async function request<T>(
   body?: unknown,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { authenticated = true, signal, _isRetry = false, full = false, formData } = options;
+  const { signal, _isRetry = false, full = false, formData } = options;
   const url = `${API_BASE_URL}${path}`;
 
-  const headers = buildHeaders(authenticated);
+  const headers = buildHeaders();
   if (formData) {
     // FormData sets its own multipart Content-Type with boundary; drop the JSON default.
     delete headers['Content-Type'];
@@ -199,10 +169,9 @@ async function request<T>(
 
     // Final 401 — parse body for any extra context, then throw
     const errBody = await safeParseJson(response);
-    clearAccessToken();
+    purgeLegacyAuthStorage();
     if (typeof window !== 'undefined') {
       document.cookie = 'isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      localStorage.removeItem('isLoggedIn');
       // Redirect to login if unauthenticated on protected action
       if (!isRefreshPath && !path.includes('/auth/login')) {
         window.location.replace('/login');

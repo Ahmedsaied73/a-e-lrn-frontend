@@ -1,30 +1,21 @@
 import { store } from '@/store/store';
 import { logout } from '@/store/slices/authSlice';
 import { addNotification } from '@/store/slices/uiSlice';
-import { clearAccessToken } from '@/lib/api-client';
+import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 
 /**
  * Handle 401 authentication error (Unauthorized)
  * Clears user data and redirects to login page
  */
 export const handleAuthError = () => {
-  // Clear token in memory
-  clearAccessToken();
-  
-  // Clear cookie
+  // Purge any legacy token-ish localStorage from older builds
+  purgeLegacyAuthStorage();
+
+  // Clear cookie UX flag
   if (typeof document !== 'undefined') {
     document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }
-  
-  // Clear old local storage items just in case
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('userId');
-  localStorage.removeItem('userName');
-  localStorage.removeItem('userEmail');
-  localStorage.removeItem('userRole');
-  localStorage.removeItem('userData');
-  localStorage.removeItem('isLoggedIn');
-  
+
   try {
     store.dispatch(logout());
     store.dispatch(addNotification({

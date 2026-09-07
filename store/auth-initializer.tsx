@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { loginStart, loginSuccess, loginFailure, guestSessionChecked } from './slices/authSlice';
 import { getCurrentUser } from '@/services/authService';
+import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 
 /**
  * Single source of truth for "am I logged in" on app load.
@@ -31,6 +32,10 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
     hasRun.current = true;
 
     const hydrate = async () => {
+      // One-time purge of legacy pre-cookie-auth localStorage keys from older
+      // builds, so localStorage never holds anything resembling an auth token.
+      purgeLegacyAuthStorage();
+
       // ponytail: Skip duplicate fetch if login flow already populated Redux
       if (isAuthenticated && user !== null) {
         return;
