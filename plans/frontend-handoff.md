@@ -257,3 +257,18 @@ Search boxes on every admin table: students, courses, videos (client-side title 
 > **Task 1 (BE 5b13a15 + FE 2d97555, Sept 2026):** The legacy video system is GONE. `GET /courses/:id` still returns the envelope `{ course, videos, enrollment, progress }` but `videos` now comes from **BunnyVideo** (READY) and there is **no `url` key** on video entries (playable links only via signed `GET /videos/:videoId/playback`). `progress` is BunnyVideoProgress (same shape). The sequential gate is a SINGLE function (`quizService.evaluateGate`): admins bypass; non-enrolled audio http 403 `NOT_ENROLLED`; first video always allowed; later videos need previous completed + quiz passed or a gate exemption. `POST /progress/complete` enforces the same gate and returns `VIDEO_NOT_UNLOCKED` (403), `NOT_ENROLLED`, or `VIDEO_NOT_FOUND` (404). `/stream/*` routes are deleted. `searchContent` video branch now searches BunnyVideo (no url key).
 
 > **Task 2 (BE 070c92f + FE 13cc6f6, Sept 2026):** Refresh tokens are now stored as a **SHA-256 hash** with a `refreshTokenFamily`; rotation keeps the family, and a **replayed/rotated token quarantines the whole family** (token + family null ? every device forced to re-login). Auth is cookie-only, so the practical rule for the FE: **never fire two concurrent `/auth/refresh-token` calls** — `api-client.ts` now single-flights `attemptSilentRefresh` (this is mandatory for the reuse-detection to be safe across parallel requests / multiple tabs). `/auth/register` shares the 20/15min limiter with login; `authorizeAdmin` re-checks role against the DB. Legacy behavior unchanged for clients: 401 ? silent refresh ? retry; refresh failure ? redirect to /login.
+
+> **Auth unify + guards + user cache (FE 213710d, f44153a, Sept 2026):**
+> - HttpOnly cookies are the ONLY auth. The in-memory Bearer compat shim and
+>   `RequestOptions.authenticated` are removed from `lib/api-client.ts` (no
+>   token store, never a Bearer header). Legacy localStorage token keys
+>   (`authToken`, `refreshToken`, `userData`, `userId`, `isLoggedIn`, ...)
+>   are purged on boot/login/logout/final-401 via `utils/auth-storage.ts`.
+> - `/login` and `/register` redirect already-authenticated users to `/` once
+>   `auth.initialized` is true (no flash-redirect before the session check).
+> - Register now auto-logs-in (dispatches loginSuccess) and is routed home —
+>   no more bounce to `/login` for a session the backend already opened.
+> - `lib/user-cache.ts`: 5-min TTL localStorage profile cache (non-secret PII).
+>   AuthInitializer hydrates Redux from a fresh cache with ZERO `/user/me` calls
+>   on hard refresh; fetches only on cache miss/expiry. Cleared on logout/401 and
+>   syncs across tabs via the `storage` event.
