@@ -203,7 +203,8 @@ export interface StudentAttemptsData {
 }
 
 // ---------------------------------------------------------------------------
-// Sequential gate — 403 body from /stream/* endpoints
+// Sequential gate — 403 body from GET /videos/:videoId/playback
+// (and the legacy free-standing gate codes the FE still maps)
 // ---------------------------------------------------------------------------
 
 export interface QuizGate403 {

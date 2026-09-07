@@ -58,15 +58,6 @@ export interface Course {
   grade: GradeEnum;
 }
 
-export interface Video {
-  id: number;
-  title: string;
-  url?: string;
-  thumbnail?: string;
-  duration?: number;
-  description?: string;
-}
-
 export interface Enrollment {
   id: number;
   userId: number;
