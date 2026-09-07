@@ -2,6 +2,7 @@ import { store } from '@/store/store';
 import { logout } from '@/store/slices/authSlice';
 import { addNotification } from '@/store/slices/uiSlice';
 import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
+import { clearUserCache } from '@/lib/user-cache';
 
 /**
  * Handle 401 authentication error (Unauthorized)
@@ -10,6 +11,7 @@ import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 export const handleAuthError = () => {
   // Purge any legacy token-ish localStorage from older builds
   purgeLegacyAuthStorage();
+  clearUserCache();
 
   // Clear cookie UX flag
   if (typeof document !== 'undefined') {

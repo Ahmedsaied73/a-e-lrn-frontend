@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -24,7 +24,9 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { loginSuccess, selectAuth } from '@/store/slices/authSlice';
 import { registerUser } from '@/services/authService';
+import { setCachedUser } from '@/lib/user-cache';
 import { addNotification, setGlobalLoading } from '@/store/slices/uiSlice';
 import Image from 'next/image';
 
@@ -58,21 +60,21 @@ export default function RegisterPage() {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(state => state.ui.globalLoading);
   const notifications = useAppSelector(state => state.ui.notifications);
+  const { initialized, isAuthenticated } = useAppSelector(selectAuth);
   
-  // Check for success or error notifications
+  // Check for error notifications
   const errorNotification = notifications.find(n => n.type === 'error');
-  const successNotification = notifications.find(n => n.type === 'success');
-  
-  // Redirect to login page after successful registration
+  const [registered, setRegistered] = useState(false);
+
+  // Already signed in → send back home (after the app has finished checking the
+  // session; before that `initialized` is false and we can't know yet). This
+  // also fires right after a successful registration, which hydrates Redux and
+  // therefore routes the new learner straight home instead of to /login.
   useEffect(() => {
-    if (successNotification) {
-      const timer = setTimeout(() => {
-        router.push('/login');
-      }, 2000);
-      
-      return () => clearTimeout(timer);
+    if (initialized && isAuthenticated) {
+      router.replace('/');
     }
-  }, [successNotification, router]);
+  }, [initialized, isAuthenticated, router]);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -101,14 +103,19 @@ export default function RegisterPage() {
         password: values.password
       };
       
-      // Register user using centralized auth service
-      await registerUser(requestData);
+      // Register user using centralized auth service. Registration opens a
+      // session on the backend (cookie-only), so hydrate Redux and cache now —
+      // the guard effect then routes the learner home as a logged-in user.
+      const { user } = await registerUser(requestData);
+      dispatch(loginSuccess(user));
+      setCachedUser(user);
+      setRegistered(true);
       
       // Show success notification
       dispatch(addNotification({
         type: 'success',
-        message: 'تم إنشاء الحساب بنجاح! سيتم توجيهك إلى صفحة تسجيل الدخول...',
-        duration: 5000
+        message: 'تم إنشاء الحساب بنجاح!',
+        duration: 3000
       }));
       
     } catch (err: any) {
@@ -319,9 +326,9 @@ export default function RegisterPage() {
               </div>
             )}
             
-            {successNotification && (
+            {registered && (
               <div className="p-3 rounded-md bg-green-500/10 border border-green-500/50 text-green-500 text-right">
-                {successNotification.message}
+                {''}تم إنشاء الحساب بنجاح! جارٍ توجيهك إلى الرئيسية...
               </div>
             )}
             

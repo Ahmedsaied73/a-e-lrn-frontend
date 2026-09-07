@@ -19,7 +19,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loginSuccess } from '@/store/slices/authSlice';
+import { selectAuth } from '@/store/slices/authSlice';
 import { loginUser } from '@/services/authService';
+import { setCachedUser } from '@/lib/user-cache';
 import { addNotification, setGlobalLoading } from '@/store/slices/uiSlice';
 
 const formSchema = z.object({
@@ -36,9 +38,18 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(state => state.ui.globalLoading);
   const notifications = useAppSelector(state => state.ui.notifications);
+  const { initialized, isAuthenticated } = useAppSelector(selectAuth);
   
   // Check for error notifications
   const errorNotification = notifications.find(n => n.type === 'error');
+
+  // Already signed in → send back home (after the app has finished checking the
+  // session; before that `initialized` is false and we can't know yet).
+  useEffect(() => {
+    if (initialized && isAuthenticated) {
+      router.replace('/');
+    }
+  }, [initialized, isAuthenticated, router]);
   
   const form = useForm<z.infer<typeof formSchema>>({    
     resolver: zodResolver(formSchema),
@@ -72,6 +83,7 @@ export default function LoginPage() {
       
       // Update Redux state
       dispatch(loginSuccess(userData.user));
+      setCachedUser(userData.user);
       
       // Show success notification
       dispatch(addNotification({

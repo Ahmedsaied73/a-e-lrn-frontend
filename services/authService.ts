@@ -5,6 +5,7 @@
 
 import { apiClient } from '@/lib/api-client';
 import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
+import { clearUserCache } from '@/lib/user-cache';
 import { User } from '@/types/api';
 
 interface LoginCredentials {
@@ -65,6 +66,7 @@ export const logoutUser = async (): Promise<void> => {
     // Ignore errors on logout
   } finally {
     purgeLegacyAuthStorage();
+    clearUserCache();
     if (typeof document !== 'undefined') {
       document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }
