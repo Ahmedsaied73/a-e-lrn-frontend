@@ -67,50 +67,50 @@ export default function AdminQuizzesPage() {
       {
         accessorKey: 'title',
         header: 'الاختبار',
-        cell: ({ row }) => <span className="font-semibold text-slate-100">{row.original.title}</span>,
+        cell: ({ row }) => <span className="font-semibold text-on-surface">{row.original.title}</span>,
       },
-      { accessorKey: 'videoTitle', header: 'الفيديو', cell: ({ row }) => <span className="text-slate-300">{row.original.videoTitle || '—'}</span> },
-      { accessorKey: 'courseTitle', header: 'المقرر', cell: ({ row }) => <span className="text-slate-300">{row.original.courseTitle}</span> },
+      { accessorKey: 'videoTitle', header: 'الفيديو', cell: ({ row }) => <span className="text-on-surface-variant">{row.original.videoTitle || '—'}</span> },
+      { accessorKey: 'courseTitle', header: 'المقرر', cell: ({ row }) => <span className="text-on-surface-variant">{row.original.courseTitle}</span> },
       {
         accessorKey: 'timeLimitSec',
         header: 'المدة',
-        cell: ({ row }) => <span className="text-slate-300">{row.original.timeLimitSec ? `${Math.round(row.original.timeLimitSec / 60)} د` : '—'}</span>,
+        cell: ({ row }) => <span className="text-on-surface-variant">{row.original.timeLimitSec ? `${Math.round(row.original.timeLimitSec / 60)} د` : '—'}</span>,
       },
       {
         accessorKey: 'passingScore',
         header: 'النجاح',
-        cell: ({ row }) => <span className="text-slate-300">{row.original.passingScore}%</span>,
+        cell: ({ row }) => <span className="text-on-surface-variant">{row.original.passingScore}%</span>,
       },
-      { accessorKey: 'totalAttempts', header: 'محاولات', cell: ({ row }) => <span className="text-slate-300">{row.original.totalAttempts}</span> },
+      { accessorKey: 'totalAttempts', header: 'محاولات', cell: ({ row }) => <span className="text-on-surface-variant">{row.original.totalAttempts}</span> },
       {
         accessorKey: 'pendingGrading',
         header: 'بانتظار التصحيح',
         cell: ({ row }) => (
           row.original.pendingGrading > 0 ? (
-            <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-300">
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
               {row.original.pendingGrading}
             </span>
           ) : (
-            <span className="text-slate-500">—</span>
+            <span className="text-on-surface-variant/70">—</span>
           )
         ),
       },
-      { accessorKey: 'updatedAt', header: 'آخر تحديث', cell: ({ row }) => <span className="text-slate-400">{formatDate(row.original.updatedAt)}</span> },
+      { accessorKey: 'updatedAt', header: 'آخر تحديث', cell: ({ row }) => <span className="text-on-surface-variant">{formatDate(row.original.updatedAt)}</span> },
       {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
           <div className="flex justify-end gap-1.5">
-            <button type="button" title="طابور التصحيح" onClick={() => router.push(`/admin/quizzes/quiz/${row.original.id}/attempts`)} className="rounded-lg border border-emerald-500/40 p-2 text-emerald-300 transition-colors duration-150 hover:border-emerald-400 hover:text-emerald-200">
+            <button type="button" title="طابور التصحيح" onClick={() => router.push(`/admin/quizzes/quiz/${row.original.id}/attempts`)} className="rounded-lg border border-emerald-200 p-2 text-emerald-600 transition-colors duration-150 hover:border-emerald-400 hover:bg-emerald-50">
               <ClipboardList className="h-3.5 w-3.5" />
             </button>
-            <button type="button" title="الوصول والاستثناءات" onClick={() => router.push(`/admin/quizzes/${row.original.videoId}/access`)} className="rounded-lg border border-sky-500/40 p-2 text-sky-300 transition-colors duration-150 hover:border-sky-400 hover:text-sky-200">
+            <button type="button" title="الوصول والاستثناءات" onClick={() => router.push(`/admin/quizzes/${row.original.videoId}/access`)} className="rounded-lg border border-sky-200 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:bg-sky-50">
               <Lock className="h-3.5 w-3.5" />
             </button>
-            <button type="button" title="إنشاء / تعديل" onClick={() => router.push(`/admin/quizzes/${row.original.videoId}`)} className="rounded-lg border border-slate-600 p-2 text-slate-300 transition-colors duration-150 hover:border-slate-400 hover:text-slate-100">
+            <button type="button" title="إنشاء / تعديل" onClick={() => router.push(`/admin/quizzes/${row.original.videoId}`)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0]">
               <FileQuestion className="h-3.5 w-3.5" />
             </button>
-            <button type="button" title="حذف" onClick={() => setDeleting(row.original)} className="rounded-lg border border-red-500/40 p-2 text-red-300 transition-colors duration-150 hover:border-red-400 hover:text-red-200">
+            <button type="button" title="حذف" onClick={() => setDeleting(row.original)} className="rounded-lg border border-red-200 p-2 text-red-700 transition-colors duration-150 hover:border-red-400 hover:bg-red-50">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -151,65 +151,65 @@ export default function AdminQuizzesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">الاختبارات</h1>
-          <p className="mt-1 text-sm text-slate-400">جميع الاختبارات المرتبطة بالفيديوهات — {total} اختبار.</p>
+          <h1 className="text-2xl font-bold text-on-surface">الاختبارات</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">جميع الاختبارات المرتبطة بالفيديوهات — {total} اختبار.</p>
         </div>
-        <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" onClick={() => void load()}>
+        <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" onClick={() => void load()}>
           <RefreshCw className="mr-0 h-4 w-4" />
           تحديث
         </Button>
       </div>
 
-      <Card className="border-slate-700/60 bg-card">
+      <Card className="border-outline-variant/70 bg-card">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base text-slate-200">بحث</CardTitle>
+          <CardTitle className="text-base text-on-surface/80">بحث</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
             <div className="min-w-0 flex-1">
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant/70" />
                 <Input
                   dir="rtl"
                   placeholder="ابحث باسم الاختبار أو الفيديو أو المقرر..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-                  className="border-slate-700 bg-slate-900/50 pr-9 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/15"
+                  className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-emerald-500/70 focus:ring-2 focus:ring-[#207bff]/20"
                 />
               </div>
             </div>
-            <Button className="bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={applySearch}>
+            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={applySearch}>
               بحث
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {error && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm font-semibold text-red-300">{error}</p>}
+      {error && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm font-semibold text-red-700">{error}</p>}
 
       <DataTable table={table} columns={columns} loading={loading} emptyLabel="لا توجد اختبارات مطابقة." />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-on-surface-variant">
           عرض {rangeLabel} من {total}
         </p>
         <div className="flex items-center gap-2">
           <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
-            <SelectTrigger className="w-28 border-slate-700 bg-slate-900/50 text-slate-100">
+            <SelectTrigger className="w-28 border-outline-variant bg-white text-on-surface">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-slate-700 bg-card text-slate-100">
+            <SelectContent className="border-outline-variant bg-card text-on-surface">
               {[10, 15, 25, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} / صفحة</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
             السابق
           </Button>
-          <span className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-1.5 text-sm text-slate-300">
+          <span className="rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-sm text-on-surface-variant">
             صفحة {page} / {Math.max(1, totalPages)}
           </span>
-          <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
             التالي
           </Button>
         </div>

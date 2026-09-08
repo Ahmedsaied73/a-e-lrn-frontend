@@ -30,11 +30,11 @@ const STATUS_OPTIONS: { value: AttemptStatus | 'ALL'; label: string }[] = [
 ];
 
 const STATUS_BADGE: Record<AttemptStatus, string> = {
-  IN_PROGRESS: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
-  SUBMITTED: 'border-slate-600 bg-slate-700/40 text-slate-300',
-  GRADING: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
-  GRADED: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-  EXPIRED: 'border-slate-600 bg-slate-700/40 text-slate-400',
+  IN_PROGRESS: 'border-sky-200 bg-sky-50 text-sky-700',
+  SUBMITTED: 'border-outline-variant bg-slate-100 text-on-surface-variant',
+  GRADING: 'border-amber-200 bg-amber-50 text-amber-700',
+  GRADED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  EXPIRED: 'border-outline-variant bg-slate-100 text-on-surface-variant',
 };
 
 function formatDate(value: string | null | undefined): string {
@@ -110,69 +110,69 @@ export default function AdminGradingPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">صندوق التصحيح</h1>
-          <p className="mt-1 text-sm text-slate-400">تصحيح المحاولات المقالية من جميع الاختبارات — {total} محاولة.</p>
+          <h1 className="text-2xl font-bold text-on-surface">صندوق التصحيح</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">تصحيح المحاولات المقالية من جميع الاختبارات — {total} محاولة.</p>
         </div>
-        <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" onClick={() => void load()}>
+        <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" onClick={() => void load()}>
           <RefreshCw className="mr-0 h-4 w-4" />
           تحديث
         </Button>
       </div>
 
-      <Card className="border-slate-700/60 bg-card">
+      <Card className="border-outline-variant/70 bg-card">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base text-slate-200">بحث وعوامل تصفية</CardTitle>
+          <CardTitle className="text-base text-on-surface/80">بحث وعوامل تصفية</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
             <div className="relative">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant/70" />
               <Input
                 dir="rtl"
                 placeholder="ابحث باسم الطالب أو البريد أو الاختبار..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-                className="border-slate-700 bg-slate-900/50 pr-9 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/15"
+                className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-emerald-500/70 focus:ring-2 focus:ring-[#207bff]/20"
               />
             </div>
             <Select value={status} onValueChange={(v) => { setStatus(v as AttemptStatus | 'ALL'); setPage(1); }}>
-              <SelectTrigger className="w-44 border-slate-700 bg-slate-900/50 text-slate-100">
+              <SelectTrigger className="w-44 border-outline-variant bg-white text-on-surface">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="border-slate-700 bg-card text-slate-100">
+              <SelectContent className="border-outline-variant bg-card text-on-surface">
                 {STATUS_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button className="bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={applySearch}>
+            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={applySearch}>
               بحث
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {error && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm font-semibold text-red-300">{error}</p>}
+      {error && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm font-semibold text-red-700">{error}</p>}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Card className="border-slate-700/60 bg-card">
+        <Card className="border-outline-variant/70 bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base text-slate-200">قائمة المحاولات ({rows.length})</CardTitle>
+            <CardTitle className="text-base text-on-surface/80">قائمة المحاولات ({rows.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {loading ? (
-              <p className="py-6 text-center text-sm text-slate-400">جارٍ التحميل...</p>
+              <p className="py-6 text-center text-sm text-on-surface-variant">جارٍ التحميل...</p>
             ) : rows.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-500">لا توجد محاولات مطابقة.</p>
+              <p className="py-6 text-center text-sm text-on-surface-variant/70">لا توجد محاولات مطابقة.</p>
             ) : rows.map((attempt) => (
-              <div key={attempt.id} className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+              <div key={attempt.id} className="rounded-xl border border-outline-variant/50 bg-surface p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-bold text-slate-100">{attempt.student.name || attempt.student.email}</p>
-                    <p className="mt-0.5 text-xs text-slate-400">
+                    <p className="font-bold text-on-surface">{attempt.student.name || attempt.student.email}</p>
+                    <p className="mt-0.5 text-xs text-on-surface-variant">
                       {attempt.quizTitle} · {attempt.courseTitle}
                       {attempt.videoTitle ? ` · ${attempt.videoTitle}` : ''}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-on-surface-variant/70">
                       محاولة {attempt.attemptNumber} — {formatDate(attempt.startedAt)}
                     </p>
                   </div>
@@ -181,15 +181,15 @@ export default function AdminGradingPage() {
                   </span>
                 </div>
                 {attempt.scorePercent != null && (
-                  <p className="mt-2 text-sm text-slate-300">
-                    الدرجة: {attempt.scorePercent}% {attempt.passed ? <span className="text-emerald-400">· ناجح</span> : <span className="text-red-400">· راسب</span>}
+                  <p className="mt-2 text-sm text-on-surface-variant">
+                    الدرجة: {attempt.scorePercent}% {attempt.passed ? <span className="text-emerald-600">· ناجح</span> : <span className="text-red-600">· راسب</span>}
                   </p>
                 )}
                 <button
                   type="button"
                   onClick={() => void openAttempt(attempt)}
                   disabled={resultLoading}
-                  className="mt-3 rounded-lg bg-emerald-500 px-3 py-2 text-sm font-bold text-slate-950 transition-colors duration-150 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="mt-3 rounded-lg bg-[#207bff] px-3 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   فتح الإجابات
                 </button>
@@ -198,15 +198,15 @@ export default function AdminGradingPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-700/60 bg-card">
+        <Card className="border-outline-variant/70 bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base text-slate-200">
+            <CardTitle className="text-base text-on-surface/80">
               {resultAttempt ? `محاولة ${result?.attemptNumber} — ${resultAttempt.student.name || resultAttempt.student.email}` : 'التفاصيل'}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {!resultAttempt ? (
-              <p className="py-6 text-center text-sm text-slate-500">اختر محاولة لعرض نتيجتها وتصحيحها.</p>
+              <p className="py-6 text-center text-sm text-on-surface-variant/70">اختر محاولة لعرض نتيجتها وتصحيحها.</p>
             ) : result ? (
               <div className="space-y-5">
                 {result.status === 'GRADING' ? (
@@ -223,30 +223,30 @@ export default function AdminGradingPage() {
                   />
                 ) : (
                   <div className="space-y-4">
-                    <p className="text-sm text-slate-300">
-                      الحالة: <span className="font-semibold text-slate-100">{result.status}</span>
+                    <p className="text-sm text-on-surface-variant">
+                      الحالة: <span className="font-semibold text-on-surface">{result.status}</span>
                       {result.scorePercent != null && (
-                        <> · الدرجة: <span className="font-semibold text-slate-100">{result.scorePercent}%</span></>
+                        <> · الدرجة: <span className="font-semibold text-on-surface">{result.scorePercent}%</span></>
                       )}
                     </p>
                     <div className="space-y-2">
                       {result.questions.map((question) => (
-                        <div key={question.name} className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+                        <div key={question.name} className="rounded-xl border border-outline-variant/50 bg-surface p-3">
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-semibold text-slate-200">{question.name}</p>
+                            <p className="text-sm font-semibold text-on-surface/80">{question.name}</p>
                             {'isCorrect' in question && (
-                              <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', question.isCorrect ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300' : 'border-red-500/40 bg-red-500/10 text-red-300')}>
+                              <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', question.isCorrect ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700')}>
                                 {question.isCorrect ? 'صحيحة' : 'خاطئة'}
                               </span>
                             )}
                             {'status' in question && question.status === 'GRADED' && (
-                              <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
+                              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
                                 {question.earnedPoints} / {question.maxPoints}
                               </span>
                             )}
                           </div>
                           {question.type === 'comment' && question.status === 'GRADED' && question.feedback && (
-                            <p className="mt-1 text-xs text-slate-400">ملاحظات: {question.feedback}</p>
+                            <p className="mt-1 text-xs text-on-surface-variant">ملاحظات: {question.feedback}</p>
                           )}
                         </div>
                       ))}
@@ -260,32 +260,32 @@ export default function AdminGradingPage() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-on-surface-variant">
           عرض {rangeLabel} من {total}
         </p>
         <div className="flex items-center gap-2">
           <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
-            <SelectTrigger className="w-28 border-slate-700 bg-slate-900/50 text-slate-100">
+            <SelectTrigger className="w-28 border-outline-variant bg-white text-on-surface">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-slate-700 bg-card text-slate-100">
+            <SelectContent className="border-outline-variant bg-card text-on-surface">
               {[10, 15, 25, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} / صفحة</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
             السابق
           </Button>
-          <span className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-1.5 text-sm text-slate-300">
+          <span className="rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-sm text-on-surface-variant">
             صفحة {page} / {Math.max(1, totalPages)}
           </span>
-          <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
             التالي
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 rounded-xl border border-slate-700/60 bg-card p-3 text-sm text-slate-400">
-        <ClipboardList className="h-4 w-4 shrink-0 text-emerald-400" />
+      <div className="flex items-center gap-2 rounded-xl border border-outline-variant/70 bg-card p-3 text-sm text-on-surface-variant">
+        <ClipboardList className="h-4 w-4 shrink-0 text-emerald-600" />
         <span>هام: تصحيح مقالي — نسبة النجاح تحسب من مجموع درجات الاختبار. اعتماد تصحيح المقالي يجعل المحاولة نهائية.</span>
       </div>
     </div>
