@@ -50,7 +50,7 @@ export function AdminSidebar() {
   const user = useAppSelector(selectUser);
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-e border-outline-variant/70 bg-white">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-e border-outline-variant/70 bg-white lg:flex">
       {/* Brand */}
       <div className="flex h-16 items-center gap-2 border-b border-outline-variant/70 px-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e8f2ff] text-[#207bff]">
