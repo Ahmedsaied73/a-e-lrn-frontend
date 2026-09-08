@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   Users,
   UserPlus,
@@ -13,6 +14,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  Upload,
+  PenLine,
+  KeyRound,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { StatCard } from '@/components/admin/StatCard';
@@ -45,8 +49,8 @@ function SectionCard({
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row items-center gap-2 space-y-0 px-5 py-4">
-        <Icon className="h-4 w-4 text-slate-400" aria-hidden="true" />
-        <CardTitle className="text-sm font-semibold text-slate-200">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-on-surface-variant" aria-hidden="true" />
+        <CardTitle className="text-sm font-semibold text-on-surface">{title}</CardTitle>
       </CardHeader>
       <CardContent className="px-5 pb-5">{children}</CardContent>
     </Card>
@@ -55,12 +59,26 @@ function SectionCard({
 
 function SkeletonStat() {
   return (
-    <div className="rounded-xl border border-slate-700/60 bg-card p-4">
+    <div className="rounded-xl border border-outline-variant/70 bg-card p-4">
       <Skeleton className="h-4 w-24 bg-muted" />
       <Skeleton className="mt-2 h-8 w-16 bg-muted" />
     </div>
   );
 }
+
+const QUICK_ACTIONS: {
+  href: string;
+  label: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
+  { href: '/admin/students', label: 'إضافة طالب', desc: 'إنشاء حساب طالب جديد', icon: UserPlus },
+  { href: '/admin/courses', label: 'إنشاء دورة', desc: 'إضافة دورة ووحداتها', icon: BookOpen },
+  { href: '/admin/courses', label: 'رفع فيديو', desc: 'رفع محتوى إلى Bunny', icon: Upload },
+  { href: '/admin/quizzes', label: 'إنشاء اختبار', desc: 'ربط اختبار بفيديو', icon: PenLine },
+  { href: '/admin/grading', label: 'تصحيح المقالي', desc: 'مراجعة المحاولات المعلقة', icon: FileCheck2 },
+  { href: '/admin/quizzes', label: 'إدارة الاستثناءات', desc: 'فتح وصول لمحتوى التقييمات', icon: KeyRound },
+];
 
 export default function AdminOverviewPage() {
   const [data, setData] = useState<AdminDashboardData | null>(null);
@@ -94,22 +112,25 @@ export default function AdminOverviewPage() {
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-100">نظرة عامة</h1>
-          <p className="mt-1 text-[13px] text-slate-500">ملخص لحالة المنصة الآن</p>
+          <h1 className="text-xl font-bold text-on-surface">نظرة عامة</h1>
+          <p className="mt-1 text-[13px] text-on-surface-variant">ملخص لحالة المنصة الآن</p>
         </div>
-        {!loading && (
-          <div className="flex items-center gap-2 rounded-full border border-slate-700/60 bg-card px-3 py-1.5 text-xs text-slate-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        {!loading && !error && (
+          <div className="flex items-center gap-2 rounded-full border border-outline-variant/70 bg-white px-3 py-1.5 text-xs font-medium text-on-surface-variant">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </span>
             بيانات مباشرة
           </div>
         )}
       </div>
 
       {error ? (
-        <Card className="mx-auto mt-10 max-w-md border-red-500/40">
+        <Card className="mx-auto mt-10 max-w-md border-red-200">
           <CardContent className="flex flex-col items-center gap-4 px-6 py-8 text-center">
-            <AlertTriangle className="h-8 w-8 text-red-400" aria-hidden="true" />
-            <p className="text-sm text-slate-300">تعذر تحميل بيانات لوحة التحكم.</p>
+            <AlertTriangle className="h-8 w-8 text-error" aria-hidden="true" />
+            <p className="text-sm font-medium text-on-surface-variant">تعذر تحميل بيانات لوحة التحكم.</p>
             <Button variant="outline" onClick={load}>
               إعادة المحاولة
             </Button>
@@ -161,11 +182,30 @@ export default function AdminOverviewPage() {
             )}
           </div>
 
+          {/* Quick actions */}
+          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            {QUICK_ACTIONS.map((action) => (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="group flex items-center gap-3 rounded-xl border border-outline-variant/70 bg-white p-4 transition-shadow duration-200 hover:border-[#4ea5ff] hover:shadow-level-2"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e8f2ff] text-[#207bff] transition-colors duration-200 group-hover:bg-[#207bff] group-hover:text-white">
+                  <action.icon className="h-4 w-4" aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-semibold text-on-surface">{action.label}</p>
+                  <p className="truncate text-[11px] text-on-surface-variant">{action.desc}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
           {/* Alerts */}
           <SectionCard
             title="تنبيهات التشغيل"
             icon={AlertTriangle}
-            className="mt-6 border-slate-700/60 bg-card"
+            className="mt-6 border-outline-variant/70 bg-white"
           >
             {loading ? (
               <div className="space-y-2">
@@ -173,37 +213,37 @@ export default function AdminOverviewPage() {
                 <Skeleton className="h-12 w-full bg-muted" />
               </div>
             ) : !data!.alerts.hasIssues && data!.alerts.essaysPendingGrading.length === 0 ? (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-[13px] text-emerald-300">
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] font-medium text-emerald-700">
                 <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                 لا توجد مشاكل حالياً — كل شيء يعمل.
               </div>
             ) : (
-              <ul className="divide-y divide-slate-800">
+              <ul className="divide-y divide-outline-variant/50">
                 {data!.alerts.failedVideos.map((v) => (
                   <li key={v.id} className="flex items-start justify-between gap-3 py-2.5 text-[13px]">
-                    <div className="flex min-w-0 items-center gap-2 text-red-300">
+                    <div className="flex min-w-0 items-center gap-2 font-medium text-red-700">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                       <span className="truncate">فيديو فشل معالجته: {v.title}</span>
                     </div>
-                    <span className="shrink-0 text-xs text-slate-500">{v.failureReason || 'بدون سبب'}</span>
+                    <span className="shrink-0 text-xs text-on-surface-variant/70">{v.failureReason || 'بدون سبب'}</span>
                   </li>
                 ))}
                 {data!.alerts.stuckProcessingVideos.map((v) => (
                   <li key={v.id} className="flex items-start justify-between gap-3 py-2.5 text-[13px]">
-                    <div className="flex min-w-0 items-center gap-2 text-amber-300">
+                    <div className="flex min-w-0 items-center gap-2 font-medium text-amber-700">
                       <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                       <span className="truncate">عالق في المعالجة: {v.title}</span>
                     </div>
-                    <span className="shrink-0 text-xs text-slate-500">منذ {v.stuckMinutes} دقيقة</span>
+                    <span className="shrink-0 text-xs text-on-surface-variant/70">منذ {v.stuckMinutes} دقيقة</span>
                   </li>
                 ))}
                 {data!.alerts.essaysPendingGrading.length > 0 && (
-                  <li className="flex items-center justify-between gap-3 py-2.5 text-[13px] text-slate-300">
+                  <li className="flex items-center justify-between gap-3 py-2.5 text-[13px] text-on-surface-variant">
                     <div className="flex min-w-0 items-center gap-2">
-                      <FileCheck2 className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden="true" />
+                      <FileCheck2 className="h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden="true" />
                       <span className="truncate">مقالي بانتظار التصحيح</span>
                     </div>
-                    <span className="shrink-0 text-xs text-slate-500">{data!.alerts.essaysPendingGrading.length} محاولة</span>
+                    <span className="shrink-0 text-xs text-on-surface-variant/70">{data!.alerts.essaysPendingGrading.length} محاولة</span>
                   </li>
                 )}
               </ul>
@@ -215,17 +255,17 @@ export default function AdminOverviewPage() {
             <SectionCard
               title="أحدث محاولات المقالي بانتظار التصحيح"
               icon={FileCheck2}
-              className="mt-6 border-slate-700/60 bg-card"
+              className="mt-6 border-outline-variant/70 bg-white"
             >
-              <ul className="divide-y divide-slate-800">
+              <ul className="divide-y divide-outline-variant/50">
                 {data!.alerts.essaysPendingGrading.slice(0, 4).map((a) => (
                   <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-[13px]">
-                    <span className="truncate text-slate-200">
+                    <span className="truncate font-medium text-on-surface">
                       {a.user.name}
-                      <span className="text-slate-500"> — {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}</span>
+                      <span className="font-normal text-on-surface-variant"> — {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}</span>
                     </span>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-on-surface-variant/70">
                         {a.submittedAt ? formatDate(a.submittedAt) : formatDate(a.startedAt)}
                       </span>
                       <StatusBadge status={a.status} />
@@ -238,49 +278,49 @@ export default function AdminOverviewPage() {
 
           {/* Recent activity */}
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <SectionCard title="أحدث المستخدمين" icon={Users} className="border-slate-700/60 bg-card">
+            <SectionCard title="أحدث المستخدمين" icon={Users} className="border-outline-variant/70 bg-white">
               {loading ? (
                 <Skeleton className="h-24 w-full bg-muted" />
               ) : (
-                <ul className="divide-y divide-slate-800">
+                <ul className="divide-y divide-outline-variant/50">
                   {data!.recent.users.map((u) => (
                     <li key={u.id} className="flex items-center justify-between gap-2 py-2.5 text-[13px]">
-                      <span className="truncate text-slate-200">{u.name}</span>
-                      <span className="shrink-0 text-xs text-slate-500">{formatDate(u.createdAt)}</span>
+                      <span className="truncate font-medium text-on-surface">{u.name}</span>
+                      <span className="shrink-0 text-xs text-on-surface-variant/70">{formatDate(u.createdAt)}</span>
                     </li>
                   ))}
                 </ul>
               )}
             </SectionCard>
 
-            <SectionCard title="أحدث الاشتراكات" icon={GraduationCap} className="border-slate-700/60 bg-card">
+            <SectionCard title="أحدث الاشتراكات" icon={GraduationCap} className="border-outline-variant/70 bg-white">
               {loading ? (
                 <Skeleton className="h-24 w-full bg-muted" />
               ) : (
-                <ul className="divide-y divide-slate-800">
+                <ul className="divide-y divide-outline-variant/50">
                   {data!.recent.enrollments.map((e) => (
                     <li key={e.id} className="flex items-center justify-between gap-2 py-2.5 text-[13px]">
-                      <span className="truncate text-slate-200">
+                      <span className="truncate font-medium text-on-surface">
                         {e.user.name}
-                        <span className="text-slate-500"> — {e.course.title}</span>
+                        <span className="font-normal text-on-surface-variant"> — {e.course.title}</span>
                       </span>
-                      <span className="shrink-0 text-xs text-slate-500">{formatDate(e.createdAt)}</span>
+                      <span className="shrink-0 text-xs text-on-surface-variant/70">{formatDate(e.createdAt)}</span>
                     </li>
                   ))}
                 </ul>
               )}
             </SectionCard>
 
-            <SectionCard title="آخر المحاولات" icon={ClipboardCheck} className="border-slate-700/60 bg-card">
+            <SectionCard title="آخر المحاولات" icon={ClipboardCheck} className="border-outline-variant/70 bg-white">
               {loading ? (
                 <Skeleton className="h-24 w-full bg-muted" />
               ) : (
-                <ul className="divide-y divide-slate-800">
+                <ul className="divide-y divide-outline-variant/50">
                   {data!.recent.attempts.map((a) => (
                     <li key={a.id} className="flex items-center justify-between gap-2 py-2.5 text-[13px]">
-                      <span className="truncate text-slate-200">
+                      <span className="truncate font-medium text-on-surface">
                         {a.user.name}
-                        <span className="text-slate-500"> — {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}</span>
+                        <span className="font-normal text-on-surface-variant"> — {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}</span>
                       </span>
                       <StatusBadge status={a.status} />
                     </li>
