@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { EnrollmentCard } from '@/components/enrollment-card';
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Play, Check, CheckCircle, Clock, Loader2, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Play, Check, CheckCircle, Clock, Loader2, AlertTriangle, Lock, BadgeCheck, FileText, BookOpen } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 // Quiz metadata is loaded on the video page after completion.
 import {
@@ -15,7 +15,7 @@ import {
 
 import { fetchCourseById } from '@/services/courseService';
 import type { VideoProgress } from '@/services/courseService';
-import { fetchBunnyCourseVideos, formatBunnyDuration } from '@/services/bunnyVideoService';
+import { fetchBunnyCourseProgress, fetchBunnyCourseVideos, formatBunnyDuration } from '@/services/bunnyVideoService';
 import type { BunnyVideo } from '@/types/bunny';
 
 export default function Page({ params }: { params: { id: string } }) {
@@ -28,10 +28,10 @@ export default function Page({ params }: { params: { id: string } }) {
   const [openVideoIds, setOpenVideoIds] = useState<Record<string, boolean>>({});
   const [courseDuration, setCourseDuration] = useState<string>('0');
   const [videoProgressMap, setVideoProgressMap] = useState<Record<string, VideoProgress>>({});
-  
+
   // Bunny Stream videos for this course
   const [bunnyVideos, setBunnyVideos] = useState<BunnyVideo[]>([]);
-  
+
   // Get assignments from Redux store
   const assignments = useAppSelector(selectAssignments);
   const assignmentStatusMap = useAppSelector(state => state.assignment.assignmentStatuses);
@@ -68,9 +68,9 @@ export default function Page({ params }: { params: { id: string } }) {
       'التاسعة عشر',
       'العشرون'
     ];
-    
-    return index < arabicOrdinals.length 
-      ? arabicOrdinals[index] 
+
+    return index < arabicOrdinals.length
+      ? arabicOrdinals[index]
       : `${index + 1}`;
   };
 
@@ -121,7 +121,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const getVideoProgress = (videoId: string | number) => {
     return videoProgressMap[String(videoId)] || { videoId, completed: false, watchedAt: null };
   };
-  
+
   // Helper function to get assignment status
   const getAssignmentStatus = (assignmentId: number) => {
     return assignmentStatusMap[assignmentId] || null;
@@ -136,31 +136,17 @@ export default function Page({ params }: { params: { id: string } }) {
     const loadCourseAndEnrollment = async () => {
       try {
         setIsLoading(true);
-        const [data, bunnyData] = await Promise.all([
+        const [data, bunnyData, progressData] = await Promise.all([
           fetchCourseById(params.id),
           fetchBunnyCourseVideos(params.id),
+          fetchBunnyCourseProgress(params.id),
         ]);
         setCourseData(data);
         setVideoProgressMap(Object.fromEntries(
-          (data.progress ?? []).map((progress) => [String(progress.videoId), progress]),
+          progressData.videos.map((progress) => [String(progress.id), { videoId: progress.id, ...progress }]),
         ));
 
-        // Unenrolled students cannot access the Bunny catalog endpoint, but the
-        // course endpoint still exposes public video metadata and thumbnails.
-        const visibleVideos = bunnyData.length > 0
-          ? bunnyData
-          : (data.videos ?? []).map((video, index) => ({
-              id: video.id,
-              courseId: Number(params.id),
-              title: video.title,
-              status: 'READY' as const,
-              duration: video.duration ?? null,
-              width: null,
-              height: null,
-              thumbnailUrl: video.thumbnail ?? null,
-              createdAt: video.position != null ? String(video.position) : String(index),
-            }));
-        setBunnyVideos(visibleVideos);
+        setBunnyVideos(bunnyData);
 
         setIsEnrolled(!!data.enrollment);
         // Initialize video accordions
@@ -169,11 +155,6 @@ export default function Page({ params }: { params: { id: string } }) {
           initialOpenState[`bunny-${bv.id}`] = false;
         });
         setOpenVideoIds(initialOpenState);
-
-        const videoIdsToFetch = bunnyData.map(bv => bv.id);
-        if (videoIdsToFetch.length > 0) {
-          dispatch(fetchAssignmentsByCourse({ courseId: params.id, videoIds: videoIdsToFetch }));
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -183,7 +164,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
     loadCourseAndEnrollment();
   }, [params.id, dispatch]);
-  
+
   // Fetch status for videos when course data is loaded and user is enrolled
   useEffect(() => {
     if (isEnrolled && bunnyVideos.length > 0) {
@@ -200,50 +181,82 @@ export default function Page({ params }: { params: { id: string } }) {
     }
   }, [courseData, bunnyVideos, calculateCourseStats]);
 
-  if (isLoading) return <div className="text-center p-8">جاري التحميل...</div>;
-  if (error) return <div className="text-center p-8 text-red-500">خطأ: {error}</div>;
-  if (!courseData) return <div className="text-center p-8">لا توجد بيانات متاحة للكورس</div>;
+  if (isLoading) return <div className="flex justify-center p-12 text-sm text-on-surface-variant">جاري التحميل...</div>;
+  if (error) return <div className="mx-auto mt-6 max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm font-medium text-red-700">خطأ: {error}</div>;
+  if (!courseData) return <div className="p-12 text-center text-sm text-on-surface-variant">لا توجد بيانات متاحة للكورس</div>;
 
   const totalVideosCount = bunnyVideos.length;
+  const sortedVideos = [...bunnyVideos].sort(
+    (a, b) => (a.position ?? Number.MAX_SAFE_INTEGER) - (b.position ?? Number.MAX_SAFE_INTEGER),
+  );
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12 lg:py-16">
       <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Main Content - Left Side */}
+        {/* Main Content */}
         <div className="min-w-0 flex-1">
-          {/* Course Header */}
-          <div className="mb-8 rounded-lg bg-primary p-6 text-on-primary sm:p-8">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h1 className="mb-4 text-2xl font-bold leading-10 sm:text-3xl">
-                  {courseData.title || "كورس الأزهر المكثف المجاني"}
-                </h1>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold">
-                    ملفات {courseData.files_count || 0} +
+          {/* Breadcrumb */}
+          <nav className="mb-4 flex items-center gap-1.5 text-xs text-on-surface-variant">
+            <Link href="/" className="transition-colors hover:text-[#0057c0]">الرئيسية</Link>
+            <span aria-hidden="true">/</span>
+            <Link href="/courses" className="transition-colors hover:text-[#0057c0]">الدورات</Link>
+            <span aria-hidden="true">/</span>
+            <span className="truncate font-semibold text-on-surface">{courseData.title}</span>
+          </nav>
+
+          {/* Course Header — Academic card */}
+          <div className="mb-6 overflow-hidden rounded-xl border border-outline-variant/70 bg-white shadow-level-2">
+            <div className="h-1.5 w-full primary-gradient" />
+            <div className="flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold leading-10 text-on-surface sm:text-3xl">
+                    {courseData.title || "كورس الأزهر المكثف المجاني"}
+                  </h1>
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                    <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                    محتوى معتمد
                   </span>
-                  <span className="bg-white/20 text-white px-4 py-1 rounded-full text-sm">
+                </div>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                  {courseData.description_short || "الدورة لطلبة الأزهر فقط ❤️"}
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f2ff] px-3 py-1.5 text-xs font-semibold text-[#0057c0]">
+                    <Play size={12} className="shrink-0" aria-hidden="true" />
                     فيديوهات {totalVideosCount} +
                   </span>
-                  <span className="bg-white/20 text-white px-4 py-1 rounded-full text-sm">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f2ff] px-3 py-1.5 text-xs font-semibold text-[#0057c0]">
+                    <Clock size={12} className="shrink-0" aria-hidden="true" />
+                    {courseDuration}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f2ff] px-3 py-1.5 text-xs font-semibold text-[#0057c0]">
+                    <FileText size={12} className="shrink-0" aria-hidden="true" />
+                    ملفات {courseData.files_count || 0} +
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f2ff] px-3 py-1.5 text-xs font-semibold text-[#0057c0]">
+                    <BookOpen size={12} className="shrink-0" aria-hidden="true" />
                     امتحانات {courseData.exams_count || 0} +
                   </span>
                 </div>
               </div>
-              <div className="text-right sm:text-left">
-                <p className="text-lg font-bold">{courseData.price === 0 ? "هذا الكورس مجاني !" : `السعر: ${courseData.price} جنيه`}</p>
-                <p className="text-sm">{courseData.description_short || "الدورة لطلبة الأزهر فقط ❤️"}</p>
+              <div className="shrink-0">
+                <p className="text-lg font-bold text-on-surface">
+                  {courseData.price === 0 ? "هذا الكورس مجاني" : `السعر: ${courseData.price} جنيه`}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Course Content */}
-          <div className="overflow-hidden rounded-lg bg-white shadow-level-2">
-            <h2 className="text-xl font-bold p-6 border-b dark:border-gray-700">محتوى الكورس</h2>
+          <div className="overflow-hidden rounded-xl border border-outline-variant/70 bg-white shadow-level-2">
+            <h2 className="border-b border-outline-variant/70 p-6 text-xl font-bold text-on-surface">
+              محتوى الدورة والوحدات التعليمية
+            </h2>
             <div className="space-y-2 p-3 sm:p-4">
               {/* ─── Video List (Bunny Stream) ───────────────────────────────── */}
-              {bunnyVideos.length > 0 ? (
-                bunnyVideos.map((bv, index) => {
+              {sortedVideos.length > 0 ? (
+                sortedVideos.map((bv, index) => {
                   const bvKey = `bunny-${bv.id}`;
                   const isOpen = !!openVideoIds[bvKey];
                   const isReady = bv.status === 'READY';
@@ -254,50 +267,64 @@ export default function Page({ params }: { params: { id: string } }) {
 
                   return (
                     <div key={bvKey} className="overflow-hidden rounded-md border border-outline-variant/70 transition-colors">
-                      {/* Accordion Header */}
+                      {/* Lesson Row */}
                       <div
-                        className="cursor-pointer p-5 transition-colors hover:bg-[#e8f2ff]/50"
+                        className="cursor-pointer p-4 transition-colors hover:bg-[#e8f2ff]/50 sm:p-5"
                         onClick={() => isReady && toggleVideo(bvKey)}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="text-primary">
-                              {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8f2ff] text-[#207bff]">
+                              {isEnrolled ? (
+                                isOpen ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />
+                              ) : (
+                                <Lock size={14} aria-hidden="true" />
+                              )}
                             </span>
-                            <h3 className="text-lg font-semibold">المحاضرة {getArabicOrdinal(index)}</h3>
+                            <div className="min-w-0">
+                              <h3 className="text-base font-semibold text-on-surface">المحاضرة {getArabicOrdinal(index)}</h3>
+                              <p className="truncate text-xs text-on-surface-variant">{bv.title}</p>
+                            </div>
 
                             {/* Show video completion status */}
                             {videoProgress.completed && (
-                              <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs">
-                                <CheckCircle size={12} className="text-green-600" />
-                                <span>تم المشاهدة</span>
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                <CheckCircle size={12} className="text-emerald-600" aria-hidden="true" />
+                                تم المشاهدة
                               </span>
                             )}
 
                             {/* Processing/Failed status badges */}
                             {isProcessing && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                <Loader2 size={10} className="animate-spin" />
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                <Loader2 size={10} className="animate-spin" aria-hidden="true" />
                                 قيد المعالجة
                               </span>
                             )}
                             {isFailed && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                                <AlertTriangle size={10} />
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                                <AlertTriangle size={10} aria-hidden="true" />
                                 فشل التحميل
+                              </span>
+                            )}
+
+                            {/* Assignment badge */}
+                            {videoAssignments.length > 0 && (
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#e8f2ff] px-2 py-0.5 text-xs font-medium text-[#0057c0]">
+                                <FileText size={10} aria-hidden="true" />
+                                واجب
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex shrink-0 items-center gap-2">
                             {/* Duration badge */}
                             {isReady && bv.duration != null && (
                               <span className="flex items-center gap-1 text-xs text-on-surface-variant">
-                                <Clock size={12} />
+                                <Clock size={12} aria-hidden="true" />
                                 {formatBunnyDuration(bv.duration)}
                               </span>
                             )}
-                            <span className="text-sm text-on-surface-variant">{bv.title}</span>
                           </div>
                         </div>
                       </div>
@@ -307,7 +334,7 @@ export default function Page({ params }: { params: { id: string } }) {
                         <div className="px-5 pb-5">
                           <div className="space-y-3">
                             {/* Thumbnail + Watch card */}
-                            <div className="flex flex-col gap-3 rounded-md bg-surface-container-low overflow-hidden sm:flex-row sm:items-stretch">
+                            <div className="flex flex-col gap-3 overflow-hidden rounded-md bg-surface-container-low sm:flex-row sm:items-stretch">
                               {/* Thumbnail */}
                               {bv.thumbnailUrl && (
                                 <div className="relative h-28 w-full shrink-0 sm:h-auto sm:w-44">
@@ -336,7 +363,7 @@ export default function Page({ params }: { params: { id: string } }) {
                                     </p>
                                   )}
                                   {videoProgress.completed && (
-                                    <span className="mt-1 inline-block text-xs text-gray-500">
+                                    <span className="mt-1 inline-block text-xs text-on-surface-variant/70">
                                       تمت المشاهدة في {new Date(videoProgress.watchedAt || '').toLocaleDateString('ar-EG')}
                                     </span>
                                   )}
@@ -361,7 +388,7 @@ export default function Page({ params }: { params: { id: string } }) {
                                   </Link>
                                 ) : (
                                   <span className="inline-flex items-center gap-1.5 self-start rounded-md bg-surface-container px-4 py-2 text-sm font-medium text-on-surface-variant">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    <Lock size={14} />
                                     اشترك لمشاهدة المحاضرة
                                   </span>
                                 )}
@@ -374,75 +401,75 @@ export default function Page({ params }: { params: { id: string } }) {
                               const isPastDue = new Date(assignment.dueDate) < new Date();
                               const isSubmitted = assignment.hasSubmitted;
                               const isGraded = assignment.submission?.status === "GRADED";
-                              
+
                               return (
-                                <div 
+                                <div
                                   key={assignment.id}
-                                  className={`flex items-center justify-between p-3 rounded-md mt-2
+                                  className={`flex items-center justify-between gap-2 border p-3 rounded-md mt-2
                                     ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
-                                      ? "bg-green-50 dark:bg-green-900/20 border-green-500"
+                                      ? "bg-emerald-50 border-emerald-300"
                                       : isGraded
-                                      ? "bg-red-50 dark:bg-red-900/20 border-red-500"
+                                      ? "bg-red-50 border-red-300"
                                       : isSubmitted
-                                      ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500"
+                                      ? "bg-amber-50 border-amber-300"
                                       : isPastDue
-                                      ? "bg-gray-50 dark:bg-gray-700 border-red-400"
-                                      : "bg-gray-50 dark:bg-gray-700 border-blue-400"}`}
+                                      ? "bg-slate-50 border-red-300"
+                                      : "bg-slate-50 border-blue-300"}`}
                                 >
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex flex-wrap items-center gap-2">
                                     {isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore ? (
-                                      <CheckCircle size={16} className="text-green-600" />
+                                      <CheckCircle size={16} className="text-emerald-600" />
                                     ) : isGraded ? (
                                       <Clock size={16} className="text-red-500" />
                                     ) : isSubmitted ? (
-                                      <Clock size={16} className="text-yellow-500" />
+                                      <Clock size={16} className="text-amber-500" />
                                     ) : isPastDue ? (
                                       <Clock size={16} className="text-red-400" />
                                     ) : (
-                                      <Clock size={16} className="text-blue-400" />
+                                      <Clock size={16} className="text-sky-500" />
                                     )}
-                                    <span className="font-medium">{assignment.title}</span>
-                                    
+                                    <span className="font-medium text-on-surface">{assignment.title}</span>
+
                                     {isGraded && assignment.submission && (
-                                      <span className={`text-xs ${assignment.submission.grade >= assignment.passingScore ? "text-green-500" : "text-red-500"}`}>
+                                      <span className={`text-xs ${assignment.submission.grade >= assignment.passingScore ? "text-emerald-600" : "text-red-500"}`}>
                                         {assignment.submission.grade >= assignment.passingScore
                                           ? `نجاح - ${assignment.submission.grade}/${assignment.passingScore}`
                                           : `رسوب - ${assignment.submission.grade}/${assignment.passingScore}`}
                                       </span>
                                     )}
-                                    
+
                                     {!isGraded && isSubmitted && (
-                                      <span className="text-xs text-yellow-500">
+                                      <span className="text-xs text-amber-500">
                                         قيد المراجعة
                                       </span>
                                     )}
-                                    
+
                                     {!isSubmitted && isPastDue && (
                                       <span className="text-xs text-red-500">
                                         انتهى موعد التسليم
                                       </span>
                                     )}
-                                    
+
                                     {!isSubmitted && !isPastDue && (
-                                      <span className="text-xs text-blue-500">
+                                      <span className="text-xs text-sky-600">
                                         موعد التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
                                       </span>
                                     )}
                                   </div>
-                                  
+
                                   {isEnrolled && videoProgress.completed && (
                                     <Link
                                       href={`/course/${params.id}/video/${bv.id}/assignment/${assignment.id}`}
-                                      className={`hover:underline text-sm flex items-center gap-1
+                                      className={`hover:underline text-sm flex items-center gap-1 shrink-0
                                         ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
-                                          ? "text-green-600"
+                                          ? "text-emerald-600"
                                           : isGraded
                                           ? "text-red-500"
                                           : isSubmitted
-                                          ? "text-yellow-500"
+                                          ? "text-amber-500"
                                           : isPastDue
                                           ? "text-red-400"
-                                          : "text-blue-500"}`}
+                                          : "text-sky-600"}`}
                                     >
                                       {isGraded ? (
                                         <>
@@ -478,14 +505,14 @@ export default function Page({ params }: { params: { id: string } }) {
                 })
               ) : (
                 /* Empty state — no videos */
-                <div className="p-6 text-center text-gray-500">
+                <div className="rounded-lg border border-dashed border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
                   لا توجد محاضرات متاحة حالياً
                 </div>
               )}
             </div>
           </div>
         </div>
-        
+
         {/* Enrollment Card - Right Side */}
         <div className="shrink-0 lg:w-80">
           <EnrollmentCard
