@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ClipboardList, RefreshCw, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -47,6 +47,63 @@ function errorMessage(error: unknown): string {
   return 'تعذر تنفيذ العملية.';
 }
 
+function AttemptDetailBody({
+  result,
+  resultAttempt,
+  onGraded,
+}: {
+  result: QuizResultData | null;
+  resultAttempt: AdminGlobalAttempt | null;
+  onGraded: () => Promise<void>;
+}) {
+  if (!resultAttempt) {
+    return <p className="py-6 text-center text-sm text-on-surface-variant/70">اختر محاولة لعرض نتيجتها وتصحيحها.</p>;
+  }
+  if (!result) return null;
+  if (result.status === 'GRADING') {
+    return (
+      <GradingForm
+        key={result.attemptId}
+        attempt={{ id: result.attemptId, attemptNumber: result.attemptNumber }}
+        result={result}
+        onGraded={onGraded}
+      />
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-on-surface-variant">
+        الحالة: <span className="font-semibold text-on-surface">{result.status}</span>
+        {result.scorePercent != null && (
+          <> · الدرجة: <span className="font-semibold text-on-surface">{result.scorePercent}%</span></>
+        )}
+      </p>
+      <div className="space-y-2">
+        {result.questions.map((question) => (
+          <div key={question.name} className="rounded-xl border border-outline-variant/50 bg-surface p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-on-surface/80">{question.name}</p>
+              {'isCorrect' in question && (
+                <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', question.isCorrect ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700')}>
+                  {question.isCorrect ? 'صحيحة' : 'خاطئة'}
+                </span>
+              )}
+              {'status' in question && question.status === 'GRADED' && (
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  {question.earnedPoints} / {question.maxPoints}
+                </span>
+              )}
+            </div>
+            {question.type === 'comment' && question.status === 'GRADED' && question.feedback && (
+              <p className="mt-1 text-xs text-on-surface-variant">ملاحظات: {question.feedback}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminGradingPage() {
   const [rows, setRows] = useState<AdminGlobalAttempt[]>([]);
   const [total, setTotal] = useState(0);
@@ -89,6 +146,21 @@ export default function AdminGradingPage() {
   }, [load]);
 
   const applySearch = () => { setSearch(searchInput.trim()); setPage(1); };
+
+  const mobileDetailRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (resultAttempt && typeof window !== 'undefined' && window.innerWidth < 1024) {
+      mobileDetailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [resultAttempt]);
+
+  const handleGraded = useCallback(async () => {
+    setResult(null);
+    setResultAttempt(null);
+    toast.success('تم اعتماد التصحيح.');
+    await load();
+  }, [load]);
 
   const openAttempt = async (attempt: AdminGlobalAttempt) => {
     setResultLoading(true);
@@ -205,56 +277,7 @@ export default function AdminGradingPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {!resultAttempt ? (
-              <p className="py-6 text-center text-sm text-on-surface-variant/70">اختر محاولة لعرض نتيجتها وتصحيحها.</p>
-            ) : result ? (
-              <div className="space-y-5">
-                {result.status === 'GRADING' ? (
-                  <GradingForm
-                    key={result.attemptId}
-                    attempt={{ id: result.attemptId, attemptNumber: result.attemptNumber }}
-                    result={result}
-                    onGraded={async () => {
-                      setResult(null);
-                      setResultAttempt(null);
-                      toast.success('تم اعتماد التصحيح.');
-                      await load();
-                    }}
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-sm text-on-surface-variant">
-                      الحالة: <span className="font-semibold text-on-surface">{result.status}</span>
-                      {result.scorePercent != null && (
-                        <> · الدرجة: <span className="font-semibold text-on-surface">{result.scorePercent}%</span></>
-                      )}
-                    </p>
-                    <div className="space-y-2">
-                      {result.questions.map((question) => (
-                        <div key={question.name} className="rounded-xl border border-outline-variant/50 bg-surface p-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-semibold text-on-surface/80">{question.name}</p>
-                            {'isCorrect' in question && (
-                              <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', question.isCorrect ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700')}>
-                                {question.isCorrect ? 'صحيحة' : 'خاطئة'}
-                              </span>
-                            )}
-                            {'status' in question && question.status === 'GRADED' && (
-                              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                                {question.earnedPoints} / {question.maxPoints}
-                              </span>
-                            )}
-                          </div>
-                          {question.type === 'comment' && question.status === 'GRADED' && question.feedback && (
-                            <p className="mt-1 text-xs text-on-surface-variant">ملاحظات: {question.feedback}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : null}
+            <AttemptDetailBody result={result} resultAttempt={resultAttempt} onGraded={handleGraded} />
           </CardContent>
         </Card>
       </div>
@@ -281,6 +304,137 @@ export default function AdminGradingPage() {
           <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
             التالي
           </Button>
+        </div>
+      </div>
+
+      {/* ── Mobile (lg:hidden) — matches the Academic Precision grading frame ── */}
+      <div className="lg:hidden">
+        <div className="space-y-4 px-4 pb-8 pt-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-bold text-on-surface">صندوق التصحيح</h1>
+              <p className="mt-0.5 text-xs text-on-surface-variant">تصحيح المحاولات المقالية</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void load()}
+              aria-label="تحديث"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/70 bg-surface-container-lowest text-on-surface-variant transition-transform active:scale-95"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant/70" />
+            <input
+              dir="rtl"
+              placeholder="ابحث باسم الطالب أو البريد أو الاختبار..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
+              className="w-full rounded-2xl border border-outline-variant/70 bg-surface-container-lowest py-2.5 pl-3 pr-9 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
+            />
+          </div>
+
+          <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1">
+            {STATUS_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => { setStatus(option.value as AttemptStatus | 'ALL'); setPage(1); }}
+                className={cn(
+                  'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
+                  status === option.value
+                    ? 'bg-[#207bff] text-white'
+                    : 'border border-outline-variant/70 bg-surface-container-lowest text-on-surface-variant',
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-3 text-xs font-semibold text-red-700">{error}</p>}
+
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-24 w-full animate-pulse rounded-2xl bg-muted" />
+              ))}
+            </div>
+          ) : rows.length === 0 ? (
+            <p className="py-10 text-center text-sm text-on-surface-variant">لا توجد محاولات مطابقة.</p>
+          ) : (
+            <ul className="space-y-3">
+              {rows.map((attempt) => (
+                <li key={attempt.id} className="rounded-2xl border border-outline-variant/70 bg-surface-container-lowest p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-bold text-on-surface">{attempt.student.name || attempt.student.email}</p>
+                      <p className="mt-0.5 truncate text-xs text-on-surface-variant">{attempt.quizTitle} · {attempt.courseTitle}</p>
+                      {attempt.videoTitle && (
+                        <p className="truncate text-xs text-on-surface-variant/70">{attempt.videoTitle}</p>
+                      )}
+                      <p className="mt-1 text-[10px] text-on-surface-variant/70">
+                        محاولة {attempt.attemptNumber} — {formatDate(attempt.startedAt)}
+                      </p>
+                    </div>
+                    <span className={cn('shrink-0 rounded-full border px-2 py-1 text-[10px] font-semibold', STATUS_BADGE[attempt.status])}>
+                      {attempt.status}
+                    </span>
+                  </div>
+                  {attempt.scorePercent != null && (
+                    <p className="mt-2 text-xs text-on-surface-variant">
+                      الدرجة: {attempt.scorePercent}% {attempt.passed ? <span className="text-emerald-600">· ناجح</span> : <span className="text-red-600">· راسب</span>}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void openAttempt(attempt)}
+                    disabled={resultLoading}
+                    className="mt-3 w-full rounded-full bg-[#207bff] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    فتح الإجابات
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Detail panel (mobile inline) */}
+          <section ref={mobileDetailRef} className="rounded-2xl border border-outline-variant/70 bg-surface-container-lowest p-4">
+            <p className="mb-3 flex items-center gap-2 text-sm font-bold text-on-surface">
+              <ClipboardList className="h-4 w-4 shrink-0 text-emerald-600" />
+              {resultAttempt ? `محاولة ${result?.attemptNumber} — ${resultAttempt.student.name || resultAttempt.student.email}` : 'التفاصيل'}
+            </p>
+            <AttemptDetailBody result={result} resultAttempt={resultAttempt} onGraded={handleGraded} />
+          </section>
+
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <p className="text-[11px] text-on-surface-variant">عرض {rangeLabel} من {total}</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={page <= 1 || loading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="flex h-9 items-center rounded-full border border-outline-variant/70 bg-surface-container-lowest px-3 text-xs font-semibold text-on-surface disabled:opacity-40"
+              >
+                السابق
+              </button>
+              <span className="rounded-full border border-outline-variant/70 bg-surface-container-lowest px-3 py-1.5 text-xs text-on-surface-variant">
+                {page} / {Math.max(1, totalPages)}
+              </span>
+              <button
+                type="button"
+                disabled={page >= totalPages || loading}
+                onClick={() => setPage((p) => p + 1)}
+                className="flex h-9 items-center rounded-full border border-outline-variant/70 bg-surface-container-lowest px-3 text-xs font-semibold text-on-surface disabled:opacity-40"
+              >
+                التالي
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
