@@ -164,37 +164,37 @@ export default function AdminCoursesPage() {
       {
         accessorKey: 'title',
         header: 'العنوان',
-        cell: ({ row }) => <span className="font-semibold text-slate-100">{row.original.title}</span>,
+        cell: ({ row }) => <span className="font-semibold text-on-surface">{row.original.title}</span>,
       },
       {
         accessorKey: 'grade',
         header: 'الصف',
-        cell: ({ row }) => <span className="text-slate-300">{GRADE_LABEL[row.original.grade] ?? row.original.grade}</span>,
+        cell: ({ row }) => <span className="text-on-surface-variant">{GRADE_LABEL[row.original.grade] ?? row.original.grade}</span>,
       },
       {
         accessorKey: 'category',
         header: 'التصنيف',
-        cell: ({ row }) => <span className="text-slate-300">{row.original.category || '—'}</span>,
+        cell: ({ row }) => <span className="text-on-surface-variant">{row.original.category || '—'}</span>,
       },
       {
         accessorKey: '_count.videos',
         header: 'الفيديوهات',
-        cell: ({ row }) => <span className="text-slate-300">{row.original._count.videos}</span>,
+        cell: ({ row }) => <span className="text-on-surface-variant">{row.original._count.videos}</span>,
       },
       {
         accessorKey: '_count.enrollments',
         header: 'الطلاب',
-        cell: ({ row }) => <span className="text-slate-300">{row.original._count.enrollments}</span>,
+        cell: ({ row }) => <span className="text-on-surface-variant">{row.original._count.enrollments}</span>,
       },
       {
         accessorKey: 'price',
         header: 'السعر',
-        cell: ({ row }) => <span className="text-slate-300">{row.original.price != null ? `${row.original.price} ج.م` : '—'}</span>,
+        cell: ({ row }) => <span className="text-on-surface-variant">{row.original.price != null ? `${row.original.price} ج.م` : '—'}</span>,
       },
       {
         accessorKey: 'createdAt',
         header: 'تاريخ الإنشاء',
-        cell: ({ row }) => <span className="text-slate-400">{formatDate(row.original.createdAt)}</span>,
+        cell: ({ row }) => <span className="text-on-surface-variant">{formatDate(row.original.createdAt)}</span>,
       },
       {
         id: 'actions',
@@ -205,7 +205,7 @@ export default function AdminCoursesPage() {
               type="button"
               title="الفيديوهات"
               onClick={() => router.push(`/admin/courses/${row.original.id}/videos`)}
-              className="rounded-lg border border-sky-500/40 p-2 text-sky-300 transition-colors duration-150 hover:border-sky-400 hover:text-sky-200"
+              className="rounded-lg border border-sky-500/40 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:text-sky-200"
             >
               <Film className="h-3.5 w-3.5" />
             </button>
@@ -213,7 +213,7 @@ export default function AdminCoursesPage() {
               type="button"
               title="تعديل"
               onClick={() => openEdit(row.original)}
-              className="rounded-lg border border-slate-600 p-2 text-slate-300 transition-colors duration-150 hover:border-slate-400 hover:text-slate-100"
+              className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-on-surface"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -221,7 +221,7 @@ export default function AdminCoursesPage() {
               type="button"
               title="حذف"
               onClick={() => setDeleting(row.original)}
-              className="rounded-lg border border-red-500/40 p-2 text-red-300 transition-colors duration-150 hover:border-red-400 hover:text-red-200"
+              className="rounded-lg border border-red-200 p-2 text-red-600 transition-colors duration-150 hover:border-red-400 hover:bg-red-50"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -249,97 +249,97 @@ export default function AdminCoursesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">الدورات</h1>
-          <p className="mt-1 text-sm text-slate-400">إدارة الدورات وفيديوهاتها — {total} دورة.</p>
+          <h1 className="text-2xl font-bold text-on-surface">الدورات</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">إدارة الدورات وفيديوهاتها — {total} دورة.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" onClick={() => void load()}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => void load()}>
             <RefreshCw className="mr-0 h-4 w-4" />
             تحديث
           </Button>
-          <Button className="bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={openCreate}>
+          <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={openCreate}>
             <Plus className="mr-0 h-4 w-4" />
             دورة جديدة
           </Button>
         </div>
       </div>
 
-      <Card className="border-slate-700/60 bg-card">
+      <Card className="border-outline-variant/70 bg-card">
         <CardContent>
           <div className="relative">
-            <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant/70" />
             <Input
               dir="rtl"
               placeholder="ابحث عن دورة..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-              className="border-slate-700 bg-slate-900/50 pr-9 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/15"
+              className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20"
             />
           </div>
         </CardContent>
       </Card>
 
-      {error && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm font-semibold text-red-300">{error}</p>}
+      {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
 
       <DataTable table={table} columns={columns} loading={loading} emptyLabel="لا توجد دورات مطابقة." />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-400">عرض {rangeLabel} من {total}</p>
+        <p className="text-sm text-on-surface-variant">عرض {rangeLabel} من {total}</p>
         <div className="flex items-center gap-2">
           <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
-            <SelectTrigger className="w-28 border-slate-700 bg-slate-900/50 text-slate-100">
+            <SelectTrigger className="w-28 border-outline-variant bg-white text-on-surface">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-slate-700 bg-card text-slate-100">
+            <SelectContent className="border-outline-variant bg-card text-on-surface">
               {[10, 15, 25, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} / صفحة</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
             السابق
           </Button>
-          <span className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-1.5 text-sm text-slate-300">
+          <span className="rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-sm text-on-surface-variant">
             صفحة {page} / {Math.max(1, totalPages)}
           </span>
-          <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
             التالي
           </Button>
         </div>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) setDialogOpen(false); }}>
-        <DialogContent className="border-slate-700/60 bg-card text-slate-100">
+        <DialogContent className="border-outline-variant/70 bg-card text-on-surface">
           <DialogHeader>
-            <DialogTitle className="text-slate-100">{editingCourse ? 'تعديل الدورة' : 'إنشاء دورة جديدة'}</DialogTitle>
+            <DialogTitle className="text-on-surface">{editingCourse ? 'تعديل الدورة' : 'إنشاء دورة جديدة'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="course-title" className="text-slate-200">العنوان *</Label>
-              <Input id="course-title" dir="rtl" value={form.title} onChange={set('title')} className="border-slate-700 bg-slate-900/50 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/15" />
+              <Label htmlFor="course-title" className="text-on-surface/80">العنوان *</Label>
+              <Input id="course-title" dir="rtl" value={form.title} onChange={set('title')} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="course-desc" className="text-slate-200">الوصف *</Label>
+              <Label htmlFor="course-desc" className="text-on-surface/80">الوصف *</Label>
               <textarea
                 id="course-desc"
                 dir="rtl"
                 value={form.description}
                 onChange={set('description')}
                 rows={3}
-                className="w-full resize-none rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
+                className="w-full resize-none rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="course-price" className="text-slate-200">السعر (ج.م) *</Label>
-                <Input id="course-price" dir="ltr" type="number" value={form.price} onChange={set('price')} className="border-slate-700 bg-slate-900/50 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/15" />
+                <Label htmlFor="course-price" className="text-on-surface/80">السعر (ج.م) *</Label>
+                <Input id="course-price" dir="ltr" type="number" value={form.price} onChange={set('price')} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-slate-200">الصف *</Label>
+                <Label className="text-on-surface/80">الصف *</Label>
                 <Select value={form.grade || 'ALL'} onValueChange={(v) => setForm((f) => ({ ...f, grade: v === 'ALL' ? '' : (v as GradeEnum) }))}>
-                  <SelectTrigger className="border-slate-700 bg-slate-900/50 text-slate-100">
+                  <SelectTrigger className="border-outline-variant bg-white text-on-surface">
                     <SelectValue placeholder="اختر الصف" />
                   </SelectTrigger>
-                  <SelectContent className="border-slate-700 bg-card text-slate-100">
+                  <SelectContent className="border-outline-variant bg-card text-on-surface">
                     <SelectItem value="ALL">اختر الصف</SelectItem>
                     <SelectItem value="FIRST_SECONDARY">الأول الثانوي</SelectItem>
                     <SelectItem value="SECOND_SECONDARY">الثاني الثانوي</SelectItem>
@@ -349,13 +349,13 @@ export default function AdminCoursesPage() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="course-category" className="text-slate-200">التصنيف</Label>
-              <Input id="course-category" dir="rtl" value={form.category} onChange={set('category')} placeholder="مثال: كيمياء" className="border-slate-700 bg-slate-900/50 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/15" />
+              <Label htmlFor="course-category" className="text-on-surface/80">التصنيف</Label>
+              <Input id="course-category" dir="rtl" value={form.category} onChange={set('category')} placeholder="مثال: كيمياء" className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" onClick={() => setDialogOpen(false)} disabled={formBusy}>إلغاء</Button>
-            <Button className="bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={() => void save()} disabled={formBusy}>
+            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => setDialogOpen(false)} disabled={formBusy}>إلغاء</Button>
+            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void save()} disabled={formBusy}>
               {formBusy ? 'جارٍ الحفظ...' : (editingCourse ? 'حفظ التغييرات' : 'إنشاء الدورة')}
             </Button>
           </DialogFooter>

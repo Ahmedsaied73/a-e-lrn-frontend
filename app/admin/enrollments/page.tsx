@@ -135,15 +135,15 @@ export default function AdminEnrollmentsPage() {
       {
         accessorKey: 'student',
         header: 'الطالب',
-        cell: ({ row }) => <span className="font-semibold text-slate-100">{row.original.student.name || row.original.student.email}</span>,
+        cell: ({ row }) => <span className="font-semibold text-on-surface">{row.original.student.name || row.original.student.email}</span>,
       },
       {
         accessorKey: 'course',
         header: 'المقرر',
         cell: ({ row }) => (
-          <span className="text-slate-300">
+          <span className="text-on-surface-variant">
             {row.original.course.title}
-            <span className="mr-2 text-[11px] text-slate-500">#{row.original.course.id}</span>
+            <span className="mr-2 text-[11px] text-on-surface-variant/70">#{row.original.course.id}</span>
           </span>
         ),
       },
@@ -152,10 +152,10 @@ export default function AdminEnrollmentsPage() {
         header: 'التقدم',
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-700/60">
-              <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, Math.round(row.original.progress * 100))}%` }} />
+            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[#e6e8eb]">
+              <div className="h-full bg-[#4ea5ff]" style={{ width: `${Math.min(100, Math.round(row.original.progress * 100))}%` }} />
             </div>
-            <span className="text-xs text-slate-400">{Math.round(row.original.progress * 100)}%</span>
+            <span className="text-xs text-on-surface-variant">{Math.round(row.original.progress * 100)}%</span>
           </div>
         ),
       },
@@ -163,7 +163,7 @@ export default function AdminEnrollmentsPage() {
         accessorKey: 'isPaid',
         header: 'الدفع',
         cell: ({ row }) => (
-          <span className={cn('rounded-full border px-2.5 py-0.5 text-[11px] font-semibold', row.original.isPaid ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/40 bg-amber-500/10 text-amber-300')}>
+          <span className={cn('rounded-full border px-2.5 py-0.5 text-[11px] font-semibold', row.original.isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700')}>
             {row.original.isPaid ? 'مدفوع' : 'غير مدفوع'}
           </span>
         ),
@@ -172,7 +172,7 @@ export default function AdminEnrollmentsPage() {
         accessorKey: 'isCompleted',
         header: 'الحالة',
         cell: ({ row }) => (
-          <span className={cn('rounded-full border px-2.5 py-0.5 text-[11px] font-semibold', row.original.isCompleted ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300' : 'border-slate-600 bg-slate-700/40 text-slate-300')}>
+          <span className={cn('rounded-full border px-2.5 py-0.5 text-[11px] font-semibold', row.original.isCompleted ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-outline-variant bg-slate-100 text-on-surface-variant')}>
             {row.original.isCompleted ? 'مكتمل' : 'قيد الدراسة'}
           </span>
         ),
@@ -180,14 +180,14 @@ export default function AdminEnrollmentsPage() {
       {
         accessorKey: 'startedAt',
         header: 'تاريخ التسجيل',
-        cell: ({ row }) => <span className="text-slate-400">{formatDate(row.original.startedAt)}</span>,
+        cell: ({ row }) => <span className="text-on-surface-variant">{formatDate(row.original.startedAt)}</span>,
       },
       {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
           <div className="flex justify-end">
-            <button type="button" title="إلغاء التسجيل" onClick={() => setUnenrolling(row.original)} className="rounded-lg border border-red-500/40 p-2 text-red-300 transition-colors duration-150 hover:border-red-400 hover:text-red-200">
+            <button type="button" title="إلغاء التسجيل" onClick={() => setUnenrolling(row.original)} className="rounded-lg border border-red-200 p-2 text-red-600 transition-colors duration-150 hover:border-red-400 hover:bg-red-50">
               <XCircle className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -211,89 +211,89 @@ export default function AdminEnrollmentsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">التسجيلات</h1>
-          <p className="mt-1 text-sm text-slate-400">تسجيل الطلاب في المقررات وإدارتها — {total} تسجيل.</p>
+          <h1 className="text-2xl font-bold text-on-surface">التسجيلات</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">تسجيل الطلاب في المقررات وإدارتها — {total} تسجيل.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" onClick={() => void load()}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => void load()}>
             <RefreshCw className="mr-0 h-4 w-4" />
             تحديث
           </Button>
-          <Button className="bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={() => void openEnrollDialog()}>
+          <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void openEnrollDialog()}>
             <Plus className="mr-0 h-4 w-4" />
             تسجيل طالب
           </Button>
         </div>
       </div>
 
-      <Card className="border-slate-700/60 bg-card">
+      <Card className="border-outline-variant/70 bg-card">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base text-slate-200">بحث وعوامل تصفية</CardTitle>
+          <CardTitle className="text-base text-on-surface/80">بحث وعوامل تصفية</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
             <div className="relative">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant/70" />
               <Input
                 dir="rtl"
                 placeholder="ابحث باسم الطالب أو المقرر..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-                className="border-slate-700 bg-slate-900/50 pr-9 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/15"
+                className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20"
               />
             </div>
             <Select value={isPaid} onValueChange={(v) => { setIsPaid(v as 'ALL' | 'true' | 'false'); setPage(1); }}>
-              <SelectTrigger className="w-36 border-slate-700 bg-slate-900/50 text-slate-100">
+              <SelectTrigger className="w-36 border-outline-variant bg-white text-on-surface">
                 <SelectValue placeholder="الدفع" />
               </SelectTrigger>
-              <SelectContent className="border-slate-700 bg-card text-slate-100">
+              <SelectContent className="border-outline-variant bg-card text-on-surface">
                 <SelectItem value="ALL">الكل</SelectItem>
                 <SelectItem value="true">مدفوع</SelectItem>
                 <SelectItem value="false">غير مدفوع</SelectItem>
               </SelectContent>
             </Select>
             <Select value={isCompleted} onValueChange={(v) => { setIsCompleted(v as 'ALL' | 'true' | 'false'); setPage(1); }}>
-              <SelectTrigger className="w-36 border-slate-700 bg-slate-900/50 text-slate-100">
+              <SelectTrigger className="w-36 border-outline-variant bg-white text-on-surface">
                 <SelectValue placeholder="الحالة" />
               </SelectTrigger>
-              <SelectContent className="border-slate-700 bg-card text-slate-100">
+              <SelectContent className="border-outline-variant bg-card text-on-surface">
                 <SelectItem value="ALL">الكل</SelectItem>
                 <SelectItem value="true">مكتمل</SelectItem>
                 <SelectItem value="false">قيد الدراسة</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={applySearch}>
+            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={applySearch}>
               بحث
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {error && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm font-semibold text-red-300">{error}</p>}
+      {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
 
       <DataTable table={table} columns={columns} loading={loading} emptyLabel="لا توجد تسجيلات مطابقة." />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-on-surface-variant">
           عرض {rangeLabel} من {total}
         </p>
         <div className="flex items-center gap-2">
           <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
-            <SelectTrigger className="w-28 border-slate-700 bg-slate-900/50 text-slate-100">
+            <SelectTrigger className="w-28 border-outline-variant bg-white text-on-surface">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-slate-700 bg-card text-slate-100">
+            <SelectContent className="border-outline-variant bg-card text-on-surface">
               {[10, 15, 25, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} / صفحة</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
             السابق
           </Button>
-          <span className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-1.5 text-sm text-slate-300">
+          <span className="rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-sm text-on-surface-variant">
             صفحة {page} / {Math.max(1, totalPages)}
           </span>
-          <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
             التالي
           </Button>
         </div>
@@ -301,37 +301,37 @@ export default function AdminEnrollmentsPage() {
 
       {/* enroll dialog */}
       <Dialog open={enrollOpen} onOpenChange={(open) => { if (!open && !enrollBusy) setEnrollOpen(false); }}>
-        <DialogContent className="border-slate-700/60 bg-card text-slate-100">
+        <DialogContent className="border-outline-variant/70 bg-card text-on-surface">
           <DialogHeader>
-            <DialogTitle className="text-slate-100">تسجيل طالب في مقرر</DialogTitle>
+            <DialogTitle className="text-on-surface">تسجيل طالب في مقرر</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-slate-200">الطالب *</Label>
+              <Label className="text-on-surface/80">الطالب *</Label>
               <Select value={enrollStudentId} onValueChange={setEnrollStudentId}>
-                <SelectTrigger className="border-slate-700 bg-slate-900/50 text-slate-100">
+                <SelectTrigger className="border-outline-variant bg-white text-on-surface">
                   <SelectValue placeholder="اختر الطالب" />
                 </SelectTrigger>
-                <SelectContent className="max-h-72 border-slate-700 bg-card text-slate-100">
+                <SelectContent className="max-h-72 border-outline-variant bg-card text-on-surface">
                   {students.map((student) => <SelectItem key={student.id} value={String(student.id)}>{student.name || student.email}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-200">المقرر *</Label>
+              <Label className="text-on-surface/80">المقرر *</Label>
               <Select value={enrollCourseId} onValueChange={setEnrollCourseId}>
-                <SelectTrigger className="border-slate-700 bg-slate-900/50 text-slate-100">
+                <SelectTrigger className="border-outline-variant bg-white text-on-surface">
                   <SelectValue placeholder="اختر المقرر" />
                 </SelectTrigger>
-                <SelectContent className="max-h-72 border-slate-700 bg-card text-slate-100">
+                <SelectContent className="max-h-72 border-outline-variant bg-card text-on-surface">
                   {courses.map((course) => <SelectItem key={course.id} value={String(course.id)}>{course.title}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="border-slate-600 text-slate-200 hover:border-slate-400 hover:text-slate-100" onClick={() => setEnrollOpen(false)} disabled={enrollBusy}>إلغاء</Button>
-            <Button className="bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={() => void doEnroll()} disabled={enrollBusy || !enrollStudentId || !enrollCourseId}>
+            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => setEnrollOpen(false)} disabled={enrollBusy}>إلغاء</Button>
+            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void doEnroll()} disabled={enrollBusy || !enrollStudentId || !enrollCourseId}>
               {enrollBusy ? 'جارٍ التسجيل...' : 'تسجيل الآن'}
             </Button>
           </DialogFooter>
@@ -348,8 +348,8 @@ export default function AdminEnrollmentsPage() {
         onConfirm={() => void confirmUnenroll()}
       />
 
-      <div className="flex items-center gap-2 rounded-xl border border-slate-700/60 bg-card p-3 text-sm text-slate-400">
-        <GraduationCap className="h-4 w-4 shrink-0 text-emerald-400" />
+      <div className="flex items-center gap-2 rounded-xl border border-outline-variant/70 bg-card p-3 text-sm text-on-surface-variant">
+        <GraduationCap className="h-4 w-4 shrink-0 text-emerald-600" />
         <span>ملاحظة: التسجيل من لوحة التحكم يكون مدفوعًا تلقائيًا لأن الدفع معطّل، ويُمنع تكرار تسجيل نفس الطالب في نفس المقرر.</span>
       </div>
     </div>
