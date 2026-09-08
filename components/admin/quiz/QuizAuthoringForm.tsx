@@ -158,72 +158,72 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
 
   return (
     <form onSubmit={handleSubmit} dir="rtl" className="space-y-6">
-      <section className="rounded-xl border border-slate-700/60 bg-card p-6">
-        <h1 className="text-xl font-bold text-slate-100">إنشاء اختبار للفيديو {videoId}</h1>
-        <p className="mt-1 text-sm text-slate-400">الحفظ يستبدل تعريف الاختبار الحالي لهذا الفيديو.</p>
+      <section className="rounded-xl border border-outline-variant/70 bg-card p-6">
+        <h1 className="text-xl font-bold text-on-surface">إنشاء اختبار للفيديو {videoId}</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">الحفظ يستبدل تعريف الاختبار الحالي لهذا الفيديو.</p>
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
-          <label className="sm:col-span-3 text-sm font-semibold text-slate-200">عنوان الاختبار
-            <input value={title} onChange={(event) => setTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+          <label className="sm:col-span-3 text-sm font-semibold text-on-surface/80">عنوان الاختبار
+            <input value={title} onChange={(event) => setTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
           </label>
-          <label className="text-sm font-semibold text-slate-200">المدة بالثواني (اختياري)
-            <input type="number" min="1" value={timeLimit} onChange={(event) => setTimeLimit(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+          <label className="text-sm font-semibold text-on-surface/80">المدة بالثواني (اختياري)
+            <input type="number" min="1" value={timeLimit} onChange={(event) => setTimeLimit(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
           </label>
-          <label className="text-sm font-semibold text-slate-200">نسبة النجاح
-            <input type="number" min="0" max="100" value={passingScore} onChange={(event) => setPassingScore(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+          <label className="text-sm font-semibold text-on-surface/80">نسبة النجاح
+            <input type="number" min="0" max="100" value={passingScore} onChange={(event) => setPassingScore(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
           </label>
         </div>
       </section>
 
       {questions.map((question, index) => (
-        <section key={question.id} className="rounded-xl border border-slate-700/60 bg-card p-6">
+        <section key={question.id} className="rounded-xl border border-outline-variant/70 bg-card p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-bold text-slate-900">العنصر {index + 1}</h2>
-            <button type="button" onClick={() => setQuestions((current) => current.filter((item) => item.id !== question.id))} disabled={questions.length === 1} className="text-sm font-semibold text-rose-400 transition-colors duration-150 hover:text-rose-300 disabled:opacity-40">حذف</button>
+            <h2 className="font-bold text-on-surface">العنصر {index + 1}</h2>
+            <button type="button" onClick={() => setQuestions((current) => current.filter((item) => item.id !== question.id))} disabled={questions.length === 1} className="text-sm font-semibold text-error transition-colors duration-150 hover:text-[#93000a] disabled:opacity-40">حذف</button>
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-semibold text-slate-200">النوع
-              <select value={question.type} onChange={(event) => updateQuestion(question.id, { type: event.target.value as QuestionType })} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15">
+            <label className="text-sm font-semibold text-on-surface/80">النوع
+              <select value={question.type} onChange={(event) => updateQuestion(question.id, { type: event.target.value as QuestionType })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20">
                 <option value="radiogroup">اختيار من متعدد</option><option value="comment">مقالي</option><option value="html">HTML للعرض</option><option value="image">صورة للعرض</option>
               </select>
             </label>
-            <label className="text-sm font-semibold text-slate-200">المعرف
-              <input value={question.name} onChange={(event) => updateQuestion(question.id, { name: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+            <label className="text-sm font-semibold text-on-surface/80">المعرف
+              <input value={question.name} onChange={(event) => updateQuestion(question.id, { name: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>
-            <label className="sm:col-span-2 text-sm font-semibold text-slate-200">العنوان
-              <input value={question.title} onChange={(event) => updateQuestion(question.id, { title: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+            <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">العنوان
+              <input value={question.title} onChange={(event) => updateQuestion(question.id, { title: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>
-            {(question.type === "radiogroup" || question.type === "comment") && <label className="text-sm font-semibold text-slate-200">النقاط
-              <input type="number" min="1" value={question.points} onChange={(event) => updateQuestion(question.id, { points: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+            {(question.type === "radiogroup" || question.type === "comment") && <label className="text-sm font-semibold text-on-surface/80">النقاط
+              <input type="number" min="1" value={question.points} onChange={(event) => updateQuestion(question.id, { points: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>}
             {question.type === "radiogroup" && <>
-              <label className="text-sm font-semibold text-slate-200">الخيارات (كل سطر: value | النص)
-                <textarea value={question.choicesText} onChange={(event) => updateQuestion(question.id, { choicesText: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+              <label className="text-sm font-semibold text-on-surface/80">الخيارات (كل سطر: value | النص)
+                <textarea value={question.choicesText} onChange={(event) => updateQuestion(question.id, { choicesText: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
               </label>
-              <label className="text-sm font-semibold text-slate-200">قيمة الإجابة الصحيحة
-                <input value={question.correctValue} onChange={(event) => updateQuestion(question.id, { correctValue: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+              <label className="text-sm font-semibold text-on-surface/80">قيمة الإجابة الصحيحة
+                <input value={question.correctValue} onChange={(event) => updateQuestion(question.id, { correctValue: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
               </label>
             </>}
-            {question.type === "comment" && <label className="sm:col-span-2 text-sm font-semibold text-slate-200">الإجابة النموذجية
-              <textarea value={question.modelAnswer} onChange={(event) => updateQuestion(question.id, { modelAnswer: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+            {question.type === "comment" && <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">الإجابة النموذجية
+              <textarea value={question.modelAnswer} onChange={(event) => updateQuestion(question.id, { modelAnswer: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>}
-            {question.type === "html" && <label className="sm:col-span-2 text-sm font-semibold text-slate-200">محتوى العرض
-              <textarea value={question.html} onChange={(event) => updateQuestion(question.id, { html: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+            {question.type === "html" && <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">محتوى العرض
+              <textarea value={question.html} onChange={(event) => updateQuestion(question.id, { html: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>}
-            {question.type === "image" && <label className="sm:col-span-2 text-sm font-semibold text-slate-200">رابط الصورة
-              <input value={question.imageLink} onChange={(event) => updateQuestion(question.id, { imageLink: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15" />
+            {question.type === "image" && <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">رابط الصورة
+              <input value={question.imageLink} onChange={(event) => updateQuestion(question.id, { imageLink: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>}
           </div>
         </section>
       ))}
 
-      {error && <p role="alert" className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-sm font-semibold text-rose-300">{error}</p>}
-      {savedQuiz && <div className="flex flex-wrap items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-300">
+      {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
+      {savedQuiz && <div className="flex flex-wrap items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">
         <span>تم حفظ الاختبار بنجاح.</span>
-        <button type="button" onClick={() => router.push(`/admin/quizzes/quiz/${savedQuiz.id}/attempts`)} className="rounded-lg bg-emerald-500 px-3 py-2 text-sm font-bold text-slate-950 transition-colors duration-150 hover:bg-emerald-400">فتح طابور التصحيح</button>
+        <button type="button" onClick={() => router.push(`/admin/quizzes/quiz/${savedQuiz.id}/attempts`)} className="rounded-lg bg-[#207bff] px-3 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0]">فتح طابور التصحيح</button>
       </div>}
       <div className="flex gap-3">
-        <button type="button" onClick={() => setQuestions((current) => [...current, newQuestion()])} className="rounded-lg border border-slate-600 px-4 py-2.5 font-semibold text-slate-200 transition-colors duration-150 hover:border-slate-400">إضافة عنصر</button>
-        <button type="submit" disabled={isSaving} className="rounded-lg bg-emerald-500 px-5 py-2.5 text-sm font-bold text-slate-950 transition-colors duration-150 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed">{isSaving ? "جاري الحفظ..." : "حفظ الاختبار"}</button>
+        <button type="button" onClick={() => setQuestions((current) => [...current, newQuestion()])} className="rounded-lg border border-outline-variant px-4 py-2.5 font-semibold text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0]">إضافة عنصر</button>
+        <button type="submit" disabled={isSaving} className="rounded-lg bg-[#207bff] px-5 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-60 disabled:cursor-not-allowed">{isSaving ? "جاري الحفظ..." : "حفظ الاختبار"}</button>
       </div>
     </form>
   );

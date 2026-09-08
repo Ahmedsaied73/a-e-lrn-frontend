@@ -5,10 +5,12 @@
 @tailwind utilities;
 
 /* -------------------------------------------------------
-   Design tokens — global light theme (shadcn-compatible names)
-   The student app renders exactly as before; only the admin
-   console overrides these beneath the `.admin-console` scope.
-------------------------------------------------------- */
+   Design tokens — unified light theme (shadcn-compatible names)
+   One "Academic Precision" (Stitch project 14391907357742829862)
+   system across the student app AND the admin console
+   (#207BFF primary, #f7f9fc surface, white cards, #e1e8f0 borders).
+   The admin console no longer defines a dark scope.
+------------------------------------------------------ */
 :root {
   --background: 213 33% 97%;
   --foreground: 218 10% 11%;
@@ -20,63 +22,21 @@
   --primary-foreground: 0 0% 100%;
   --secondary: 207 100% 65%;
   --secondary-foreground: 0 0% 100%;
-  --muted: 217 14% 91%;
-  --muted-foreground: 220 14% 29%;
-  --accent: 214 100% 96%;
+  --muted: 213 24% 96%;
+  --muted-foreground: 220 25% 29%;
+  --accent: 214 100% 93%;
   --accent-foreground: 215 25% 27%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
-  --border: 213 33% 91%;
-  --input: 213 33% 91%;
+  --border: 213 37% 91%;
+  --input: 213 37% 91%;
   --ring: 214 100% 56%;
   --radius: 0.5rem;
 }
 
 /* -------------------------------------------------------
-   Admin console private scope — ui-ux-pro-max “dark tech +
-   status green” palette (design-system/e-learning-admin-console).
-   Scoped here so shadcn primitives resolve dark inside admin
-   pages while the student app keeps the global light tokens.
-------------------------------------------------------- */
-.admin-console {
-  color-scheme: dark;
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
-  --card: 221 33% 16%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 142 71% 45%;
-  --primary-foreground: 217 33% 9%;
-  --secondary: 215 25% 27%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 221 26% 20%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 221 26% 20%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 0%;
-  --border: 215 18% 31%;
-  --input: 215 18% 31%;
-  --ring: 0 0% 100%;
-
-  background-color: #0f172a;
-  color: #f8fafc;
-}
-
-.admin-console ::-webkit-scrollbar-track {
-  background: #1b2336;
-}
-.admin-console ::-webkit-scrollbar-thumb {
-  background: #475569;
-}
-.admin-console ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-/* -------------------------------------------------------
    Base layer — light theme, Cairo font, RTL
-------------------------------------------------------- */
+------------------------------------------------------ */
 @layer base {
   html,
   body {
@@ -111,7 +71,7 @@
 
 /* -------------------------------------------------------
    Legacy gradient utilities (kept for inner pages)
-------------------------------------------------------- */
+------------------------------------------------------ */
 .primary-gradient {
   background: linear-gradient(135deg, #207bff 0%, #4ea5ff 100%);
 }
@@ -125,7 +85,7 @@
 
 /* -------------------------------------------------------
    Dot-grid hero background (used on homepage)
-------------------------------------------------------- */
+------------------------------------------------------ */
 .dot-grid-bg {
   background-image: radial-gradient(circle at 2px 2px, #207bff22 1px, transparent 0);
   background-size: 32px 32px;
@@ -133,7 +93,7 @@
 
 /* -------------------------------------------------------
    Smooth transitions for interactive elements
-------------------------------------------------------- */
+------------------------------------------------------ */
 .interactive {
   @apply transition-all duration-300 ease-in-out;
 }

@@ -10,6 +10,7 @@ import {
   GraduationCap,
   FileCheck2,
   FlaskConical,
+  ExternalLink,
   LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -27,11 +28,11 @@ const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: R
     items: [
       { href: '/admin/students', label: 'الطلاب', icon: Users },
       { href: '/admin/courses', label: 'الدورات والفيديوهات', icon: BookOpen },
-      { href: '/admin/enrollments', label: 'الاشتراكات', icon: GraduationCap },
+      { href: '/admin/enrollments', label: 'الاشتراكات والتسجيلات', icon: GraduationCap },
     ],
   },
   {
-    label: 'التقييم',
+    label: 'التقييم والامتحانات',
     items: [
       { href: '/admin/quizzes', label: 'الاختبارات', icon: ListChecks },
       { href: '/admin/grading', label: 'تصحيح المقالي', icon: FileCheck2 },
@@ -49,15 +50,15 @@ export function AdminSidebar() {
   const user = useAppSelector(selectUser);
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-e border-slate-800 bg-[#0b1220]">
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-e border-outline-variant/70 bg-white">
       {/* Brand */}
-      <div className="flex h-16 items-center gap-2 border-b border-slate-800 px-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-400">
-          <FlaskConical className="h-4 w-4" aria-hidden="true" />
+      <div className="flex h-16 items-center gap-2 border-b border-outline-variant/70 px-5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e8f2ff] text-[#207bff]">
+          <FlaskConical className="h-5 w-5" aria-hidden="true" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-slate-100">لوحة التحكم</p>
-          <p className="truncate text-[11px] text-slate-500">أكاديمية الكيمياء</p>
+          <p className="truncate text-sm font-bold text-on-surface">لوحة التحكم</p>
+          <p className="truncate text-[11px] text-on-surface-variant">أكاديمية الكيمياء</p>
         </div>
       </div>
 
@@ -65,7 +66,7 @@ export function AdminSidebar() {
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         {NAV_GROUPS.map((group) => (
           <div key={group.label} className="mb-5">
-            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">
               {group.label}
             </p>
             <ul className="space-y-1">
@@ -78,8 +79,8 @@ export function AdminSidebar() {
                       className={cn(
                         'flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150',
                         active
-                          ? 'bg-emerald-500/15 text-emerald-300'
-                          : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200',
+                          ? 'bg-[#e8f2ff] text-[#0057c0]'
+                          : 'text-on-surface-variant hover:bg-[#e8f2ff]/50 hover:text-[#0057c0]',
                       )}
                     >
                       <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -93,21 +94,33 @@ export function AdminSidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="border-t border-slate-800 p-3">
-        <div className="flex items-center gap-3 rounded-lg px-2 py-1">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-bold text-slate-100">
+      {/* Back to portal + version */}
+      <div className="border-t border-outline-variant/70 px-3 py-3">
+        <Link
+          href="/"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-on-surface-variant transition-colors duration-150 hover:bg-[#e8f2ff]/50 hover:text-[#0057c0]"
+        >
+          <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>الرجوع للبوابة الرئيسية</span>
+        </Link>
+        <p className="mt-2 px-3 text-[11px] text-on-surface-variant/70">الإصدار 2.4.0</p>
+      </div>
+
+      {/* User chip */}
+      <div className="border-t border-outline-variant/70 p-3">
+        <div className="flex items-center gap-3 rounded-lg border border-outline-variant/50 bg-surface px-2 py-1.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e8f2ff] text-xs font-bold text-[#0057c0]">
             {user?.name?.trim()?.charAt(0) || 'أ'}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-slate-200">{user?.name}</p>
-            <p className="truncate text-[11px] text-slate-500">{user?.email}</p>
+            <p className="truncate text-xs font-semibold text-on-surface">{user?.name}</p>
+            <p className="truncate text-[11px] text-on-surface-variant">{user?.email}</p>
           </div>
           <button
             type="button"
             onClick={() => logoutUser()}
             title="تسجيل الخروج"
-            className="cursor-pointer rounded-md p-1.5 text-slate-500 transition-colors duration-150 hover:bg-slate-800 hover:text-red-400"
+            className="cursor-pointer rounded-md p-1.5 text-on-surface-variant transition-colors duration-150 hover:bg-red-50 hover:text-error"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
           </button>

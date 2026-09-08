@@ -63,19 +63,19 @@ export default function GradingForm({ attempt, result, onGraded }: GradingFormPr
   return (
     <div className="space-y-5">
       {essayQuestions.length === 0 ? (
-        <p className="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-300">
+        <p className="rounded-lg border border-outline-variant/50 bg-surface p-4 text-sm text-on-surface-variant">
           هذا الاختبار لا يحتوي على أسئلة مقالية — يعتمد التصحيح على نظام الاختيار من متعدد تلقائيًا.
           يمكنك اعتماد النتيجة أو إعادة المحاولة من القائمة.
         </p>
       ) : essayQuestions.map((question) => (
-        <div key={question.name} className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-          <p className="font-bold text-slate-100">{question.name}</p>
-          <p className="mt-2 whitespace-pre-wrap rounded-lg bg-slate-900/60 p-3 text-sm text-slate-300">
+        <div key={question.name} className="rounded-xl border border-outline-variant/50 bg-surface p-4">
+          <p className="font-bold text-on-surface">{question.name}</p>
+          <p className="mt-2 whitespace-pre-wrap rounded-lg bg-surface-container-low p-3 text-sm text-on-surface-variant">
             إجابة الطالب: {question.studentAnswer || "لم تتم الإجابة"}
           </p>
-          <p className="mt-2 text-sm text-slate-500">الإجابة النموذجية: {question.modelAnswer}</p>
+          <p className="mt-2 text-sm text-on-surface-variant/70">الإجابة النموذجية: {question.modelAnswer}</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="text-sm font-semibold text-slate-200">
+            <label className="text-sm font-semibold text-on-surface/80">
               الدرجة (الحد الأقصى {question.maxPoints})
               <input
                 type="number"
@@ -84,27 +84,27 @@ export default function GradingForm({ attempt, result, onGraded }: GradingFormPr
                 step="1"
                 value={scores[question.name] ?? ""}
                 onChange={(event) => setScores((current) => ({ ...current, [question.name]: event.target.value }))}
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
+                className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
               />
             </label>
-            <label className="text-sm font-semibold text-slate-200">
+            <label className="text-sm font-semibold text-on-surface/80">
               ملاحظات
               <textarea
                 value={feedback[question.name] ?? ""}
                 onChange={(event) => setFeedback((current) => ({ ...current, [question.name]: event.target.value }))}
-                className="mt-1 min-h-20 w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
+                className="mt-1 min-h-20 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
               />
             </label>
           </div>
         </div>
       ))}
-      {error && <p role="alert" className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-sm font-semibold text-rose-300">{error}</p>}
+      {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
       {essayQuestions.length > 0 && (
         <button
           type="button"
           onClick={() => void submitGrade()}
           disabled={working}
-          className="rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-950 transition-colors duration-150 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg bg-[#207bff] px-4 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {working ? "جاري الحفظ..." : "اعتماد التصحيح"}
         </button>

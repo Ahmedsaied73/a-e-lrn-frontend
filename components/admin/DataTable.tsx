@@ -17,13 +17,13 @@ interface DataTableProps<TData> {
 export function DataTable<TData>({ table, columns, loading, emptyLabel = 'لا توجد بيانات.', rowClassName }: DataTableProps<TData>) {
   const rows = table.getRowModel().rows;
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-700/60 bg-card">
+    <div className="overflow-hidden rounded-xl border border-outline-variant/70 bg-card">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="border-slate-700/60 bg-muted/40 hover:bg-muted/40">
+            <TableRow key={headerGroup.id} className="border-outline-variant/50 bg-muted/40 hover:bg-muted/40">
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className="whitespace-nowrap text-slate-300">
+                <TableHead key={header.id} className="whitespace-nowrap text-on-surface-variant">
                   {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                 </TableHead>
               ))}
@@ -33,25 +33,25 @@ export function DataTable<TData>({ table, columns, loading, emptyLabel = 'لا �
         <TableBody>
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
-              <TableRow key={`sk-${i}`} className="border-slate-700/60">
+              <TableRow key={`sk-${i}`} className="border-outline-variant/50">
                 {columns.map((_, ci) => (
                   <TableCell key={ci} className="py-3">
-                    <Skeleton className="h-4 w-full bg-slate-700/50" />
+                    <Skeleton className="h-4 w-full bg-muted" />
                   </TableCell>
                 ))}
               </TableRow>
             ))
           ) : rows.length === 0 ? (
-            <TableRow className="border-slate-700/60 hover:bg-transparent">
-              <TableCell colSpan={columns.length} className="py-10 text-center text-sm text-slate-500">
+            <TableRow className="border-outline-variant/50 hover:bg-transparent">
+              <TableCell colSpan={columns.length} className="py-10 text-center text-sm text-on-surface-variant">
                 {emptyLabel}
               </TableCell>
             </TableRow>
           ) : (
             rows.map((row) => (
-              <TableRow key={row.id} className={cn('border-slate-700/60', rowClassName?.(row.original))}>
+              <TableRow key={row.id} className={cn('border-outline-variant/50', rowClassName?.(row.original))}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="whitespace-nowrap py-3 text-slate-200">
+                  <TableCell key={cell.id} className="whitespace-nowrap py-3 text-on-surface">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

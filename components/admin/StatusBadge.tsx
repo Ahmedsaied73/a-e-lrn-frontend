@@ -4,19 +4,19 @@ import type { AttemptStatus, VideoStatus } from '@/types/admin';
 type Status = VideoStatus | AttemptStatus | 'PENDING' | 'GRADED' | 'PLACED' | 'PAID' | 'UNPAID';
 
 const variantByStatus: Record<Status, string> = {
-  PENDING: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
-  UPLOADING: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
-  PROCESSING: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
-  READY: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-  FAILED: 'border-red-500/40 bg-red-500/10 text-red-300',
-  IN_PROGRESS: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
-  SUBMITTED: 'border-slate-400/40 bg-slate-400/10 text-slate-300',
-  GRADING: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
-  GRADED: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-  EXPIRED: 'border-slate-500/40 bg-slate-500/10 text-slate-400',
-  PLACED: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-  PAID: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-  UNPAID: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
+  PENDING: 'border-amber-200 bg-amber-50 text-amber-700',
+  UPLOADING: 'border-sky-200 bg-sky-50 text-sky-700',
+  PROCESSING: 'border-sky-200 bg-sky-50 text-sky-700',
+  READY: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  FAILED: 'border-red-200 bg-red-50 text-red-700',
+  IN_PROGRESS: 'border-sky-200 bg-sky-50 text-sky-700',
+  SUBMITTED: 'border-slate-200 bg-slate-100 text-slate-600',
+  GRADING: 'border-amber-200 bg-amber-50 text-amber-700',
+  GRADED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  EXPIRED: 'border-slate-200 bg-slate-50 text-slate-500',
+  PLACED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  PAID: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  UNPAID: 'border-amber-200 bg-amber-50 text-amber-700',
 };
 
 const labelByStatus: Record<Status, string> = {
@@ -40,7 +40,7 @@ export function StatusBadge({ status, className }: { status: Status; className?:
     <span
       className={cn(
         'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold',
-        variantByStatus[status] ?? 'border-slate-600 bg-slate-700/40 text-slate-300',
+        variantByStatus[status] ?? 'border-slate-200 bg-slate-100 text-slate-600',
         className,
       )}
     >

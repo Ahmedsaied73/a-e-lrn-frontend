@@ -31,7 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     // -mt-16 reclaims the global <main> pt-16 so the console fills the viewport.
-    <div className="admin-console -mt-16 flex min-h-screen">
+    <div className="-mt-16 flex min-h-screen bg-[#f7f9fc]">
       <AdminSidebar />
       <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
     </div>
