@@ -256,7 +256,7 @@ Search boxes on every admin table: students, courses, videos (client-side title 
 
 > **Task 1 (BE 5b13a15 + FE 2d97555, Sept 2026):** The legacy video system is GONE. `GET /courses/:id` still returns the envelope `{ course, videos, enrollment, progress }` but `videos` now comes from **BunnyVideo** (READY) and there is **no `url` key** on video entries (playable links only via signed `GET /videos/:videoId/playback`). `progress` is BunnyVideoProgress (same shape). The sequential gate is a SINGLE function (`quizService.evaluateGate`): admins bypass; non-enrolled audio http 403 `NOT_ENROLLED`; first video always allowed; later videos need previous completed + quiz passed or a gate exemption. `POST /progress/complete` enforces the same gate and returns `VIDEO_NOT_UNLOCKED` (403), `NOT_ENROLLED`, or `VIDEO_NOT_FOUND` (404). `/stream/*` routes are deleted. `searchContent` video branch now searches BunnyVideo (no url key).
 
-> **Task 2 (BE 070c92f + FE 13cc6f6, Sept 2026):** Refresh tokens are now stored as a **SHA-256 hash** with a `refreshTokenFamily`; rotation keeps the family, and a **replayed/rotated token quarantines the whole family** (token + family null ? every device forced to re-login). Auth is cookie-only, so the practical rule for the FE: **never fire two concurrent `/auth/refresh-token` calls** � `api-client.ts` now single-flights `attemptSilentRefresh` (this is mandatory for the reuse-detection to be safe across parallel requests / multiple tabs). `/auth/register` shares the 20/15min limiter with login; `authorizeAdmin` re-checks role against the DB. Legacy behavior unchanged for clients: 401 ? silent refresh ? retry; refresh failure ? redirect to /login.
+> **Task 2 (BE 070c92f + FE 13cc6f6, Sept 2026):** Refresh tokens are now stored as a **SHA-256 hash** with a `refreshTokenFamily`; rotation keeps the family, and a **replayed/rotated token quarantines the whole family** (token + family null ? every device forced to re-login). Auth is cookie-only, so the practical rule for the FE: **never fire two concurrent `/auth/refresh-token` calls** � `api-client.ts` now single-flights `attemptSilentRefresh` (this is mandatory for the reuse-detection to be safe across parallel requests / multiple tabs). `/auth/register` shares the 20/15min limiter with login; `authorizeAdmin` re-checks role against the DB. Legacy behavior unchanged for clients: 401 ? silent refresh ? retry; refresh failure ? redirect to /login.
 
 > **Auth unify + guards + user cache (FE 213710d, f44153a, Sept 2026):**
 > - HttpOnly cookies are the ONLY auth. The in-memory Bearer compat shim and
@@ -266,9 +266,50 @@ Search boxes on every admin table: students, courses, videos (client-side title 
 >   are purged on boot/login/logout/final-401 via `utils/auth-storage.ts`.
 > - `/login` and `/register` redirect already-authenticated users to `/` once
 >   `auth.initialized` is true (no flash-redirect before the session check).
-> - Register now auto-logs-in (dispatches loginSuccess) and is routed home �
+> - Register now auto-logs-in (dispatches loginSuccess) and is routed home �
 >   no more bounce to `/login` for a session the backend already opened.
 > - `lib/user-cache.ts`: 5-min TTL localStorage profile cache (non-secret PII).
 >   AuthInitializer hydrates Redux from a fresh cache with ZERO `/user/me` calls
 >   on hard refresh; fetches only on cache miss/expiry. Cleared on logout/401 and
 >   syncs across tabs via the `storage` event.
+
+### 99.5 Unified light theme round (Stitch "Academic Precision", FE d66ab5b → 94565d9, Sept 2026)
+
+Redesigned the WHOLE app (student + admin) to one light Material-3-flavored system
+from Stitch project **14391907357742829862** ("Academic Precision": primary `#207bff`,
+secondary `#4ea5ff`, surface bg `#f7f9fc`, white cards, `#e1e8f0` borders, chips `#e8f2ff`,
+progress pill `#4ea5ff` on `#f5f7fa`, radius 8/16, shadows level-1/2/3). Do NOT reintroduce dark
+classes or the `.admin-console` scope — the **dark admin console is gone permanently** (user decision).
+
+Commits: `d66ab5b` (plan + `.gitignore` adds `design-ref/`), `2ca8975` (tokens + shared
+components: AdminSidebar, DataTable, StatCard, StatusBadge, ConfirmDialog, quiz components,
+`app/admin/layout.tsx`), `21d3286` (students/courses/videos/enrollments), `f549765`
+(grading + quizzes index), `9376d58` (dashboard), `94565d9` (course page).
+
+- **`app/globals.css`** — `.admin-console {…}` block DELETED; `:root` tokens aligned
+  (`--muted 213 24% 96%`, `--muted-foreground 220 25% 29%` ≈ `#414754`, `--accent 214 100% 93%`).
+  Keep all new admin markup on shadcn tailwind tokens (`on-surface`, `outline-variant`,
+  `bg-surface`, `bg-[#e8f2ff]`/`text-[#207bff]`/`text-[#0057c0]`, `shadow-level-2`) or raw hex.
+- **`app/admin/layout.tsx`** keeps `-mt-16 flex min-h-screen` but dropped the `admin-console`
+  class; area bg `#f7f9fc`.
+- **AdminSidebar** — light: `border-e border-outline-variant/70`, active `bg-[#e8f2ff] text-[#0057c0]`,
+  footer "الرجوع للبوابة الرئيسية" + `الإصدار 2.4.0` + user chip + logout. Groups عام/الإدارة/التقييم.
+  "إعدادات النظام" intentionally NOT shipped (no backend page).
+- **Dashboard** — added stitched **quick-actions grid** (add student / create course / upload video /
+  create quiz / grade essays / manage exemptions) with hover chip→solid-blue. Live-data pill uses a
+  ping dot. KPI strip, alerts, three recent-activity columns unchanged in shape, lighted.
+- **StatusBadge/StatCard/DataTable/shared chips** — light tints (`bg-*-50 border-*-200 text-*-700`),
+  tinted icon chips, slate-only for neutral SUBMITTED/EXPIRED rows (`bg-slate-100`).
+- **Course page (`app/course/[id]/page.tsx`)** — redesigned ON TOP of the user's WIP (their hooks/
+  state/service logic preserved verbatim). New: breadcrumb (الرئيسية / الدورات / title), light header
+  card with `محتوى معتمد` chip + stats chips (فيديوهات/المدة/ملفات/امتحانات) + price side note;
+  section title "محتوى الدورة والوحدات التعليمية"; lesson rows sorted by **`BunnyVideo.position`**
+  (fallback MAX_SAFE_INTEGER), each = numbered circle (Chevron/🔐Lock when not enrolled) + ordinal
+  title + subtitle + completed/processing/failed + `واجب` badges + duration; body keeps
+  thumbnail/watch card + assignment cards (light tints; `dark:` variants stripped). EnrollmentCard rail untouched.
+- **Verification** — `tsc --noEmit` clean; Playwright flow (admin dashboard, students, courses,
+  enrollments, quizzes, grading, `/admin/courses/8/videos`, `/admin/quizzes/4/access`, student
+  `/course/8`) all green. Only console noise: pre-existing missing home images `teacher.png` /
+  `grade1-3.png` / `brain.png` → 400 on `/` (out of scope, known).
+- When touching admin UI: **stay on the light token set**; never add `dark:` / slate-700+ body
+  backgrounds / `.admin-console`. Reference screens in `design-ref/stitch/` (gitignored).
