@@ -17,8 +17,10 @@ import {
   Upload,
   PenLine,
   KeyRound,
+  Rocket,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { cn } from '@/lib/utils';
 import { StatCard } from '@/components/admin/StatCard';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -108,7 +110,8 @@ export default function AdminOverviewPage() {
     : 0;
 
   return (
-    <div className="p-6 lg:p-8">
+    <>
+      <div className="hidden p-6 lg:block lg:p-8">
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -331,6 +334,238 @@ export default function AdminOverviewPage() {
           </div>
         </>
       )}
-    </div>
+      </div>
+
+      {/* ── Mobile (lg:hidden) — matches the Academic Precision mobile frame ── */}
+      <div className="lg:hidden">
+        <div className="space-y-4 px-4 pb-8 pt-3">
+          {/* Greeting + live pulse */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-bold text-on-surface">مرحباً بك</h1>
+              <p className="mt-0.5 text-xs text-on-surface-variant">إليك ملخص المنصة الآن</p>
+            </div>
+            {!loading && !error && (
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-secondary-fixed px-2.5 py-1 text-[10px] font-semibold text-[#00487f]">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                </span>
+                بيانات مباشرة
+              </span>
+            )}
+          </div>
+
+          {/* Health banner */}
+          {!error &&
+            (loading ? (
+              <Skeleton className="h-12 w-full rounded-2xl bg-muted" />
+            ) : data!.alerts.hasIssues || data!.alerts.essaysPendingGrading.length > 0 ? (
+              <div className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-700">
+                <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {data!.alerts.failedVideos.length + data!.alerts.stuckProcessingVideos.length} فيديو بحاجة إلى انتباه
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-700">
+                <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                كل شيء يعمل — لا توجد مشاكل حالياً
+              </div>
+            ))}
+
+          {/* Hero stat */}
+          {loading ? (
+            <Skeleton className="h-36 w-full rounded-2xl bg-muted" />
+          ) : (
+            <div className="relative overflow-hidden rounded-2xl bg-[#207bff] p-5 text-on-primary">
+              <div className="absolute -left-6 -top-8 h-28 w-28 rounded-full bg-white/10" aria-hidden="true" />
+              <div className="absolute -bottom-10 -right-4 h-24 w-24 rounded-full bg-white/5" aria-hidden="true" />
+              <div className="relative">
+                <p className="text-xs font-medium text-on-primary/80">المحتوى الجاهز للمشاهدة</p>
+                <div className="mt-2 flex items-end gap-1">
+                  <span className="text-[44px] font-extrabold leading-none tracking-tight">
+                    {data!.counts.videos.READY ?? 0}
+                  </span>
+                  <span className="mb-1 text-base font-semibold text-on-primary/80">
+                    / {data!.counts.videos.total}
+                  </span>
+                </div>
+                <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/25">
+                  <div
+                    className="h-full rounded-full bg-on-primary"
+                    style={{
+                      width: `${
+                        data!.counts.videos.total
+                          ? Math.round(((data!.counts.videos.READY ?? 0) / data!.counts.videos.total) * 100)
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+                <p className="mt-2 text-[11px] text-on-primary/80">
+                  {data!.counts.videos.FAILED
+                    ? `فشل معالجة ${data!.counts.videos.FAILED} — أعد الرفع`
+                    : 'جميع المحاضرات جاهزة للمشاهدة'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* KPI 2×2 */}
+          <div className="grid grid-cols-2 gap-3">
+            {(
+              [
+                { label: 'الطلاب', value: data?.counts.students, icon: Users, chip: 'bg-primary-fixed text-[#004397]' },
+                { label: 'الدورات', value: data?.counts.courses, icon: BookOpen, chip: 'bg-secondary-fixed text-[#00487f]' },
+                { label: 'الاشتراكات', value: data?.counts.enrollments, icon: GraduationCap, chip: 'bg-tertiary-fixed text-[#004395]' },
+                { label: 'بانتظار التصحيح', value: data?.counts.attempts.GRADING, icon: ClipboardCheck, chip: 'bg-error-container text-[#93000a]' },
+              ] as {
+                label: string;
+                value: number | undefined;
+                icon: React.ComponentType<{ className?: string }>;
+                chip: string;
+              }[]
+            ).map((k) => (
+              <div
+                key={k.label}
+                className="flex items-center gap-3 rounded-2xl border border-outline-variant/70 bg-surface-container-lowest p-4"
+              >
+                <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', k.chip)}>
+                  <k.icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-[11px] text-on-surface-variant">{k.label}</p>
+                  <p className="text-lg font-bold leading-tight text-on-surface">{loading ? '…' : (k.value ?? 0)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick actions */}
+          <div>
+            <h2 className="mb-2 px-1 text-sm font-bold text-on-surface">إجراءات سريعة</h2>
+            <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+              {QUICK_ACTIONS.slice(0, 4).map((action) => (
+                <Link key={action.label} href={action.href} className="snap-start">
+                  <div className="flex w-[150px] flex-col items-start gap-2 rounded-2xl border border-outline-variant/70 bg-surface-container-lowest p-3.5 transition-transform active:scale-[0.98]">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e8f2ff] text-[#207bff]">
+                      <action.icon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <span className="text-xs font-bold text-on-surface">{action.label}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent students */}
+          <section className="overflow-hidden rounded-2xl border border-outline-variant/70 bg-surface-container-lowest">
+            <header className="flex items-center justify-between border-b border-outline-variant/40 px-4 py-3">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-on-surface">
+                <Users className="h-4 w-4 text-on-surface-variant" aria-hidden="true" />
+                أحدث الطلاب
+              </h2>
+              <Link href="/admin/students" className="text-xs font-semibold text-[#0057c0]">
+                عرض الكل
+              </Link>
+            </header>
+            <ul className="divide-y divide-outline-variant/40">
+              {loading ? (
+                <Skeleton className="m-4 h-14 w-[calc(100%-2rem)] bg-muted" />
+              ) : (
+                data!.recent.users.slice(0, 3).map((u) => (
+                  <li key={u.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-xs font-bold text-[#004397]">
+                        {u.name.trim().charAt(0)}
+                      </span>
+                      <span className="truncate text-xs font-semibold text-on-surface">{u.name}</span>
+                    </div>
+                    <span className="shrink-0 text-[10px] text-on-surface-variant/70">{formatDate(u.createdAt)}</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
+
+          {/* Recent subscriptions */}
+          <section className="overflow-hidden rounded-2xl border border-outline-variant/70 bg-surface-container-lowest">
+            <header className="flex items-center justify-between border-b border-outline-variant/40 px-4 py-3">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-on-surface">
+                <GraduationCap className="h-4 w-4 text-on-surface-variant" aria-hidden="true" />
+                أحدث الاشتراكات
+              </h2>
+              <Link href="/admin/students" className="text-xs font-semibold text-[#0057c0]">
+                عرض الكل
+              </Link>
+            </header>
+            <ul className="divide-y divide-outline-variant/40">
+              {loading ? (
+                <Skeleton className="m-4 h-14 w-[calc(100%-2rem)] bg-muted" />
+              ) : (
+                data!.recent.enrollments.slice(0, 3).map((e) => (
+                  <li key={e.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-fixed text-xs font-bold text-[#00487f]">
+                        {e.user.name.trim().charAt(0)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold text-on-surface">{e.user.name}</p>
+                        <p className="truncate text-[10px] text-on-surface-variant">{e.course.title}</p>
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-[10px] text-on-surface-variant/70">{formatDate(e.createdAt)}</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
+
+          {/* Recent attempts */}
+          <section className="overflow-hidden rounded-2xl border border-outline-variant/70 bg-surface-container-lowest">
+            <header className="flex items-center justify-between border-b border-outline-variant/40 px-4 py-3">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-on-surface">
+                <ClipboardCheck className="h-4 w-4 text-on-surface-variant" aria-hidden="true" />
+                آخر المحاولات
+              </h2>
+              <Link href="/admin/grading" className="text-xs font-semibold text-[#0057c0]">
+                عرض الكل
+              </Link>
+            </header>
+            <ul className="divide-y divide-outline-variant/40">
+              {loading ? (
+                <Skeleton className="m-4 h-14 w-[calc(100%-2rem)] bg-muted" />
+              ) : (
+                data!.recent.attempts.slice(0, 3).map((a) => (
+                  <li key={a.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-error-container text-xs font-bold text-[#93000a]">
+                        {a.user.name.trim().charAt(0)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold text-on-surface">{a.user.name}</p>
+                        <p className="truncate text-[10px] text-on-surface-variant">
+                          {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}
+                        </p>
+                      </div>
+                    </div>
+                    <StatusBadge status={a.status} />
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
+
+          {/* Motivation micro-card */}
+          <div className="flex items-center gap-3 rounded-2xl bg-primary-fixed/70 px-4 py-3.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#207bff] text-on-primary">
+              <Rocket className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <p className="text-xs font-semibold leading-relaxed text-[#001a43]">
+              واصل التقدم — أنت تبني مستقبل طلابك خطوة بخطوة
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
