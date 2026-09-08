@@ -46,3 +46,5 @@ next-env.d.ts
 # dev logs
 fe*.log
 fe*.err.log
+
+design-ref/
