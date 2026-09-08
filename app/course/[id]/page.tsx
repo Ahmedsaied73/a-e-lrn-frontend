@@ -249,10 +249,15 @@ export default function Page({ params }: { params: { id: string } }) {
           </div>
 
           {/* Course Content */}
-          <div className="overflow-hidden rounded-xl border border-outline-variant/70 bg-white shadow-level-2">
+          <div className="overflow-hidden rounded-2xl border border-outline-variant/70 bg-white shadow-level-2">
             <h2 className="border-b border-outline-variant/70 p-6 text-xl font-bold text-on-surface">
               محتوى الدورة والوحدات التعليمية
             </h2>
+            <div className="flex items-center gap-2 border-b border-outline-variant/40 px-4 py-3">
+              <span className="inline-flex items-center rounded-full bg-[#207bff] px-3.5 py-1.5 text-xs font-bold text-white">
+                جميع المحاضرات ({sortedVideos.length})
+              </span>
+            </div>
             <div className="space-y-2 p-3 sm:p-4">
               {/* ─── Video List (Bunny Stream) ───────────────────────────────── */}
               {sortedVideos.length > 0 ? (
@@ -266,23 +271,21 @@ export default function Page({ params }: { params: { id: string } }) {
                   const videoAssignments = findAssignmentsForVideo(bv.id);
 
                   return (
-                    <div key={bvKey} className="overflow-hidden rounded-md border border-outline-variant/70 transition-colors">
-                      {/* Lesson Row */}
+                    <div key={bvKey} className="overflow-hidden rounded-2xl border border-outline-variant/70 transition-colors">
+                      {/* Lesson Row — Academic card style */}
                       <div
                         className="cursor-pointer p-4 transition-colors hover:bg-[#e8f2ff]/50 sm:p-5"
                         onClick={() => isReady && toggleVideo(bvKey)}
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-3">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8f2ff] text-[#207bff]">
-                              {isEnrolled ? (
-                                isOpen ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />
-                              ) : (
-                                <Lock size={14} aria-hidden="true" />
-                              )}
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#001a43] text-xs font-bold tracking-tight text-white">
+                              {String(index + 1).padStart(2, '0')}
                             </span>
                             <div className="min-w-0">
-                              <h3 className="text-base font-semibold text-on-surface">المحاضرة {getArabicOrdinal(index)}</h3>
+                              <h3 className="text-base font-semibold text-on-surface">
+                                المحاضرة {getArabicOrdinal(index)}
+                              </h3>
                               <p className="truncate text-xs text-on-surface-variant">{bv.title}</p>
                             </div>
 
@@ -315,6 +318,14 @@ export default function Page({ params }: { params: { id: string } }) {
                                 واجب
                               </span>
                             )}
+
+                            {/* Subscriber-only chip (frame-honest: enrollment-gated) */}
+                            {!isEnrolled && isReady && (
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-tertiary-fixed px-2 py-0.5 text-xs font-medium text-[#004395]">
+                                <Lock size={10} aria-hidden="true" />
+                                خاص بالمشتركين
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex shrink-0 items-center gap-2">
@@ -325,6 +336,13 @@ export default function Page({ params }: { params: { id: string } }) {
                                 {formatBunnyDuration(bv.duration)}
                               </span>
                             )}
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8f2ff] text-[#207bff]">
+                              {isEnrolled ? (
+                                isOpen ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />
+                              ) : (
+                                <Lock size={14} aria-hidden="true" />
+                              )}
+                            </span>
                           </div>
                         </div>
                       </div>
