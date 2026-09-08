@@ -313,3 +313,34 @@ components: AdminSidebar, DataTable, StatCard, StatusBadge, ConfirmDialog, quiz 
   `grade1-3.png` / `brain.png` → 400 on `/` (out of scope, known).
 - When touching admin UI: **stay on the light token set**; never add `dark:` / slate-700+ body
   backgrounds / `.admin-console`. Reference screens in `design-ref/stitch/` (gitignored).
+
+### 99.6 Admin mobile round + course lesson cards (FE `d3dcacc`→`03f9631`, BE `58a2f6f`, Sept 2026)
+
+Full Stitch mobile treatment (frames `_1`–`_4` admin, `_5` course). Plan committed
+`45c9a71` (`plans/admin-mobile-stich.md`). All `tsc --noEmit` clean; Playwright-verified at
+**390×844 + 1440×900** (markers, no horizontal overflow, interactions: expandable student/course
+action cards, "فتح الإجابات" → detail panel, lesson tiles). Screenshots under the temp dir.
+
+- **Mobile shell (M1)** — `components/admin/MobileShell.tsx` (top app bar à la Material 3 + live
+  date; **all 4 admin sections** with icons), bottom nav `nav[aria-label="التنقل الرئيسي"]`
+  (نظرة عامة / الطلاب / المقررات / التصحيح, active = primary strong pill). `app/admin/layout.tsx`
+  adds `pt-16 lg:pt-0 pb-24 lg:pb-0` (needed for any page with a header — add `lg:pt-16` variants
+  only if a page sits under the sidebar header). `AdminSidebar.tsx` is `hidden lg:flex`.
+  Safe areas: `.pt-safe`/`.pb-safe` utility classes in `app/globals.css`.
+- **Mobile trees (M2–M5)** — each admin page keeps its full desktop tree wrapped in
+  `hidden lg:block` and adds a `lg:hidden` mobile tree reusing the SAME data + handlers
+  (new `mobileActions`, `mobileDetailRef` scroll-into-view in grading):
+  dashboard (greeting+pulse, health banner, hero stat `videos.READY/total` + progress, KPI 2×2,
+  quick actions, recent cards, motivation micro-card), students (search, role/grade chips,
+  expandable actions), courses (search, expandable actions), grading (attempt cards → detail
+  panel rendered inline; `AttemptDetailBody` extracted and shared with desktop).
+- **Course lesson cards (M6)** — `app/course/[id]/page.tsx`: lesson row restyle ONLY (all fetch/
+  state/hooks preserved). Each row: two-digit number tile (`bg-[#001a43]` white text), ordinal
+  title + subtitle, status chips (تم المشاهدة / قيد المعالجة / فشل التحميل / واجب), new
+  `خاص بالمشتركين` chip when `!isEnrolled && isReady` (clutter-free: hidden when enrolled),
+  duration + chevron/lock circle; "جميع المحاضرات (N)" bar above the list. Accordion body
+  (thumbnail/watch/assignments) untouched.
+- **Backend dependency (LIMITER)** — global rate limit raised **100→1000 req/15min** in `app.js`
+  (committed `58a2f6f`; it starved tab-heavy browsing AND test suites — each `/admin` load costs
+  ~2–3 API calls). `/auth/login` stays 20/15min. BE must be restarted after app.js edits (no
+  nodemon) — `Stop-Process <pid>; Start-Process node app.js`.
