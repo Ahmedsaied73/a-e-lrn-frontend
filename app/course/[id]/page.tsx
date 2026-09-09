@@ -4,19 +4,41 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { EnrollmentCard } from '@/components/enrollment-card';
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Play, Check, CheckCircle, Clock, Loader2, AlertTriangle, Lock, BadgeCheck, FileText, BookOpen } from 'lucide-react';
+import {
+  AlertTriangle,
+  BadgeCheck,
+  Check,
+  CheckCircle,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Clock,
+  FileText,
+  Home,
+  Loader2,
+  Lock,
+  Play,
+  PlayCircle,
+} from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 // Quiz metadata is loaded on the video page after completion.
 import {
   fetchAssignmentStatus,
   selectAssignments,
-  fetchAssignmentsByCourse
 } from '@/store/slices/assignmentSlice';
 
 import { fetchCourseById } from '@/services/courseService';
 import type { VideoProgress } from '@/services/courseService';
-import { fetchBunnyCourseProgress, fetchBunnyCourseVideos, formatBunnyDuration } from '@/services/bunnyVideoService';
+import { fetchBunnyCourseProgress, fetchBunnyCourseVideos } from '@/services/bunnyVideoService';
 import type { BunnyVideo } from '@/types/bunny';
+
+const INITIAL_VISIBLE_LESSONS = 6;
+
+const GRADE_LABELS: Record<string, string> = {
+  FIRST_SECONDARY: 'الصف الأول الثانوي',
+  SECOND_SECONDARY: 'الصف الثاني الثانوي',
+  THIRD_SECONDARY: 'الصف الثالث الثانوي',
+};
 
 export default function Page({ params }: { params: { id: string } }) {
   const dispatch = useAppDispatch();
@@ -24,10 +46,10 @@ export default function Page({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [openVideoIds, setOpenVideoIds] = useState<Record<string, boolean>>({});
   const [courseDuration, setCourseDuration] = useState<string>('0');
   const [videoProgressMap, setVideoProgressMap] = useState<Record<string, VideoProgress>>({});
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_LESSONS);
 
   // Bunny Stream videos for this course
   const [bunnyVideos, setBunnyVideos] = useState<BunnyVideo[]>([]);
@@ -44,43 +66,13 @@ export default function Page({ params }: { params: { id: string } }) {
     }));
   };
 
-  // Function to get Arabic ordinal number (first, second, etc.)
-  const getArabicOrdinal = (index: number) => {
-    const arabicOrdinals = [
-      'الأولى',
-      'الثانية',
-      'الثالثة',
-      'الرابعة',
-      'الخامسة',
-      'السادسة',
-      'السابعة',
-      'الثامنة',
-      'التاسعة',
-      'العاشرة',
-      'الحادية عشر',
-      'الثانية عشر',
-      'الثالثة عشر',
-      'الرابعة عشر',
-      'الخامسة عشر',
-      'السادسة عشر',
-      'السابعة عشر',
-      'الثامنة عشر',
-      'التاسعة عشر',
-      'العشرون'
-    ];
-
-    return index < arabicOrdinals.length
-      ? arabicOrdinals[index]
-      : `${index + 1}`;
-  };
-
   // Helper function to find assignments for a specific video
   const findAssignmentsForVideo = useCallback((videoId: number | string) => {
     const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
     return assignments.filter(assignment => assignment.videoId === videoIdNum);
   }, [assignments]);
 
-  // Helper function to format duration from seconds
+  // Helper function to format duration from seconds (natural Arabic form)
   const formatDuration = useCallback((totalSeconds: number) => {
     if (totalSeconds === 0) return '0 دقيقة';
     const totalMinutes = Math.floor(totalSeconds / 60);
@@ -97,7 +89,7 @@ export default function Page({ params }: { params: { id: string } }) {
     }
   }, []);
 
-  // Helper function to calculate total course duration and questions
+  // Helper function to calculate total course duration
   const calculateCourseStats = useCallback((courseData: any, bunnyVids: BunnyVideo[]) => {
     const totalDurationInSeconds = (bunnyVids && bunnyVids.length > 0)
       ? bunnyVids.reduce((total, bv) => total + (bv.duration || 0), 0)
@@ -155,6 +147,7 @@ export default function Page({ params }: { params: { id: string } }) {
           initialOpenState[`bunny-${bv.id}`] = false;
         });
         setOpenVideoIds(initialOpenState);
+        setVisibleCount(INITIAL_VISIBLE_LESSONS);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -189,79 +182,71 @@ export default function Page({ params }: { params: { id: string } }) {
   const sortedVideos = [...bunnyVideos].sort(
     (a, b) => (a.position ?? Number.MAX_SAFE_INTEGER) - (b.position ?? Number.MAX_SAFE_INTEGER),
   );
+  const shownVideos = sortedVideos.slice(0, visibleCount);
+  const remainingVideos = totalVideosCount - shownVideos.length;
+  const firstVideo = sortedVideos.find((bv) => bv.status === 'READY');
+  const thumbnailUrl =
+    courseData.thumbnail && String(courseData.thumbnail).startsWith('http')
+      ? String(courseData.thumbnail)
+      : null;
+  const gradeLabel = courseData.grade ? GRADE_LABELS[courseData.grade] : undefined;
+  const examsCount = courseData.exams_count ?? courseData.questions_count ?? 0;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12 lg:py-16">
-      <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Main Content */}
-        <div className="min-w-0 flex-1">
-          {/* Breadcrumb */}
-          <nav className="mb-4 flex items-center gap-1.5 text-xs text-on-surface-variant">
-            <Link href="/" className="transition-colors hover:text-[#0057c0]">الرئيسية</Link>
-            <span aria-hidden="true">/</span>
-            <Link href="/courses" className="transition-colors hover:text-[#0057c0]">الدورات</Link>
-            <span aria-hidden="true">/</span>
-            <span className="truncate font-semibold text-on-surface">{courseData.title}</span>
-          </nav>
+    <div className="w-full">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-margin-mobile pb-xl pt-6 lg:px-margin-desktop">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-2 text-[13px] font-medium text-on-surface-variant">
+          <Link href="/" className="flex items-center gap-1 transition-colors hover:text-primary">
+            <Home size={16} aria-hidden="true" />
+            الرئيسية
+          </Link>
+          <ChevronRight size={14} className="rotate-180 text-outline" aria-hidden="true" />
+          <Link href="/grades/1" className="transition-colors hover:text-primary">الدورات</Link>
+          <ChevronRight size={14} className="rotate-180 text-outline" aria-hidden="true" />
+          <span className="truncate text-on-surface-variant">{courseData.title}</span>
+          <ChevronRight size={14} className="rotate-180 text-outline" aria-hidden="true" />
+          <span className="font-bold text-primary">محتوى الدورة</span>
+        </nav>
 
-          {/* Course Header — Academic card */}
-          <div className="mb-6 overflow-hidden rounded-xl border border-outline-variant/70 bg-white shadow-level-2">
-            <div className="h-1.5 w-full primary-gradient" />
-            <div className="flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold leading-10 text-on-surface sm:text-3xl">
-                    {courseData.title || "كورس الأزهر المكثف المجاني"}
-                  </h1>
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                    <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
-                    محتوى معتمد
-                  </span>
+        {/* Main Grid Layout */}
+        <div className="flex flex-col items-start gap-8 lg:flex-row">
+          {/* Main Content: Modules & Lessons */}
+          <div className="flex w-full flex-col gap-6 lg:w-2/3">
+            {/* Header Card with Filter Tabs */}
+            <div className="flex flex-col gap-5 rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <div className="mb-1 flex items-center gap-3">
+                    <h1 className="text-headline-md font-bold text-on-surface">
+                      محتوى الدورة والوحدات التعليمية
+                    </h1>
+                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[12px] font-bold text-primary">
+                      {totalVideosCount} محاضرة
+                    </span>
+                  </div>
+                  <p className="text-[14px] text-on-surface-variant">
+                    {courseData.description_short || courseData.description || 'منهج شامل ومكثف مع حل تدريبات وامتحانات تفاعلية'}
+                  </p>
                 </div>
-                <p className="mt-2 text-sm text-on-surface-variant">
-                  {courseData.description_short || "الدورة لطلبة الأزهر فقط ❤️"}
-                </p>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f2ff] px-3 py-1.5 text-xs font-semibold text-[#0057c0]">
-                    <Play size={12} className="shrink-0" aria-hidden="true" />
-                    فيديوهات {totalVideosCount} +
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f2ff] px-3 py-1.5 text-xs font-semibold text-[#0057c0]">
-                    <Clock size={12} className="shrink-0" aria-hidden="true" />
-                    {courseDuration}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f2ff] px-3 py-1.5 text-xs font-semibold text-[#0057c0]">
-                    <FileText size={12} className="shrink-0" aria-hidden="true" />
-                    ملفات {courseData.files_count || 0} +
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f2ff] px-3 py-1.5 text-xs font-semibold text-[#0057c0]">
-                    <BookOpen size={12} className="shrink-0" aria-hidden="true" />
-                    امتحانات {courseData.exams_count || 0} +
-                  </span>
-                </div>
+                <span className="flex items-center gap-1 text-[13px] font-medium text-on-surface-variant">
+                  <BadgeCheck size={16} className="text-primary" aria-hidden="true" />
+                  منهج معتمد
+                </span>
               </div>
-              <div className="shrink-0">
-                <p className="text-lg font-bold text-on-surface">
-                  {courseData.price === 0 ? "هذا الكورس مجاني" : `السعر: ${courseData.price} جنيه`}
-                </p>
+
+              {/* Module Filter Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto border-b border-outline-variant/40 pb-1">
+                <button className="whitespace-nowrap rounded-lg bg-primary px-4 py-2 text-[14px] font-bold text-on-primary shadow-sm transition-all">
+                  جميع المحاضرات ({totalVideosCount})
+                </button>
               </div>
             </div>
-          </div>
 
-          {/* Course Content */}
-          <div className="overflow-hidden rounded-2xl border border-outline-variant/70 bg-white shadow-level-2">
-            <h2 className="border-b border-outline-variant/70 p-6 text-xl font-bold text-on-surface">
-              محتوى الدورة والوحدات التعليمية
-            </h2>
-            <div className="flex items-center gap-2 border-b border-outline-variant/40 px-4 py-3">
-              <span className="inline-flex items-center rounded-full bg-[#207bff] px-3.5 py-1.5 text-xs font-bold text-white">
-                جميع المحاضرات ({sortedVideos.length})
-              </span>
-            </div>
-            <div className="space-y-2 p-3 sm:p-4">
-              {/* ─── Video List (Bunny Stream) ───────────────────────────────── */}
-              {sortedVideos.length > 0 ? (
-                sortedVideos.map((bv, index) => {
+            {/* Lessons List Container */}
+            <div className="flex flex-col gap-4">
+              {shownVideos.length > 0 ? (
+                shownVideos.map((bv, index) => {
                   const bvKey = `bunny-${bv.id}`;
                   const isOpen = !!openVideoIds[bvKey];
                   const isReady = bv.status === 'READY';
@@ -269,91 +254,113 @@ export default function Page({ params }: { params: { id: string } }) {
                   const isFailed = bv.status === 'FAILED';
                   const videoProgress = getVideoProgress(bv.id);
                   const videoAssignments = findAssignmentsForVideo(bv.id);
+                  const completed = videoProgress.completed;
 
                   return (
-                    <div key={bvKey} className="overflow-hidden rounded-2xl border border-outline-variant/70 transition-colors">
-                      {/* Lesson Row — Academic card style */}
+                    <div
+                      key={bvKey}
+                      className="group relative overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-5 shadow-sm transition-all hover:border-primary/50 hover:shadow-md"
+                    >
+                      {/* Accent bar */}
                       <div
-                        className="cursor-pointer p-4 transition-colors hover:bg-[#e8f2ff]/50 sm:p-5"
-                        onClick={() => isReady && toggleVideo(bvKey)}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#001a43] text-xs font-bold tracking-tight text-white">
-                              {String(index + 1).padStart(2, '0')}
-                            </span>
-                            <div className="min-w-0">
-                              <h3 className="text-base font-semibold text-on-surface">
-                                المحاضرة {getArabicOrdinal(index)}
-                              </h3>
-                              <p className="truncate text-xs text-on-surface-variant">{bv.title}</p>
+                        className={`absolute right-0 top-0 bottom-0 w-1.5 transition-all ${
+                          completed ? 'bg-emerald-500' : 'bg-primary/30 group-hover:bg-primary'
+                        }`}
+                      />
+
+                      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                        <div className="flex items-start gap-4 sm:items-center">
+                          {/* Lesson number */}
+                          <div
+                            className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl text-[18px] font-bold shadow-sm transition-all ${
+                              completed
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-surface-container-high text-on-surface-variant group-hover:bg-primary group-hover:text-on-primary'
+                            }`}
+                          >
+                            {String(index + 1).padStart(2, '0')}
+                          </div>
+
+                          <div>
+                            {/* Chips */}
+                            <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                              {!isEnrolled && isReady && (
+                                <span className="flex items-center gap-1 rounded-md bg-surface-container px-2 py-0.5 text-[11px] font-medium text-on-surface-variant">
+                                  <Lock size={13} aria-hidden="true" />
+                                  خاص بالمشتركين
+                                </span>
+                              )}
+                              {completed && (
+                                <span className="flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+                                  <Check size={13} aria-hidden="true" />
+                                  تم المشاهدة
+                                </span>
+                              )}
+                              {isProcessing && (
+                                <span className="flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                                  <Loader2 size={11} className="animate-spin" aria-hidden="true" />
+                                  قيد المعالجة
+                                </span>
+                              )}
+                              {isFailed && (
+                                <span className="flex items-center gap-1 rounded-md bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">
+                                  <AlertTriangle size={11} aria-hidden="true" />
+                                  فشل التحميل
+                                </span>
+                              )}
+                              {videoAssignments.length > 0 && (
+                                <span className="flex items-center gap-1 rounded-md bg-primary-fixed px-2 py-0.5 text-[11px] font-medium text-on-primary-fixed-variant">
+                                  <FileText size={11} aria-hidden="true" />
+                                  واجب مرفق
+                                </span>
+                              )}
                             </div>
 
-                            {/* Show video completion status */}
-                            {videoProgress.completed && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                                <CheckCircle size={12} className="text-emerald-600" aria-hidden="true" />
-                                تم المشاهدة
-                              </span>
-                            )}
+                            <h3 className="text-[16px] font-bold leading-snug text-on-surface transition-colors group-hover:text-primary">
+                              {bv.title || `المحاضرة ${index + 1}`}
+                            </h3>
 
-                            {/* Processing/Failed status badges */}
-                            {isProcessing && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                <Loader2 size={10} className="animate-spin" aria-hidden="true" />
-                                قيد المعالجة
-                              </span>
-                            )}
-                            {isFailed && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-                                <AlertTriangle size={10} aria-hidden="true" />
-                                فشل التحميل
-                              </span>
-                            )}
-
-                            {/* Assignment badge */}
-                            {videoAssignments.length > 0 && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#e8f2ff] px-2 py-0.5 text-xs font-medium text-[#0057c0]">
-                                <FileText size={10} aria-hidden="true" />
-                                واجب
-                              </span>
-                            )}
-
-                            {/* Subscriber-only chip (frame-honest: enrollment-gated) */}
-                            {!isEnrolled && isReady && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-tertiary-fixed px-2 py-0.5 text-xs font-medium text-[#004395]">
-                                <Lock size={10} aria-hidden="true" />
-                                خاص بالمشتركين
-                              </span>
-                            )}
+                            {/* Meta row */}
+                            <div className="mt-2 flex items-center gap-4 text-[12px] font-medium text-on-surface-variant">
+                              {isReady && bv.duration != null ? (
+                                <span className="flex items-center gap-1">
+                                  <PlayCircle size={15} className="text-primary" aria-hidden="true" />
+                                  {formatDuration(bv.duration)}
+                                </span>
+                              ) : isProcessing ? (
+                                <span className="flex items-center gap-1">
+                                  <Loader2 size={15} className="animate-spin text-amber-600" aria-hidden="true" />
+                                  جاري تجهيز المحاضرة
+                                </span>
+                              ) : null}
+                            </div>
                           </div>
+                        </div>
 
-                          <div className="flex shrink-0 items-center gap-2">
-                            {/* Duration badge */}
-                            {isReady && bv.duration != null && (
-                              <span className="flex items-center gap-1 text-xs text-on-surface-variant">
-                                <Clock size={12} aria-hidden="true" />
-                                {formatBunnyDuration(bv.duration)}
-                              </span>
-                            )}
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8f2ff] text-[#207bff]">
-                              {isEnrolled ? (
-                                isOpen ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />
-                              ) : (
-                                <Lock size={14} aria-hidden="true" />
-                              )}
+                        {/* Action */}
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          {isEnrolled && isReady ? (
+                            <button
+                              onClick={() => toggleVideo(bvKey)}
+                              aria-label={isOpen ? 'إغلاق المحاضرة' : 'فتح المحاضرة'}
+                              className="flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/60 text-outline transition-all group-hover:border-primary group-hover:text-primary"
+                            >
+                              {isOpen ? <ChevronUp size={20} aria-hidden="true" /> : <ChevronRight size={20} className="rotate-180" aria-hidden="true" />}
+                            </button>
+                          ) : (
+                            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-container text-outline">
+                              <Lock size={16} aria-hidden="true" />
                             </span>
-                          </div>
+                          )}
                         </div>
                       </div>
 
                       {/* Accordion Body — only for READY videos */}
                       {isOpen && isReady && (
-                        <div className="px-5 pb-5">
+                        <div className="pt-5">
                           <div className="space-y-3">
                             {/* Thumbnail + Watch card */}
-                            <div className="flex flex-col gap-3 overflow-hidden rounded-md bg-surface-container-low sm:flex-row sm:items-stretch">
-                              {/* Thumbnail */}
+                            <div className="flex flex-col gap-3 overflow-hidden rounded-xl bg-surface-container-low sm:flex-row sm:items-stretch">
                               {bv.thumbnailUrl && (
                                 <div className="relative h-28 w-full shrink-0 sm:h-auto sm:w-44">
                                   <Image
@@ -365,7 +372,7 @@ export default function Page({ params }: { params: { id: string } }) {
                                   />
                                   <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow">
-                                      <Play size={16} className="text-primary" fill="currentColor" />
+                                      <Play size={16} className="text-primary" fill="currentColor" aria-hidden="true" />
                                     </div>
                                   </div>
                                 </div>
@@ -377,10 +384,10 @@ export default function Page({ params }: { params: { id: string } }) {
                                   <p className="font-medium text-on-surface">{bv.title}</p>
                                   {bv.duration != null && (
                                     <p className="mt-1 text-xs text-on-surface-variant">
-                                      المدة: {formatBunnyDuration(bv.duration)}
+                                      المدة: {formatDuration(bv.duration)}
                                     </p>
                                   )}
-                                  {videoProgress.completed && (
+                                  {completed && (
                                     <span className="mt-1 inline-block text-xs text-on-surface-variant/70">
                                       تمت المشاهدة في {new Date(videoProgress.watchedAt || '').toLocaleDateString('ar-EG')}
                                     </span>
@@ -390,23 +397,23 @@ export default function Page({ params }: { params: { id: string } }) {
                                 {isEnrolled ? (
                                   <Link
                                     href={`/course/${params.id}/video/${bv.id}`}
-                                    className="inline-flex items-center gap-1.5 self-start rounded-md bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition-colors hover:bg-[#0057c0] active:bg-[#004aa0]"
+                                    className="inline-flex items-center gap-1.5 self-start rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition-colors hover:bg-on-primary-fixed-variant"
                                   >
-                                    {videoProgress.completed ? (
+                                    {completed ? (
                                       <>
-                                        <Check size={14} />
+                                        <Check size={14} aria-hidden="true" />
                                         مشاهدة مرة أخرى
                                       </>
                                     ) : (
                                       <>
-                                        <Play size={14} />
+                                        <Play size={14} aria-hidden="true" />
                                         شاهد المحاضرة
                                       </>
                                     )}
                                   </Link>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1.5 self-start rounded-md bg-surface-container px-4 py-2 text-sm font-medium text-on-surface-variant">
-                                    <Lock size={14} />
+                                  <span className="inline-flex items-center gap-1.5 self-start rounded-xl bg-surface-container px-4 py-2 text-sm font-medium text-on-surface-variant">
+                                    <Lock size={14} aria-hidden="true" />
                                     اشترك لمشاهدة المحاضرة
                                   </span>
                                 )}
@@ -423,28 +430,29 @@ export default function Page({ params }: { params: { id: string } }) {
                               return (
                                 <div
                                   key={assignment.id}
-                                  className={`flex items-center justify-between gap-2 border p-3 rounded-md mt-2
-                                    ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
-                                      ? "bg-emerald-50 border-emerald-300"
+                                  className={`flex items-center justify-between gap-2 rounded-xl border p-3 ${
+                                    isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
+                                      ? "bg-emerald-50 border-emerald-200"
                                       : isGraded
-                                      ? "bg-red-50 border-red-300"
+                                      ? "bg-red-50 border-red-200"
                                       : isSubmitted
-                                      ? "bg-amber-50 border-amber-300"
+                                      ? "bg-amber-50 border-amber-200"
                                       : isPastDue
-                                      ? "bg-slate-50 border-red-300"
-                                      : "bg-slate-50 border-blue-300"}`}
+                                      ? "bg-surface-container border-red-200"
+                                      : "bg-surface-container border-primary-fixed-dim"
+                                  }`}
                                 >
                                   <div className="flex flex-wrap items-center gap-2">
                                     {isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore ? (
-                                      <CheckCircle size={16} className="text-emerald-600" />
+                                      <CheckCircle size={16} className="text-emerald-600" aria-hidden="true" />
                                     ) : isGraded ? (
-                                      <Clock size={16} className="text-red-500" />
+                                      <CheckCircle size={16} className="text-red-500" aria-hidden="true" />
                                     ) : isSubmitted ? (
-                                      <Clock size={16} className="text-amber-500" />
+                                      <Clock size={16} className="text-amber-500" aria-hidden="true" />
                                     ) : isPastDue ? (
-                                      <Clock size={16} className="text-red-400" />
+                                      <Clock size={16} className="text-red-400" aria-hidden="true" />
                                     ) : (
-                                      <Clock size={16} className="text-sky-500" />
+                                      <FileText size={16} className="text-sky-600" aria-hidden="true" />
                                     )}
                                     <span className="font-medium text-on-surface">{assignment.title}</span>
 
@@ -478,8 +486,8 @@ export default function Page({ params }: { params: { id: string } }) {
                                   {isEnrolled && videoProgress.completed && (
                                     <Link
                                       href={`/course/${params.id}/video/${bv.id}/assignment/${assignment.id}`}
-                                      className={`hover:underline text-sm flex items-center gap-1 shrink-0
-                                        ${isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
+                                      className={`flex shrink-0 items-center gap-1 text-sm hover:underline ${
+                                        isGraded && assignment.submission && assignment.submission.grade >= assignment.passingScore
                                           ? "text-emerald-600"
                                           : isGraded
                                           ? "text-red-500"
@@ -487,26 +495,27 @@ export default function Page({ params }: { params: { id: string } }) {
                                           ? "text-amber-500"
                                           : isPastDue
                                           ? "text-red-400"
-                                          : "text-sky-600"}`}
+                                          : "text-sky-600"
+                                      }`}
                                     >
                                       {isGraded ? (
                                         <>
-                                          <Check size={16} />
+                                          <Check size={16} aria-hidden="true" />
                                           عرض النتيجة
                                         </>
                                       ) : isSubmitted ? (
                                         <>
-                                          <Clock size={16} />
+                                          <FileText size={16} aria-hidden="true" />
                                           عرض التسليم
                                         </>
                                       ) : isPastDue ? (
                                         <>
-                                          <Clock size={16} />
+                                          <Check size={16} aria-hidden="true" />
                                           متأخر
                                         </>
                                       ) : (
                                         <>
-                                          <Clock size={16} />
+                                          <FileText size={16} aria-hidden="true" />
                                           بدء الواجب
                                         </>
                                       )}
@@ -523,27 +532,41 @@ export default function Page({ params }: { params: { id: string } }) {
                 })
               ) : (
                 /* Empty state — no videos */
-                <div className="rounded-lg border border-dashed border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
+                <div className="rounded-xl border border-dashed border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
                   لا توجد محاضرات متاحة حالياً
                 </div>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Enrollment Card - Right Side */}
-        <div className="shrink-0 lg:w-80">
-          <EnrollmentCard
-            courseId={params.id}
-            userId={userId}
-            isEnrolled={isEnrolled}
-            courseTitle={courseData.title}
-            coursePrice={courseData.price || "مجاني"}
-            courseDuration={courseDuration}
-            questionsCount={String(courseData.questions_count || 0)}
-            className="sticky top-24"
-            onEnrollSuccess={() => setIsEnrolled(true)}
-          />
+            {/* Load More Action */}
+            {remainingVideos > 0 && (
+              <button
+                onClick={() => setVisibleCount(totalVideosCount)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-3.5 text-[14px] font-bold text-primary shadow-sm transition-all hover:bg-surface-container-low"
+              >
+                <ChevronDown size={20} aria-hidden="true" />
+                عرض باقي الحصص والمحاضرات ({remainingVideos} محاضرة متبقية)
+              </button>
+            )}
+          </div>
+
+          {/* Sidebar: Course Overview & Enrollment Card */}
+          <aside className="w-full flex-shrink-0 lg:w-1/3">
+            <EnrollmentCard
+              courseId={params.id}
+              isEnrolled={isEnrolled}
+              courseTitle={courseData.title}
+              coursePrice={courseData.price || 'مجاني'}
+              courseDuration={courseDuration}
+              examsCount={examsCount}
+              lessonsCount={totalVideosCount}
+              thumbnail={thumbnailUrl}
+              gradeLabel={gradeLabel}
+              primaryVideoHref={firstVideo ? `/course/${params.id}/video/${firstVideo.id}` : undefined}
+              className="sticky top-24"
+              onEnrollSuccess={() => setIsEnrolled(true)}
+            />
+          </aside>
         </div>
       </div>
     </div>

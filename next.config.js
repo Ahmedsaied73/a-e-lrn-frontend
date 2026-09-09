@@ -44,6 +44,17 @@ const nextConfig = {
         hostname: '**.b-cdn.net',
         pathname: '/**',
       },
+      // YouTube video thumbnails
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+        pathname: '/**',
+      },
     ],
   },
 };

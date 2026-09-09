@@ -18,11 +18,9 @@ import {
 } from "lucide-react";
 import { AppDispatch } from "@/store/store";
 import { addNotification } from "@/store/slices/uiSlice";
-import { fetchAssignmentsByVideo, selectAssignments } from "@/store/slices/assignmentSlice";
 import { fetchQuizMeta } from "@/store/slices/quizSlice";
 import QuizIntroCard from "@/components/quiz/QuizIntroCard";
 import { fetchBunnyPlaybackUrl, BunnyVideoError, fetchBunnyCourseVideos, formatBunnyDuration } from '@/services/bunnyVideoService';
-import { fetchCourseById } from '@/services/courseService';
 import type { BunnyPlaybackData, BunnyVideo } from '@/types/bunny';
 import type { QuizGate403 } from '@/types/quiz';
 
@@ -42,7 +40,6 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   // Bunny playback and video metadata
   const [playbackData, setPlaybackData] = useState<BunnyPlaybackData | null>(null);
   const [bunnyVideo, setBunnyVideo] = useState<BunnyVideo | null>(null);
-  const [progressVideoId, setProgressVideoId] = useState<number | null>(null);
   
   // Loading & error states
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +54,6 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   const [completionDate, setCompletionDate] = useState<string | null>(null);
 
   // Redux store selections
-  const assignments = useSelector(selectAssignments);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 1. Fetch Video Playback URL & Metadata (Bunny Stream)
@@ -69,41 +65,33 @@ export default function VideoPage({ params }: { params: { id: string; video: str
       setIsNotEnrolled(false);
       setIsNotReady(false);
       setQuizGate(null);
+      setBunnyVideo(null);
+      setPlaybackData(null);
 
-      // The playback records and progress records use different video tables.
-      // Load both so progress is written against the legacy Video.id expected by /progress.
-      const [courseData, courseVideos] = await Promise.all([
-        fetchCourseById(params.id).catch(() => null),
-        fetchBunnyCourseVideos(params.id).catch(() => [] as BunnyVideo[]),
-      ]);
+      const courseVideos = await fetchBunnyCourseVideos(params.id);
 
       // Find matching video by numeric ID or Bunny GUID string
       const foundVideo = courseVideos.find(
         v => v.id === Number(params.video) || v.bunnyVideoId === params.video
       );
 
-      if (foundVideo) {
-        setBunnyVideo(foundVideo);
+      if (!foundVideo) {
+        throw new BunnyVideoError('VIDEO_NOT_FOUND', 'الفيديو غير موجود في هذا الكورس', 404);
       }
+      setBunnyVideo(foundVideo);
 
-      const foundIndex = foundVideo ? courseVideos.indexOf(foundVideo) : -1;
-      const legacyVideo = courseData?.videos?.find((video) => video.title === foundVideo?.title)
-        ?? (foundIndex >= 0 ? courseData?.videos?.[foundIndex] : undefined);
-      setProgressVideoId(legacyVideo?.id ?? (foundVideo ? null : Number(params.video)));
-
-      // Determine target ID to request playback token for (prefer numeric ID, fallback to param)
-      const targetVideoId = foundVideo ? foundVideo.id : params.video;
-
-      const playback = await fetchBunnyPlaybackUrl(targetVideoId);
+      const playback = await fetchBunnyPlaybackUrl(foundVideo.id);
       setPlaybackData(playback);
-
-      // Fetch video assignments
-      dispatch(fetchAssignmentsByVideo(String(targetVideoId)));
     } catch (err: unknown) {
       if (err instanceof BunnyVideoError) {
         if (err.code === 'VIDEO_ACCESS_DENIED') {
-          const body = err.body;
-          if (body && typeof body === 'object' && 'quizId' in body) {
+          const body = err.body as QuizGate403 | undefined;
+          const isGate = body && (
+            body.code === 'SEQUENTIAL_GATE' ||
+            // fallback for older backends that predate structured `code`s
+            (!('code' in body) && 'quizId' in body)
+          );
+          if (isGate) {
             setQuizGate(body as QuizGate403);
           } else {
             setIsNotEnrolled(true);
@@ -128,7 +116,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   // 2. Silent Token Refresh (proactively refreshes 5 minutes before expiresAt)
   // ─────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!playbackData?.expiresAt) return;
+    if (!playbackData?.expiresAt || !bunnyVideo) return;
 
     const expiresAtMs = playbackData.expiresAt * 1000;
     const now = Date.now();
@@ -140,7 +128,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
 
     const timer = setTimeout(async () => {
       try {
-        const refreshed = await fetchBunnyPlaybackUrl(bunnyVideo?.id ?? params.video);
+        const refreshed = await fetchBunnyPlaybackUrl(bunnyVideo.id);
         setPlaybackData(refreshed);
       } catch (err) {
         console.warn('Failed to silently refresh Bunny video playback token:', err);
@@ -148,20 +136,19 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [bunnyVideo?.id, playbackData?.expiresAt, params.video]);
+  }, [bunnyVideo, playbackData?.expiresAt]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 3. Check Video Completion Status
   // ─────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     const checkVideoCompletion = async () => {
-      const videoId = progressVideoId ?? Number(params.video);
-      if (!Number.isFinite(videoId)) return;
+      if (!bunnyVideo) return;
 
       try {
         const { apiClient } = await import('@/lib/api-client');
         const data = await apiClient.get<{ videoId: number | string; completed: boolean; watchedAt: string | null }>(
-          `/progress/${videoId}`
+          `/progress/${bunnyVideo.id}`
         );
         if (data) {
           setApiCompletionStatus(data.completed);
@@ -175,7 +162,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     };
     
     checkVideoCompletion();
-  }, [params.video, progressVideoId]);
+  }, [bunnyVideo]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 4. Handle Video Completion
@@ -192,8 +179,8 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     try {
       setCompletingVideo(true);
       const { apiClient } = await import('@/lib/api-client');
-      const videoId = progressVideoId ?? Number(params.video);
-      if (!Number.isFinite(videoId)) {
+      const videoId = bunnyVideo?.id;
+      if (!videoId) {
         throw new Error('تعذر تحديد المحاضرة لتحديث التقدم');
       }
       await apiClient.post<{ videoId: number | string; completed: boolean; watchedAt: string | null }>(
@@ -210,14 +197,20 @@ export default function VideoPage({ params }: { params: { id: string; video: str
         message: 'تم إكمال المحاضرة بنجاح!'
       }));
     } catch (err: unknown) {
+      // Map structured backend codes to friendly Arabic messages.
+      const errBody = (err as { body?: { code?: string } } | null)?.body;
+      let message = getErrorMessage(err, 'حدث خطأ أثناء تحديث حالة الفيديو');
+      if (errBody && typeof errBody === 'object' && errBody.code === 'VIDEO_NOT_UNLOCKED') {
+        message = 'أكمل المحاضرة السابقة أولاً ليُتاح لك إكمال هذه المحاضرة';
+      }
       dispatch(addNotification({
         type: 'error',
-        message: getErrorMessage(err, 'حدث خطأ أثناء تحديث حالة الفيديو')
+        message
       }));
     } finally {
       setCompletingVideo(false);
     }
-  }, [apiCompletionStatus, params.video, progressVideoId, dispatch]);
+  }, [apiCompletionStatus, bunnyVideo?.id, dispatch]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 5. Render Video Player or State Placeholders
@@ -338,7 +331,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   const videoDurationFormatted = bunnyVideo?.duration != null 
     ? formatBunnyDuration(bunnyVideo.duration) 
     : null;
-  const canTrackProgress = progressVideoId != null;
+  const canTrackProgress = bunnyVideo != null;
 
   return (
     <div className="mx-auto min-h-[80vh] w-full max-w-7xl px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
@@ -390,60 +383,6 @@ export default function VideoPage({ params }: { params: { id: string; video: str
                 )}
               </div>
 
-              {/* Video Assignments Section */}
-              {assignments && assignments.length > 0 && (
-                <div className="border-t border-outline-variant/60 pt-5">
-                  <h4 className="text-lg font-semibold text-on-surface mb-3">الواجبات المتاحة</h4>
-                  <div className="space-y-3">
-                    {assignments.map((assignment) => (
-                      <div key={assignment.id} className="flex items-center justify-between rounded-md border border-outline-variant/60 bg-surface-container-low p-4 transition-colors hover:bg-[#e8f2ff]/60">
-                        <div className="flex-1">
-                          <h5 className="font-medium text-on-surface">{assignment.title}</h5>
-                          <p className="text-sm text-on-surface-variant mt-1">{assignment.description}</p>
-                          <div className="flex items-center mt-2 text-xs text-on-surface-variant">
-                            <span>نوع الواجب: {assignment.isMCQ ? "اختيار من متعدد" : "واجب عادي"}</span>
-                            <span className="mx-2">•</span>
-                            <span className={`${new Date(assignment.dueDate) < new Date() ? 'text-red-500' : 'text-green-600'}`}>
-                              تاريخ التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="mr-4">
-                          {assignment.hasSubmitted ? (
-                            assignment.submission ? (
-                              <div className="flex flex-col items-end">
-                                <span className="text-[#16a34a] flex items-center font-medium">
-                                  <CheckCircle className="h-4 w-4 ml-1" />
-                                  تم التسليم
-                                </span>
-                                {assignment.submission.status === "GRADED" && (
-                                  <span className="text-sm mt-1">
-                                    الدرجة: {assignment.submission.grade}/{assignment.passingScore}
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-amber-600 flex items-center font-medium">
-                                <span className="inline-block h-2 w-2 rounded-full bg-amber-500 ml-1"></span>
-                                قيد المراجعة
-                              </span>
-                            )
-                          ) : (
-                            <Button
-                              onClick={() => router.push(`/course/${params.id}/video/${params.video}/assignment/${assignment.id}`)}
-                              className="rounded-md bg-primary px-4 py-2 text-sm text-white transition-colors hover:bg-[#0057c0]"
-                              disabled={!apiCompletionStatus}
-                            >
-                              بدء الواجب
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
               {/* Video Completion Button */}
               <div className="mt-6 flex justify-center border-t border-outline-variant/60 pt-6">
                 <Button
@@ -476,7 +415,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
               {/* Quiz Section — QuizIntroCard fetches its own metadata and renders nothing when absent. */}
               {apiCompletionStatus && (
                 <div className="border-t border-outline-variant/60 pt-5">
-                  <QuizIntroCard videoId={progressVideoId ?? params.video} courseId={params.id} />
+                  <QuizIntroCard videoId={bunnyVideo!.id} courseId={params.id} />
                 </div>
               )}
             </div>

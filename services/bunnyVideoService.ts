@@ -17,6 +17,13 @@ import { apiClient } from '@/lib/api-client';
 import { ForbiddenError, NotFoundError, ApiError } from '@/lib/errors';
 import type { BunnyVideo, BunnyPlaybackData, BunnyErrorCode } from '@/types/bunny';
 
+export interface BunnyCourseProgressData {
+  courseId: number;
+  totalVideos: number;
+  completedVideos: number;
+  videos: Array<{ id: number; completed: boolean; watchedAt: string | null }>;
+}
+
 // ---------------------------------------------------------------------------
 // Custom error class for Bunny-specific error codes
 // ---------------------------------------------------------------------------
@@ -105,6 +112,12 @@ export async function fetchBunnyCourseVideos(
     // Re-throw everything else (network errors, 5xx, etc.)
     throw err;
   }
+}
+
+export async function fetchBunnyCourseProgress(
+  courseId: string | number,
+): Promise<BunnyCourseProgressData> {
+  return apiClient.get<BunnyCourseProgressData>(`/progress/course/${courseId}`);
 }
 
 /**
