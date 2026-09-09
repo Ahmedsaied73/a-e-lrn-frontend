@@ -83,6 +83,21 @@ export async function deleteQuiz(
   );
 }
 
+/**
+ * Upload a question image from the admin's device (file-explorer picker).
+ * Proxied by the backend to Supabase Storage — returns the public URL
+ * to store as the question `imageLink`.
+ */
+export async function uploadQuizImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("image", file);
+  const data = await apiClient.postFormData<{ url: string }>(`/quizzes/images`, formData);
+  if (!data || typeof data.url !== "string" || !data.url.trim()) {
+    throw new Error("استجابة غير متوقعة من الخادم.");
+  }
+  return data.url;
+}
+
 export async function grantQuizExemption(
   videoId: number | string,
   userId: number,

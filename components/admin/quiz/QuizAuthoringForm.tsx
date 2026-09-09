@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { upsertQuiz } from "@/services/adminQuizService";
+import { upsertQuiz, uploadQuizImage } from "@/services/adminQuizService";
 import type { StudentSafeQuiz, UpsertQuizInput } from "@/types/quiz";
 
 type QuestionType = "radiogroup" | "comment" | "html" | "image";
@@ -17,7 +17,10 @@ interface AuthorQuestion {
   correctValue: string;
   modelAnswer: string;
   html: string;
-  imageLink: string;
+  imageUrl: string;
+  imagePreview: string | null;
+  imageUploading: boolean;
+  imageError: string | null;
 }
 
 interface QuizAuthoringFormProps {
@@ -35,7 +38,10 @@ function newQuestion(): AuthorQuestion {
     correctValue: "",
     modelAnswer: "",
     html: "",
-    imageLink: "",
+    imageUrl: "",
+    imagePreview: null,
+    imageUploading: false,
+    imageError: null,
   };
 }
 
@@ -46,6 +52,16 @@ function errorMessage(error: unknown): string {
     if (typeof message === "string" && message.trim()) return message;
   }
   return "تعذر حفظ الاختبار.";
+}
+
+function imageUploadErrorMessage(error: unknown): string {
+  const status = typeof error === "object" && error !== null && "status" in error
+    ? (error as { status?: unknown }).status
+    : undefined;
+  if (status === 413) return "الصورة كبيرة جداً — الحد الأقصى 5MB.";
+  if (status === 415) return "نوع الملف غير مدعوم — استخدم JPEG أو PNG أو WebP أو GIF.";
+  if (status === 501) return "رفع الصور غير مفعّل على الخادم بعد.";
+  return errorMessage(error);
 }
 
 function parseChoices(value: string) {
@@ -67,7 +83,7 @@ function buildPayload(title: string, timeLimit: string, passingScore: string, qu
     if (question.type === "radiogroup") return { ...base, choices: parseChoices(question.choicesText) };
     if (question.type === "comment") return base;
     if (question.type === "html") return { ...base, html: question.html };
-    return { ...base, imageLink: question.imageLink.trim() };
+    return { ...base, imageLink: question.imageUrl.trim() };
   });
 
   const answerKey: Record<string, unknown> = {};
@@ -117,7 +133,7 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
     if (timeLimit.trim() && (!Number.isInteger(Number(timeLimit)) || Number(timeLimit) <= 0)) return "المدة يجب أن تكون رقماً صحيحاً موجباً.";
 
     const names = new Set<string>();
-    for (const question of questions) {
+    for (const [index, question] of questions.entries()) {
       const name = question.name.trim();
       if (!name) return "اسم كل عنصر مطلوب.";
       if (names.has(name)) return `اسم السؤال مكرر: ${name}`;
@@ -132,12 +148,39 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
       if ((question.type === "radiogroup" || question.type === "comment") && Number(question.points) <= 0) {
         return `نقاط السؤال ${name} يجب أن تكون أكبر من صفر.`;
       }
+      if (question.type === "image" && !question.imageUrl.trim()) {
+        return `أضف صورة للعنصر ${index + 1}.`;
+      }
     }
     return null;
   };
 
+  const handleImageSelect = async (id: string, file: File | undefined) => {
+    if (!file) return;
+    const preview = URL.createObjectURL(file);
+    updateQuestion(id, { imagePreview: preview, imageUploading: true, imageError: null });
+    try {
+      const url = await uploadQuizImage(file);
+      URL.revokeObjectURL(preview);
+      updateQuestion(id, { imageUrl: url, imagePreview: null, imageUploading: false, imageError: null });
+    } catch (uploadError) {
+      URL.revokeObjectURL(preview);
+      updateQuestion(id, { imagePreview: null, imageUploading: false, imageError: imageUploadErrorMessage(uploadError) });
+    }
+  };
+
+  const clearImage = (id: string) => {
+    const question = questions.find((item) => item.id === id);
+    if (question?.imagePreview) URL.revokeObjectURL(question.imagePreview);
+    updateQuestion(id, { imageUrl: "", imagePreview: null, imageUploading: false, imageError: null });
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (questions.some((question) => question.imageUploading)) {
+      setError("انتظر اكتمال رفع الصور قبل الحفظ.");
+      return;
+    }
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -209,9 +252,44 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
             {question.type === "html" && <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">محتوى العرض
               <textarea value={question.html} onChange={(event) => updateQuestion(question.id, { html: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>}
-            {question.type === "image" && <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">رابط الصورة
-              <input value={question.imageLink} onChange={(event) => updateQuestion(question.id, { imageLink: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
-            </label>}
+            {question.type === "image" && <div className="sm:col-span-2 text-sm font-semibold text-on-surface/80">صورة السؤال
+              <div className="mt-1">
+                {(question.imageUrl || question.imagePreview) && (
+                  <img
+                    src={question.imageUrl || question.imagePreview || ""}
+                    alt="معاينة صورة السؤال"
+                    className="mb-2 max-h-48 rounded-lg border border-outline-variant object-contain"
+                  />
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors duration-150 ${question.imageUploading ? "bg-outline cursor-wait" : "bg-[#207bff] hover:bg-[#0057c0]"}`}>
+                    {question.imageUrl ? "استبدال الصورة" : "اختيار صورة من الجهاز"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      disabled={question.imageUploading}
+                      onChange={(event) => {
+                        void handleImageSelect(question.id, event.target.files?.[0]);
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
+                  {(question.imageUrl || question.imageError) && (
+                    <button
+                      type="button"
+                      onClick={() => clearImage(question.id)}
+                      disabled={question.imageUploading}
+                      className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0] disabled:opacity-40"
+                    >
+                      إزالة
+                    </button>
+                  )}
+                </div>
+                {question.imageUploading && <p className="mt-1 text-xs font-semibold text-[#0057c0]">جاري رفع الصورة...</p>}
+                {question.imageError && <p role="alert" className="mt-1 text-xs font-semibold text-red-700">{question.imageError}</p>}
+              </div>
+            </div>}
           </div>
         </section>
       ))}
