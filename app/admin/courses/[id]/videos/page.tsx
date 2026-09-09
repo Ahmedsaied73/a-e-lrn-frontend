@@ -172,6 +172,11 @@ export default function AdminCourseVideosPage() {
         )}
       </div>
       <StatusBadge status={video.status} className="shrink-0" />
+      {!video.quiz && (
+        <span title="هذه المحاضرة بلا اختبار — الطلاب يتقدمون بمجرد المشاهدة" className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+          بدون اختبار
+        </span>
+      )}
       <div className="flex shrink-0 items-center gap-1.5">
         <button type="button" title="لأعلى" disabled={index === 0} onClick={() => void doReorder(index, -1)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-on-surface disabled:opacity-30">
           <ArrowUp className="h-3.5 w-3.5" />

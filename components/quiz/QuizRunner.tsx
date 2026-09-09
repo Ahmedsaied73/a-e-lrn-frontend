@@ -325,12 +325,23 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
   function renderQuestion(q: SurveyElement) {
     const qIdx = questions.indexOf(q);
 
+    // Optional photo attached to an answerable question (MCQ/essay) —
+    // same guard as standalone image elements.
+    const attachedImage = typeof q.imageLink === "string" && isSafeHtmlUrl(q.imageLink)
+      ? q.imageLink
+      : null;
+    const attachedImageNode = attachedImage ? (
+      <img src={attachedImage} alt={q.title ?? "صورة السؤال"} className="mx-auto mb-4 max-h-96 rounded-xl object-contain" />
+    ) : null;
+
     if (q.type === "radiogroup") {
       const choices = (q.choices ?? []) as Array<string | { value: string; text: string }>;
       const selected = answers[q.name] as string | undefined;
 
       return (
-        <fieldset className="space-y-3.5">
+        <>
+          {attachedImageNode}
+          <fieldset className="space-y-3.5">
           <legend className="sr-only">خيارات الإجابة</legend>
           {choices.map((choice, ci) => {
             const val = getChoiceValue(choice);
@@ -378,18 +389,22 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
             );
           })}
         </fieldset>
+        </>
       );
     }
 
     if (q.type === "comment") {
       return (
-        <textarea
+        <>
+          {attachedImageNode}
+          <textarea
           className="w-full min-h-[160px] p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#207bff]/30 focus:border-[#207bff] transition resize-y"
           placeholder="اكتب إجابتك هنا..."
           value={(answers[q.name] as string) ?? ""}
           onChange={(e) => setAnswer(q.name, e.target.value)}
           dir="rtl"
         />
+        </>
       );
     }
 

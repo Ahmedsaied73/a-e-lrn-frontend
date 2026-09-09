@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { upsertQuiz, uploadQuizImage } from "@/services/adminQuizService";
+import QuestionImagePicker from "./QuestionImagePicker";
 import type { StudentSafeQuiz, UpsertQuizInput } from "@/types/quiz";
 
 type QuestionType = "radiogroup" | "comment" | "html" | "image";
@@ -84,9 +85,15 @@ function buildPayload(title: string, timeLimit: string, passingScore: string, qu
       return {
         ...base,
         choices: filled.map((choice) => ({ value: choice.text.trim(), text: choice.text.trim() })),
+        ...(question.imageUrl.trim() ? { imageLink: question.imageUrl.trim() } : {}),
       };
     }
-    if (question.type === "comment") return base;
+    if (question.type === "comment") {
+      return {
+        ...base,
+        ...(question.imageUrl.trim() ? { imageLink: question.imageUrl.trim() } : {}),
+      };
+    }
     if (question.type === "html") return { ...base, html: question.html };
     return { ...base, imageLink: question.imageUrl.trim() };
   });
@@ -310,50 +317,44 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
               >
                 ＋ إضافة خيار
               </button>
+              <div className="mt-3">
+                <QuestionImagePicker
+                  optional
+                  imageUrl={question.imageUrl}
+                  imagePreview={question.imagePreview}
+                  imageUploading={question.imageUploading}
+                  imageError={question.imageError}
+                  onSelect={(file) => void handleImageSelect(question.id, file)}
+                  onClear={() => clearImage(question.id)}
+                />
+              </div>
             </div>}
-            {question.type === "comment" && <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">الإجابة النموذجية
-              <textarea value={question.modelAnswer} onChange={(event) => updateQuestion(question.id, { modelAnswer: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
-            </label>}
+            {question.type === "comment" && <div className="sm:col-span-2 space-y-3">
+              <label className="block text-sm font-semibold text-on-surface/80">الإجابة النموذجية
+                <textarea value={question.modelAnswer} onChange={(event) => updateQuestion(question.id, { modelAnswer: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+              </label>
+              <QuestionImagePicker
+                optional
+                imageUrl={question.imageUrl}
+                imagePreview={question.imagePreview}
+                imageUploading={question.imageUploading}
+                imageError={question.imageError}
+                onSelect={(file) => void handleImageSelect(question.id, file)}
+                onClear={() => clearImage(question.id)}
+              />
+            </div>}
             {question.type === "html" && <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">محتوى العرض
               <textarea value={question.html} onChange={(event) => updateQuestion(question.id, { html: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>}
-            {question.type === "image" && <div className="sm:col-span-2 text-sm font-semibold text-on-surface/80">صورة السؤال
-              <div className="mt-1">
-                {(question.imageUrl || question.imagePreview) && (
-                  <img
-                    src={question.imageUrl || question.imagePreview || ""}
-                    alt="معاينة صورة السؤال"
-                    className="mb-2 max-h-48 rounded-lg border border-outline-variant object-contain"
-                  />
-                )}
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors duration-150 ${question.imageUploading ? "bg-outline cursor-wait" : "bg-[#207bff] hover:bg-[#0057c0]"}`}>
-                    {question.imageUrl ? "استبدال الصورة" : "اختيار صورة من الجهاز"}
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      className="hidden"
-                      disabled={question.imageUploading}
-                      onChange={(event) => {
-                        void handleImageSelect(question.id, event.target.files?.[0]);
-                        event.target.value = "";
-                      }}
-                    />
-                  </label>
-                  {(question.imageUrl || question.imageError) && (
-                    <button
-                      type="button"
-                      onClick={() => clearImage(question.id)}
-                      disabled={question.imageUploading}
-                      className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0] disabled:opacity-40"
-                    >
-                      إزالة
-                    </button>
-                  )}
-                </div>
-                {question.imageUploading && <p className="mt-1 text-xs font-semibold text-[#0057c0]">جاري رفع الصورة...</p>}
-                {question.imageError && <p role="alert" className="mt-1 text-xs font-semibold text-red-700">{question.imageError}</p>}
-              </div>
+            {question.type === "image" && <div className="sm:col-span-2">
+              <QuestionImagePicker
+                imageUrl={question.imageUrl}
+                imagePreview={question.imagePreview}
+                imageUploading={question.imageUploading}
+                imageError={question.imageError}
+                onSelect={(file) => void handleImageSelect(question.id, file)}
+                onClear={() => clearImage(question.id)}
+              />
             </div>}
           </div>
         </section>

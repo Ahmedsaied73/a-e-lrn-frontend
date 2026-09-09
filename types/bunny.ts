@@ -54,6 +54,9 @@ export interface BunnyVideo {
   // Admin-only debug fields (undefined for student responses)
   failureReason?: string | null;
   processingProgress?: number | null;
+
+  /** Quiz existence only (no content) — drives the admin "no quiz" guardrail. */
+  quiz?: { id: number } | null;
 }
 
 // ---------------------------------------------------------------------------
