@@ -21,6 +21,8 @@ interface AuthorQuestion {
   choices: AuthorChoice[];
   correctChoiceId: string;
   modelAnswer: string;
+  rubric: string;
+  aiEnabled: boolean;
   html: string;
   imageUrl: string;
   imagePreview: string | null;
@@ -47,6 +49,8 @@ function newQuestion(): AuthorQuestion {
     choices: [first, second],
     correctChoiceId: first.id,
     modelAnswer: "",
+    rubric: "",
+    aiEnabled: false,
     html: "",
     imageUrl: "",
     imagePreview: null,
@@ -113,6 +117,8 @@ function buildPayload(title: string, timeLimit: string, passingScore: string, qu
         type: question.type,
         modelAnswer: question.modelAnswer.trim(),
         points: Number(question.points),
+        ...(question.rubric.trim() ? { rubric: question.rubric.trim().slice(0, 5000) } : {}),
+        ...(question.aiEnabled ? { ai: { enabled: true } } : {}),
       };
     }
   });
@@ -332,6 +338,19 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
             {question.type === "comment" && <div className="sm:col-span-2 space-y-3">
               <label className="block text-sm font-semibold text-on-surface/80">الإجابة النموذجية
                 <textarea value={question.modelAnswer} onChange={(event) => updateQuestion(question.id, { modelAnswer: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+              </label>
+              <label className="block text-sm font-semibold text-on-surface/80">معايير التصحيح (اختياري)
+                <textarea value={question.rubric} onChange={(event) => updateQuestion(question.id, { rubric: event.target.value })} placeholder="مثال: ذكر العاصمة = ٥ درجات، ذكر السبب = ٥ درجات" className="mt-1 min-h-20 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-on-surface/80">
+                <input
+                  type="checkbox"
+                  checked={question.aiEnabled}
+                  onChange={(event) => updateQuestion(question.id, { aiEnabled: event.target.checked })}
+                  className="h-4 w-4 shrink-0 accent-[#207bff]"
+                />
+                تصحيح تلقائي بالذكاء الاصطناعي
+                <span className="font-normal text-on-surface-variant">(تُصحَّح الإجابة آلياً عند الثقة العالية، وإلا تذهب للمصحح)</span>
               </label>
               <QuestionImagePicker
                 optional
