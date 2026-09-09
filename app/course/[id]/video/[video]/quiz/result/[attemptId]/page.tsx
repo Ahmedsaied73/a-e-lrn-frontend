@@ -50,6 +50,24 @@ export default function QuizResultPage({ params }: PageProps) {
     load();
   }, [params.attemptId, params.video, dispatch]);
 
+  // Auto-refetch while grading: reflects the real backend state (AI worker or
+  // human grader flips GRADING → GRADED). Polls every 10s, max ~2 minutes,
+  // then stops and leaves manual refresh. No fake delays.
+  const resultStatus = result?.status;
+  useEffect(() => {
+    if (isLoading || resultStatus !== "GRADING") return;
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (tries > 12) {
+        clearInterval(timer);
+        return;
+      }
+      void dispatch(fetchQuizResult(params.attemptId)).unwrap().catch(() => {});
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [isLoading, resultStatus, params.attemptId, dispatch]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
