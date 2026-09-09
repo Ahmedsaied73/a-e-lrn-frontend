@@ -132,6 +132,9 @@ async function request<T>(
       body: formData ?? (body !== undefined ? JSON.stringify(body) : undefined),
       credentials: 'include', // ⚠️ MANDATORY: Enables HttpOnly Cookie transmission
       signal,
+      // API responses must never be heuristically cached: a 304 (Not Modified)
+      // has no body and would break polling flows (e.g. grading-status refetch).
+      cache: 'no-store',
     });
   } catch (_netErr: unknown) {
     // Friendly error for CORS failures, server down, or offline status
