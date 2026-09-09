@@ -97,6 +97,11 @@ function AttemptDetailBody({
             {question.type === 'comment' && question.status === 'GRADED' && question.feedback && (
               <p className="mt-1 text-xs text-on-surface-variant">ملاحظات: {question.feedback}</p>
             )}
+            {'gradedBy' in question && question.gradedBy === 'ai' && (
+              <p className="mt-1 text-[11px] font-semibold text-[#0057c0]">
+                🤖 تصحيح تلقائي{typeof question.confidence === 'number' ? ` (الثقة ${Math.round(question.confidence * 100)}%)` : ''}
+              </p>
+            )}
           </div>
         ))}
       </div>

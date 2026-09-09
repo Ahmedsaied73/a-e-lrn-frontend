@@ -160,6 +160,10 @@ export interface EssayResultQuestion {
   maxPoints: number;
   feedback: string | null;
   status: 'GRADED' | 'PENDING_REVIEW';
+  /** AI attribution passthrough (present only for AI-graded essays). */
+  gradedBy?: string;
+  confidence?: number;
+  gradedModel?: string;
 }
 
 export type ResultQuestion = McqResultQuestion | EssayResultQuestion;

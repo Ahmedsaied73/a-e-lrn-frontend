@@ -62,6 +62,11 @@ export default function GradingForm({ attempt, result, onGraded }: GradingFormPr
 
   return (
     <div className="space-y-5">
+      {essayQuestions.some((q) => q.gradedBy === "ai") && (
+        <p className="rounded-lg border border-[#207bff]/30 bg-[#e8f2ff]/60 p-3 text-xs font-semibold text-[#0057c0]">
+          🤖 تتضمن هذه المحاولة أسئلة صُححت تلقائياً — راجع الدرجات والثقة قبل الاعتماد (الاعتماد يستبدلها).
+        </p>
+      )}
       {essayQuestions.length === 0 ? (
         <p className="rounded-lg border border-outline-variant/50 bg-surface p-4 text-sm text-on-surface-variant">
           هذا الاختبار لا يحتوي على أسئلة مقالية — يعتمد التصحيح على نظام الاختيار من متعدد تلقائيًا.
@@ -69,7 +74,14 @@ export default function GradingForm({ attempt, result, onGraded }: GradingFormPr
         </p>
       ) : essayQuestions.map((question) => (
         <div key={question.name} className="rounded-xl border border-outline-variant/50 bg-surface p-4">
-          <p className="font-bold text-on-surface">{question.name}</p>
+          <p className="font-bold text-on-surface">
+            {question.name}
+            {question.gradedBy === "ai" && (
+              <span className="mr-2 rounded-full border border-[#207bff]/30 bg-[#e8f2ff]/60 px-2 py-0.5 text-[11px] font-bold text-[#0057c0]">
+                🤖 تلقائي{typeof question.confidence === "number" ? ` (الثقة ${Math.round(question.confidence * 100)}%)` : ""}
+              </span>
+            )}
+          </p>
           <p className="mt-2 whitespace-pre-wrap rounded-lg bg-surface-container-low p-3 text-sm text-on-surface-variant">
             إجابة الطالب: {question.studentAnswer || "لم تتم الإجابة"}
           </p>
