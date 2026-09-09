@@ -79,9 +79,11 @@ function buildPayload(title: string, timeLimit: string, passingScore: string, qu
   const elements = questions.map((question, index) => {
     const base = { type: question.type, name: `q${index + 1}`, title: question.title.trim() };
     if (question.type === "radiogroup") {
+      // Empty rows are UI scratch space — never ship them as blank options.
+      const filled = question.choices.filter((choice) => choice.text.trim());
       return {
         ...base,
-        choices: question.choices.map((choice) => ({ value: choice.text.trim(), text: choice.text.trim() })),
+        choices: filled.map((choice) => ({ value: choice.text.trim(), text: choice.text.trim() })),
       };
     }
     if (question.type === "comment") return base;
@@ -206,9 +208,11 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
     }));
   };
 
+  const anyUploading = questions.some((question) => question.imageUploading);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (questions.some((question) => question.imageUploading)) {
+    if (anyUploading) {
       setError("انتظر اكتمال رفع الصور قبل الحفظ.");
       return;
     }
@@ -362,7 +366,7 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
       </div>}
       <div className="flex gap-3">
         <button type="button" onClick={() => setQuestions((current) => [...current, newQuestion()])} className="rounded-lg border border-outline-variant px-4 py-2.5 font-semibold text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0]">إضافة عنصر</button>
-        <button type="submit" disabled={isSaving} className="rounded-lg bg-[#207bff] px-5 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-60 disabled:cursor-not-allowed">{isSaving ? "جاري الحفظ..." : "حفظ الاختبار"}</button>
+        <button type="submit" disabled={isSaving || anyUploading} className="rounded-lg bg-[#207bff] px-5 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-60 disabled:cursor-not-allowed">{isSaving ? "جاري الحفظ..." : "حفظ الاختبار"}</button>
       </div>
     </form>
   );
