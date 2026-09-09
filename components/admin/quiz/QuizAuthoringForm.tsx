@@ -133,7 +133,8 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
     if (timeLimit.trim() && (!Number.isInteger(Number(timeLimit)) || Number(timeLimit) <= 0)) return "المدة يجب أن تكون رقماً صحيحاً موجباً.";
 
     const names = new Set<string>();
-    for (const [index, question] of questions.entries()) {
+    for (let index = 0; index < questions.length; index++) {
+      const question = questions[index];
       const name = question.name.trim();
       if (!name) return "اسم كل عنصر مطلوب.";
       if (names.has(name)) return `اسم السؤال مكرر: ${name}`;
