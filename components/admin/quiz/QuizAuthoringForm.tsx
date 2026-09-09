@@ -7,14 +7,18 @@ import type { StudentSafeQuiz, UpsertQuizInput } from "@/types/quiz";
 
 type QuestionType = "radiogroup" | "comment" | "html" | "image";
 
+interface AuthorChoice {
+  id: string;
+  text: string;
+}
+
 interface AuthorQuestion {
   id: string;
   type: QuestionType;
-  name: string;
   title: string;
   points: string;
-  choicesText: string;
-  correctValue: string;
+  choices: AuthorChoice[];
+  correctChoiceId: string;
   modelAnswer: string;
   html: string;
   imageUrl: string;
@@ -27,15 +31,20 @@ interface QuizAuthoringFormProps {
   videoId: string;
 }
 
+function newChoice(text = ""): AuthorChoice {
+  return { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, text };
+}
+
 function newQuestion(): AuthorQuestion {
+  const first = newChoice();
+  const second = newChoice();
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     type: "radiogroup",
-    name: "",
     title: "",
     points: "1",
-    choicesText: "",
-    correctValue: "",
+    choices: [first, second],
+    correctChoiceId: first.id,
     modelAnswer: "",
     html: "",
     imageUrl: "",
@@ -64,44 +73,40 @@ function imageUploadErrorMessage(error: unknown): string {
   return errorMessage(error);
 }
 
-function parseChoices(value: string) {
-  return value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line, index) => {
-      const [rawValue, ...rawText] = line.split("|");
-      const choiceValue = rawValue.trim() || String(index + 1);
-      return { value: choiceValue, text: rawText.join("|").trim() || choiceValue };
-    })
-    .filter((choice) => choice.text);
-}
-
 function buildPayload(title: string, timeLimit: string, passingScore: string, questions: AuthorQuestion[]): UpsertQuizInput {
-  const elements = questions.map((question) => {
-    const base = { type: question.type, name: question.name.trim(), title: question.title.trim() };
-    if (question.type === "radiogroup") return { ...base, choices: parseChoices(question.choicesText) };
+  // Internal element names are auto-assigned (q1..qn) — the المعرف field was
+  // removed from the UI; the backend requires unique names for grading keys.
+  const elements = questions.map((question, index) => {
+    const base = { type: question.type, name: `q${index + 1}`, title: question.title.trim() };
+    if (question.type === "radiogroup") {
+      return {
+        ...base,
+        choices: question.choices.map((choice) => ({ value: choice.text.trim(), text: choice.text.trim() })),
+      };
+    }
     if (question.type === "comment") return base;
     if (question.type === "html") return { ...base, html: question.html };
     return { ...base, imageLink: question.imageUrl.trim() };
   });
 
   const answerKey: Record<string, unknown> = {};
-  for (const question of questions) {
+  questions.forEach((question, index) => {
+    const name = `q${index + 1}`;
     if (question.type === "radiogroup") {
-      answerKey[question.name.trim()] = {
+      const correct = question.choices.find((choice) => choice.id === question.correctChoiceId);
+      answerKey[name] = {
         type: question.type,
-        correctValue: question.correctValue.trim(),
+        correctValue: (correct?.text || "").trim(),
         points: Number(question.points),
       };
     } else if (question.type === "comment") {
-      answerKey[question.name.trim()] = {
+      answerKey[name] = {
         type: question.type,
         modelAnswer: question.modelAnswer.trim(),
         points: Number(question.points),
       };
     }
-  }
+  });
 
   return {
     title: title.trim(),
@@ -132,22 +137,18 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
     if (!Number.isInteger(score) || score < 0 || score > 100) return "نسبة النجاح يجب أن تكون بين 0 و100.";
     if (timeLimit.trim() && (!Number.isInteger(Number(timeLimit)) || Number(timeLimit) <= 0)) return "المدة يجب أن تكون رقماً صحيحاً موجباً.";
 
-    const names = new Set<string>();
     for (let index = 0; index < questions.length; index++) {
       const question = questions[index];
-      const name = question.name.trim();
-      if (!name) return "اسم كل عنصر مطلوب.";
-      if (names.has(name)) return `اسم السؤال مكرر: ${name}`;
-      names.add(name);
+      const label = `العنصر ${index + 1}`;
       if (question.type === "radiogroup") {
-        const choices = parseChoices(question.choicesText);
-        if (choices.length < 2) return `أضف خيارين على الأقل للسؤال ${name}.`;
-        if (!question.correctValue.trim() || !choices.some((choice) => choice.value === question.correctValue.trim())) {
-          return `حدد إجابة صحيحة موجودة للسؤال ${name}.`;
-        }
+        const texts = question.choices.map((choice) => choice.text.trim()).filter(Boolean);
+        if (texts.length < 2) return `أضف خيارين على الأقل لـ${label}.`;
+        if (new Set(texts).size !== texts.length) return `نصوص الخيارات مكررة في ${label} — يجب أن يختلف كل خيار.`;
+        const correct = question.choices.find((choice) => choice.id === question.correctChoiceId);
+        if (!correct || !correct.text.trim()) return `حدد الإجابة الصحيحة لـ${label}.`;
       }
       if ((question.type === "radiogroup" || question.type === "comment") && Number(question.points) <= 0) {
-        return `نقاط السؤال ${name} يجب أن تكون أكبر من صفر.`;
+        return `نقاط ${label} يجب أن تكون أكبر من صفر.`;
       }
       if (question.type === "image" && !question.imageUrl.trim()) {
         return `أضف صورة للعنصر ${index + 1}.`;
@@ -174,6 +175,35 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
     const question = questions.find((item) => item.id === id);
     if (question?.imagePreview) URL.revokeObjectURL(question.imagePreview);
     updateQuestion(id, { imageUrl: "", imagePreview: null, imageUploading: false, imageError: null });
+  };
+
+  const updateChoice = (questionId: string, choiceId: string, text: string) => {
+    setQuestions((current) => current.map((question) => question.id === questionId
+      ? { ...question, choices: question.choices.map((choice) => choice.id === choiceId ? { ...choice, text } : choice) }
+      : question));
+  };
+
+  const addChoice = (questionId: string) => {
+    setQuestions((current) => current.map((question) => {
+      if (question.id !== questionId) return question;
+      const choice = newChoice();
+      return {
+        ...question,
+        choices: [...question.choices, choice],
+        correctChoiceId: question.correctChoiceId || choice.id,
+      };
+    }));
+  };
+
+  const removeChoice = (questionId: string, choiceId: string) => {
+    setQuestions((current) => current.map((question) => {
+      if (question.id !== questionId || question.choices.length <= 2) return question;
+      const choices = question.choices.filter((choice) => choice.id !== choiceId);
+      const correctChoiceId = question.correctChoiceId === choiceId
+        ? (choices[0]?.id || "")
+        : question.correctChoiceId;
+      return { ...question, choices, correctChoiceId };
+    }));
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -230,23 +260,53 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
                 <option value="radiogroup">اختيار من متعدد</option><option value="comment">مقالي</option><option value="html">HTML للعرض</option><option value="image">صورة للعرض</option>
               </select>
             </label>
-            <label className="text-sm font-semibold text-on-surface/80">المعرف
-              <input value={question.name} onChange={(event) => updateQuestion(question.id, { name: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
-            </label>
             <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">العنوان
               <input value={question.title} onChange={(event) => updateQuestion(question.id, { title: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>
             {(question.type === "radiogroup" || question.type === "comment") && <label className="text-sm font-semibold text-on-surface/80">النقاط
               <input type="number" min="1" value={question.points} onChange={(event) => updateQuestion(question.id, { points: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>}
-            {question.type === "radiogroup" && <>
-              <label className="text-sm font-semibold text-on-surface/80">الخيارات (كل سطر: value | النص)
-                <textarea value={question.choicesText} onChange={(event) => updateQuestion(question.id, { choicesText: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
-              </label>
-              <label className="text-sm font-semibold text-on-surface/80">قيمة الإجابة الصحيحة
-                <input value={question.correctValue} onChange={(event) => updateQuestion(question.id, { correctValue: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
-              </label>
-            </>}
+            {question.type === "radiogroup" && <div className="sm:col-span-2">
+              <p className="text-sm font-semibold text-on-surface/80">الخيارات <span className="font-normal text-on-surface-variant">— حدد الإجابة الصحيحة بالزر</span></p>
+              <div className="mt-1 space-y-2">
+                {question.choices.map((choice) => (
+                  <div key={choice.id} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name={`correct-${question.id}`}
+                      checked={question.correctChoiceId === choice.id}
+                      onChange={() => updateQuestion(question.id, { correctChoiceId: choice.id })}
+                      title="إجابة صحيحة"
+                      aria-label="إجابة صحيحة"
+                      className="h-4 w-4 shrink-0 accent-[#207bff]"
+                    />
+                    <input
+                      value={choice.text}
+                      onChange={(event) => updateChoice(question.id, choice.id, event.target.value)}
+                      placeholder="نص الخيار"
+                      className="w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeChoice(question.id, choice.id)}
+                      disabled={question.choices.length <= 2}
+                      title="حذف الخيار"
+                      aria-label="حذف الخيار"
+                      className="shrink-0 rounded-lg border border-outline-variant px-2.5 py-2 text-sm font-bold text-error transition-colors duration-150 hover:border-error disabled:opacity-40"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => addChoice(question.id)}
+                className="mt-2 rounded-lg border border-dashed border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0]"
+              >
+                ＋ إضافة خيار
+              </button>
+            </div>}
             {question.type === "comment" && <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">الإجابة النموذجية
               <textarea value={question.modelAnswer} onChange={(event) => updateQuestion(question.id, { modelAnswer: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
             </label>}
