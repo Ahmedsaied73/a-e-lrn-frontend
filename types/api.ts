@@ -47,6 +47,11 @@ export interface User {
   grade: GradeEnum;
   role: 'STUDENT' | 'ADMIN';
   createdAt: string;
+  /** Server-truth feature flags (clients must never decide enablement). */
+  features?: {
+    notifications?: boolean;
+    aiGrader?: boolean;
+  };
 }
 
 export interface Course {

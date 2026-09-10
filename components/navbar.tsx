@@ -4,10 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Bell, User, LogOut, Menu, X, BookOpen, Trophy, CreditCard, HelpCircle } from "lucide-react";
+import { User, LogOut, Menu, X, BookOpen, Trophy, CreditCard, HelpCircle } from "lucide-react";
 import { logoutUser } from "@/services/authService";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectIsAuthenticated, selectUser, logout } from "@/store/slices/authSlice";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 const NAV_LINKS = [
   { href: "/", label: "الرئيسية" },
@@ -99,14 +100,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <>
-              {/* Bell */}
-              <button
-                aria-label="الإشعارات"
-                className="relative p-2 rounded-full border-2 border-[#4ea5ff]/60 text-[#4ea5ff] hover:bg-[#207bff]/8 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#207bff]/30"
-              >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />
-              </button>
+              <NotificationBell />
 
               {/* Avatar Dropdown */}
               <div className="relative" ref={dropdownRef}>

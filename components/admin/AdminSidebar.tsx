@@ -12,13 +12,14 @@ import {
   FlaskConical,
   ExternalLink,
   LogOut,
+  Bell,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppSelector } from '@/store/hooks';
 import { selectUser } from '@/store/slices/authSlice';
 import { logoutUser } from '@/services/authService';
 
-const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }[] }[] = [
+const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; feature?: 'notifications' | 'aiGrader' }[] }[] = [
   {
     label: 'عام',
     items: [{ href: '/admin', label: 'نظرة عامة', icon: LayoutDashboard }],
@@ -29,6 +30,7 @@ const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: R
       { href: '/admin/students', label: 'الطلاب', icon: Users },
       { href: '/admin/courses', label: 'الدورات والفيديوهات', icon: BookOpen },
       { href: '/admin/enrollments', label: 'الاشتراكات والتسجيلات', icon: GraduationCap },
+      { href: '/admin/notifications', label: 'الإشعارات', icon: Bell, feature: 'notifications' as const },
     ],
   },
   {
@@ -71,6 +73,8 @@ export function AdminSidebar() {
             </p>
             <ul className="space-y-1">
               {group.items.map((item) => {
+                // Feature-gated links disappear entirely when the backend says off.
+                if (item.feature && user?.features?.[item.feature] === false) return null;
                 const active = isActive(pathname, item.href);
                 return (
                   <li key={item.href}>
