@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Routes that require authentication
-const protectedRoutes = ['/me', '/course'];
+// Routes that require authentication (F-3: /admin added — same UX-signal
+// semantics as below; real admin enforcement stays server-side via 403s,
+// plus the client layout role guard).
+const protectedRoutes = ['/me', '/course', '/admin'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -33,5 +35,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/me/:path*', '/course/:path*'],
+  matcher: ['/me/:path*', '/course/:path*', '/admin/:path*'],
 };

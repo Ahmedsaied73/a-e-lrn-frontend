@@ -53,9 +53,10 @@ export default function QuizResultPage({ params }: PageProps) {
   // Auto-refetch while grading: reflects the real backend state (AI worker or
   // human grader flips GRADING → GRADED). Polls every 10s, max ~2 minutes,
   // then stops and leaves manual refresh. No fake delays.
+  // F-2: SUBMITTED counts as pending too (matches isPending below).
   const resultStatus = result?.status;
   useEffect(() => {
-    if (isLoading || resultStatus !== "GRADING") return;
+    if (isLoading || (resultStatus !== "GRADING" && resultStatus !== "SUBMITTED")) return;
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
