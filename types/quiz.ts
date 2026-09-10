@@ -145,7 +145,8 @@ export interface McqResultQuestion {
   name: string;
   type: 'radiogroup';
   studentAnswer: string | null;
-  correctAnswer: string;
+  /** Null until the attempt is graded — answers unlock on pass review (hide-until-pass). */
+  correctAnswer: string | null;
   isCorrect: boolean;
   earnedPoints: number;
   maxPoints: number;
@@ -155,7 +156,8 @@ export interface EssayResultQuestion {
   name: string;
   type: 'comment';
   studentAnswer: string | null;
-  modelAnswer: string;
+  /** Null until the attempt is graded (hide-until-pass). */
+  modelAnswer: string | null;
   earnedPoints: number | null;
   maxPoints: number;
   feedback: string | null;

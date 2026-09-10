@@ -78,7 +78,9 @@ function McqCard({ q, index }: { q: McqResultQuestion; index: number }) {
 
         {/* Options display */}
         <div className="space-y-3">
-          {/* Correct answer */}
+          {/* Correct answer — withheld until grading unlocks it (hide-until-pass) */}
+          {q.correctAnswer != null ? (
+          <>
           <div className="flex items-center justify-between p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/70">
             <div className="flex items-center gap-3">
               <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-sm flex items-center justify-center shadow-sm">
@@ -103,6 +105,12 @@ function McqCard({ q, index }: { q: McqResultQuestion; index: number }) {
               <span className="hidden sm:inline-block text-xs font-bold text-rose-700 bg-rose-100 px-2.5 py-1 rounded-md">
                 اختيارك غير الصحيح
               </span>
+            </div>
+          )}
+          </>
+          ) : (
+            <div className="flex items-center p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-sm">
+              <span>الإجابات النموذجية تظهر بعد اجتياز الاختبار</span>
             </div>
           )}
 

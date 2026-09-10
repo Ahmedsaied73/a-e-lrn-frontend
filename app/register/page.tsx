@@ -40,8 +40,8 @@ const formSchema = z.object({
   phone: z.string().min(11, {
     message: 'رقم الهاتف يجب أن يكون 11 رقم على الأقل',
   }),
-  password: z.string().min(6, {
-    message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+  password: z.string().min(8, {
+    message: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
   }),
   confirmPassword: z.string(),
   grade: z.string({
