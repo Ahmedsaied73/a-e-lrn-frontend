@@ -31,17 +31,24 @@ export function useQuizAutosave({
 }: UseQuizAutosaveOptions): UseQuizAutosaveResult {
   const responsesRef = useRef(responses);
   const saveInFlightRef = useRef<Promise<void> | null>(null);
+  // F-1: edits made mid-save queue ONE trailing save instead of waiting for
+  // the next 25s tick (which a crash would silently eat).
+  const pendingRef = useRef(false);
+  const enabledRef = useRef(enabled);
   const firstRenderRef = useRef(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     responsesRef.current = responses;
-  }, [responses]);
+    enabledRef.current = enabled;
+  }, [responses, enabled]);
 
   const saveNow = useCallback(async () => {
-    if (!enabled || saveInFlightRef.current) {
-      return saveInFlightRef.current ?? Promise.resolve();
+    if (!enabledRef.current) return;
+    if (saveInFlightRef.current) {
+      pendingRef.current = true;
+      return saveInFlightRef.current;
     }
 
     const savePromise = (async () => {
@@ -54,12 +61,18 @@ export function useQuizAutosave({
       } finally {
         setIsSaving(false);
         saveInFlightRef.current = null;
+        // Flush one trailing save with the newest state (single level — the
+        // recursive call re-arms pendingRef if edits land during the flush).
+        if (pendingRef.current) {
+          pendingRef.current = false;
+          void saveNow();
+        }
       }
     })();
 
     saveInFlightRef.current = savePromise;
     return savePromise;
-  }, [attemptId, enabled]);
+  }, [attemptId]);
 
   useEffect(() => {
     if (!enabled) return;
