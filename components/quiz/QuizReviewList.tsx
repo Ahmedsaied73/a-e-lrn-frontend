@@ -174,8 +174,8 @@ function EssayCard({ q, index }: { q: EssayResultQuestion; index: number }) {
           </div>
         </div>
 
-        {/* Model answer — ONLY shown when GRADED */}
-        {isGraded && (
+        {/* Model answer — ONLY shown when GRADED (backend withholds it pre-pass) */}
+        {isGraded && q.modelAnswer && (
           <div>
             <h3 className="text-xs font-bold text-[#207bff] uppercase tracking-wide mb-2">الإجابة النموذجية</h3>
             <div className="bg-[#eef6ff]/60 border border-blue-100 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
