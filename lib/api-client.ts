@@ -63,30 +63,40 @@ function buildHeaders(): Record<string, string> {
 let _pendingRefresh: Promise<boolean> | null = null;
 
 async function doRefresh(): Promise<boolean> {
-  const refreshEndpoints = ['/auth/refresh-token', '/auth/refresh'];
+  // Single endpoint: the legacy '/auth/refresh' fallback was an unmounted
+  // path (always 404) — every cycle paid a wasted request for it.
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
 
-  for (const endpoint of refreshEndpoints) {
-    try {
-      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-
-      if (res.ok) {
-        // Cookie-only auth: the refresh endpoint re-issues HttpOnly access +
-        // refresh cookies. Nothing to read from the body.
-        return true;
-      }
-    } catch {
-      // Continue to next endpoint or fail
+    if (res.ok) {
+      // Cookie-only auth: the refresh endpoint re-issues HttpOnly access +
+      // refresh cookies. Nothing to read from the body.
+      return true;
     }
+  } catch {
+    // Fail below
   }
 
   return false;
 }
 
 async function attemptSilentRefresh(): Promise<boolean> {
+  // Never spend refresh budget while logged out: without the login flag there
+  // is no session worth refreshing (our code always sets/clears it alongside
+  // the httpOnly cookies). SSR has no cookies to read — attempt (safe default).
+  if (
+    typeof document !== 'undefined' &&
+    !document.cookie
+      .split(';')
+      .some((c) => c.trim() === 'isLoggedIn=true')
+  ) {
+    return false;
+  }
+
   if (_pendingRefresh) return _pendingRefresh;
 
   _pendingRefresh = doRefresh().finally(() => {
@@ -163,7 +173,11 @@ async function request<T>(
   // refresh succeeds we never need the error body. Only parse after final failure.
   if (response.status === 401) {
     const isRefreshPath = path.includes('/auth/refresh');
-    if (!isRefreshPath && !_isRetry) {
+    // Auth-endpoint 401s are credential errors (wrong password, unknown email),
+    // never an expired session — refreshing against them only burns the shared
+    // auth-limiter budget (each failure cost login + refresh).
+    const isAuthPath = path.startsWith('/auth/');
+    if (!isRefreshPath && !isAuthPath && !_isRetry) {
       const refreshed = await attemptSilentRefresh();
       if (refreshed) {
         // Retry original request once
