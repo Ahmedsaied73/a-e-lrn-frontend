@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import {
   fetchAssignmentsByVideo as svcFetchByVideo,
+  fetchCourseAssignments as svcFetchCourseAssignments,
   fetchAssignmentById as svcFetchById,
   submitAssignment as svcSubmit,
   fetchAssignmentStatus as svcFetchStatus,
@@ -64,20 +65,14 @@ export const fetchAssignmentsByVideo = createAsyncThunk(
 );
 
 /**
- * Fetch all assignments for a course using parallel per-video requests.
- * The N+1 sequential loop has been removed — requests are fired in parallel.
- * If a dedicated /assignments/course/:id endpoint is added later, update this thunk.
+ * Fetch all assignments for a course in a single request.
+ * Eliminates the N+1 per-video loop.
  */
 export const fetchAssignmentsByCourse = createAsyncThunk(
   'assignment/fetchAssignmentsByCourse',
-  async (
-    { videoIds }: { courseId: string; videoIds: (string | number)[] },
-    { rejectWithValue },
-  ) => {
+  async (courseId: string | number, { rejectWithValue }) => {
     try {
-      // Parallel fetches — eliminates the sequential N+1 loop
-      const results = await Promise.all(videoIds.map((id) => svcFetchByVideo(id)));
-      return results.flat();
+      return await svcFetchCourseAssignments(courseId);
     } catch (error) {
       return rejectWithValue(
         error instanceof Error ? error.message : 'An error occurred while fetching assignments',

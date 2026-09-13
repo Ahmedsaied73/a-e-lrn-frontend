@@ -6,12 +6,6 @@
  */
 
 import { apiClient } from '@/lib/api-client';
-import {
-  getMockAssignmentStatus,
-  isMockAssignmentId,
-  isMockVideoId,
-  mockAssignments,
-} from '@/lib/mock/course';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -29,6 +23,7 @@ export interface Assignment {
   title: string;
   description: string;
   videoId: number | null;
+  bunnyVideoId?: number | null;
   dueDate: string;
   isMCQ: boolean;
   passingScore: number;
@@ -111,9 +106,6 @@ function unwrap<T>(raw: unknown): T {
  * Response shape: { assignments: Assignment[] }  (flat, no envelope)
  */
 export async function fetchAssignmentsByVideo(videoId: string | number): Promise<Assignment[]> {
-  if (isMockVideoId(videoId)) {
-    return mockAssignments.filter((a) => a.videoId === Number(videoId));
-  }
   const raw = await apiClient.get<unknown>(`/assignments/video/${videoId}`);
   const data = unwrap<Assignment[] | { assignments?: Assignment[] }>(raw);
   if (Array.isArray(data)) return data;
@@ -126,9 +118,6 @@ export async function fetchAssignmentsByVideo(videoId: string | number): Promise
  * Returns a single assignment with its questions.
  */
 export async function fetchAssignmentById(assignmentId: number): Promise<Assignment> {
-  if (isMockAssignmentId(assignmentId)) {
-    return mockAssignments.find((a) => a.id === assignmentId)!;
-  }
   const raw = await apiClient.get<unknown>(`/assignments/${assignmentId}`);
   return unwrap<Assignment>(raw);
 }
@@ -155,7 +144,6 @@ export async function submitAssignment(payload: {
  * Check whether the user has submitted a specific assignment.
  */
 export async function fetchAssignmentStatus(assignmentId: number): Promise<AssignmentStatus> {
-  if (isMockAssignmentId(assignmentId)) return getMockAssignmentStatus(assignmentId);
   const raw = await apiClient.get<unknown>(`/assignments/${assignmentId}/status`);
   return unwrap<AssignmentStatus>(raw);
 }
@@ -172,4 +160,21 @@ export async function fetchAssignmentSubmissions(
   if (Array.isArray(data)) return data;
   if (data && 'submissions' in data && Array.isArray(data.submissions)) return data.submissions;
   return [];
+}
+
+/**
+ * Fetch all assignments for a course in a single request.
+ * Uses GET /assignments/course/:courseId — returns assignments across all videos.
+ */
+export async function fetchCourseAssignments(
+  courseId: string | number,
+): Promise<Assignment[]> {
+  try {
+    const data = await apiClient.get<{ course: { id: number; title: string }; assignments: Assignment[] }>(
+      `/assignments/course/${courseId}`,
+    );
+    return data?.assignments ?? [];
+  } catch {
+    return [];
+  }
 }

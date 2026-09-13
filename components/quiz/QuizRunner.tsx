@@ -11,6 +11,7 @@ import { useQuizAutosave } from "@/hooks/useQuizAutosave";
 import { ApiError } from "@/lib/errors";
 import type { StartQuizData } from "@/types/quiz";
 import { Flag, ChevronRight, ChevronLeft, CheckCircle, Clock, Loader2, AlertTriangle } from "lucide-react";
+import DOMPurify from 'dompurify';
 
 // --- Types from SurveyJS surveyJson shape ---
 interface SurveyElement {
@@ -412,7 +413,7 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
       return (
         <div
           className="prose prose-slate max-w-none text-slate-700"
-          dangerouslySetInnerHTML={{ __html: sanitizeQuizHtml(q.html ?? "", isHydrated) }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(sanitizeQuizHtml(q.html ?? "", isHydrated)) }}
         />
       );
     }

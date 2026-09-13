@@ -24,12 +24,13 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 // Quiz metadata is loaded on the video page after completion.
 import {
   fetchAssignmentStatus,
+  fetchAssignmentsByCourse,
   selectAssignments,
 } from '@/store/slices/assignmentSlice';
 
 import { fetchCourseById } from '@/services/courseService';
 import type { VideoProgress } from '@/services/courseService';
-import { fetchBunnyCourseProgress, fetchBunnyCourseVideos } from '@/services/bunnyVideoService';
+import { fetchBunnyCourseVideos } from '@/services/bunnyVideoService';
 import type { BunnyVideo } from '@/types/bunny';
 
 const INITIAL_VISIBLE_LESSONS = 6;
@@ -69,7 +70,7 @@ export default function Page({ params }: { params: { id: string } }) {
   // Helper function to find assignments for a specific video
   const findAssignmentsForVideo = useCallback((videoId: number | string) => {
     const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
-    return assignments.filter(assignment => assignment.videoId === videoIdNum);
+    return assignments.filter(assignment => assignment.videoId === videoIdNum || assignment.bunnyVideoId === videoIdNum);
   }, [assignments]);
 
   // Helper function to format duration from seconds (natural Arabic form)
@@ -128,19 +129,23 @@ export default function Page({ params }: { params: { id: string } }) {
     const loadCourseAndEnrollment = async () => {
       try {
         setIsLoading(true);
-        const [data, bunnyData, progressData] = await Promise.all([
+        const [data, bunnyData] = await Promise.all([
           fetchCourseById(params.id),
           fetchBunnyCourseVideos(params.id),
-          fetchBunnyCourseProgress(params.id),
         ]);
         setCourseData(data);
+        // Use progress already returned by fetchCourseById aggregate (no extra request)
         setVideoProgressMap(Object.fromEntries(
-          progressData.videos.map((progress) => [String(progress.id), { videoId: progress.id, ...progress }]),
+          (data.progress ?? []).map((progress) => [String(progress.videoId), progress]),
         ));
 
         setBunnyVideos(bunnyData);
 
-        setIsEnrolled(!!data.enrollment);
+        const enrolled = !!data.enrollment;
+        setIsEnrolled(enrolled);
+        if (enrolled) {
+          dispatch(fetchAssignmentsByCourse(params.id));
+        }
         // Initialize video accordions
         const initialOpenState: Record<string, boolean> = {};
         bunnyData.forEach((bv: BunnyVideo) => {

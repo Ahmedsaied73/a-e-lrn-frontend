@@ -140,7 +140,7 @@ export default function Page({ params }: { params: { id: string } }) {
       <div className="mb-6">
         <Link 
           href={`/course/${params.id}`}
-          className="inline-flex items-center gap-2 text-[#61B846] hover:text-[#61B846]/80 transition-colors"
+          className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-600/80 transition-colors"
         >
           <ArrowLeft size={20} />
           العودة إلى صفحة الكورس
@@ -149,13 +149,13 @@ export default function Page({ params }: { params: { id: string } }) {
 
       {/* Invoice Card - Full Width at Top */}
       <div className="w-full mb-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-bold mb-6 text-center">ملخص الطلب</h2>
           
           {/* Course Summary */}
           <div className="mb-6">
             <h3 className="font-semibold mb-2">{courseData.title}</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-on-surface-variant mb-4">
               {courseData.description_short || "الدورة لطلبة الأزهر فقط ❤️"}
             </p>
             
@@ -186,12 +186,12 @@ export default function Page({ params }: { params: { id: string } }) {
             <div>
               <div className="flex items-center gap-4">
                 <span className="text-lg font-semibold">السعر:</span>
-                <span className="text-2xl font-bold text-[#61B846]">
+                <span className="text-2xl font-bold text-emerald-600">
                   {courseData.price === 0 ? "مجاني" : `${courseData.price} جنيه`}
                 </span>
               </div>
               {courseData.price > 0 && (
-                <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400 mt-2">
+                <div className="flex gap-4 text-sm text-on-surface-variant mt-2">
                   <span>الضرائب: متضمنة</span>
                   <span>رسوم المعالجة: مجانية</span>
                 </div>
@@ -200,11 +200,11 @@ export default function Page({ params }: { params: { id: string } }) {
             
             {/* Payment Security */}
             <div className="text-right">
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <div className="flex items-center gap-2 text-sm text-on-surface-variant mb-2">
                 <Shield size={16} />
                 <span>دفع آمن ومشفر</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2 text-sm text-on-surface-variant">
                 <CreditCard size={16} />
                 <span>جميع طرق الدفع مقبولة</span>
               </div>
@@ -213,7 +213,7 @@ export default function Page({ params }: { params: { id: string } }) {
           
           {/* Subscribe Button */}
           <Button 
-            className="w-full bg-[#61B846] hover:bg-[#61B846]/90 text-white py-3 text-lg font-semibold"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 text-lg font-semibold"
             disabled={enrollmentLoading}
             onClick={handleSubscription}
           >
@@ -234,7 +234,7 @@ export default function Page({ params }: { params: { id: string } }) {
         {/* Main Content - Left Side */}
         <div className="flex-1">
           {/* Course Header */}
-          <div className="bg-gradient-to-l from-[#61B846] to-[#61B846]/80 rounded-lg p-6 mb-8">
+          <div className="bg-gradient-to-l from-primary-color to-primary-light rounded-lg p-6 mb-8">
             <div className="flex justify-between items-start">
               <div>
                 <h1 className="text-3xl font-bold text-white mb-4">
@@ -260,15 +260,15 @@ export default function Page({ params }: { params: { id: string } }) {
           </div>
 
           {/* Course Content */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
-            <h2 className="text-xl font-bold p-6 border-b dark:border-gray-700">محتوى الكورس</h2>
-            <div className="divide-y dark:divide-gray-700">
+          <div className="bg-white rounded-lg overflow-hidden">
+            <h2 className="text-xl font-bold p-6 border-b border-outline-variant">محتوى الكورس</h2>
+            <div className="divide-y divide-outline-variant">
               {courseData.videos && courseData.videos.length > 0 ? (
                 courseData.videos.map((video: any, index: number) => {
                   return (
                     <div key={video.id} className="transition-colors">
                       <div 
-                        className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                        className="p-6 hover:bg-surface-container-low transition-colors cursor-pointer"
                         onClick={() => toggleVideo(video.id)}
                       >
                         <div className="flex items-center justify-between">
@@ -279,7 +279,7 @@ export default function Page({ params }: { params: { id: string } }) {
                             <h3 className="text-lg font-semibold">المحاضرة {getArabicOrdinal(index)}</h3>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="text-sm text-on-surface-variant">
                               {video.title}
                             </span>
                           </div>
@@ -290,9 +290,9 @@ export default function Page({ params }: { params: { id: string } }) {
                         <div className="px-6 pb-6">
                           <div className="space-y-4 pl-10">
                             {/* Video Card */}
-                            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-[#61B846]">
+                            <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border-l-4 border-primary-color">
                               <div className="flex items-center gap-2">
-                                <Play size={16} className="text-[#61B846]" />
+                                <Play size={16} className="text-emerald-600" />
                                 <span className="font-medium">{video.description || "شاهد هذه المحاضرة"}</span>
                               </div>
                               <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
@@ -307,13 +307,13 @@ export default function Page({ params }: { params: { id: string } }) {
                               return (
                                 <div 
                                   key={assignment.id}
-                                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-blue-400 mt-2"
+                                  className="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border-l-4 border-primary-color mt-2"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <Clock size={16} className="text-blue-400" />
+                                    <Clock size={16} className="text-primary-color" />
                                     <span className="font-medium">{assignment.title}</span>
                                     
-                                    <span className="text-xs text-blue-500">
+                                    <span className="text-xs text-primary-color">
                                       موعد التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
                                     </span>
                                   </div>
@@ -331,7 +331,7 @@ export default function Page({ params }: { params: { id: string } }) {
                   );
                 })
               ) : (
-                <div className="p-6 text-center text-gray-500">
+                <div className="p-6 text-center text-on-surface-variant">
                   لا توجد محاضرات متاحة حالياً
                 </div>
               )}

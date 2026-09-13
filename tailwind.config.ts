@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import { primary, secondary, tertiary, surface, onSurface, outline, error as errorColors, dark as darkColors } from './lib/colors';
 
 const config: Config = {
   content: [
@@ -21,66 +22,77 @@ const config: Config = {
         secondary: 'hsl(var(--secondary))',
 
         // Design System — Surface
-        surface: '#f7f9fc',
-        'surface-dim': '#d8dadd',
-        'surface-bright': '#f7f9fc',
-        'surface-container-lowest': '#ffffff',
-        'surface-container-low': '#f2f4f7',
-        'surface-container': '#eceef1',
-        'surface-container-high': '#e6e8eb',
-        'surface-container-highest': '#e0e3e6',
-        'surface-variant': '#e0e3e6',
+        surface: surface.DEFAULT,
+        'surface-dim': surface.dim,
+        'surface-bright': surface.bright,
+        'surface-container-lowest': surface.containerLowest,
+        'surface-container-low': surface.containerLow,
+        'surface-container': surface.container,
+        'surface-container-high': surface.containerHigh,
+        'surface-container-highest': surface.containerHighest,
+        'surface-variant': surface.variant,
+        'surface-white': surface.white,
 
         // Design System — On-Surface
-        'on-surface': '#191c1e',
-        'on-surface-variant': '#414754',
-        'inverse-surface': '#2d3133',
-        'inverse-on-surface': '#eff1f4',
+        'on-surface': onSurface.DEFAULT,
+        'on-surface-variant': onSurface.variant,
+        'inverse-surface': onSurface.inverse,
+        'inverse-on-surface': onSurface.inverseOn,
 
         // Design System — Outline
-        outline: '#727786',
-        'outline-variant': '#c1c6d7',
+        outline: outline.DEFAULT,
+        'outline-variant': outline.variant,
+        'outline-border': outline.border,
+
+        // Design System — Dark surfaces (dropdowns, overlays only)
+        dark: darkColors.bg,
+        'dark-hover': darkColors.hover,
+        'dark-border': darkColors.border,
+        'dark-gray400': darkColors.gray400,
 
         // Design System — Primary
-        'primary-color': '#207bff',
-        'on-primary': '#ffffff',
-        'primary-container': '#006ff0',
-        'on-primary-container': '#fefcff',
-        'inverse-primary': '#aec6ff',
-        'primary-fixed': '#d8e2ff',
-        'primary-fixed-dim': '#aec6ff',
-        'on-primary-fixed': '#001a43',
-        'on-primary-fixed-variant': '#004397',
-        'surface-tint': '#005ac5',
+        'primary-color': primary.DEFAULT,
+        'primary-hover': primary.hover,
+        'primary-light': primary.light,
+        'primary-pale': primary.pale,
+        'on-primary': primary.onPrimary,
+        'primary-container': primary.container,
+        'on-primary-container': primary.onContainer,
+        'inverse-primary': primary.fixedDim,
+        'primary-fixed': primary.fixed,
+        'primary-fixed-dim': primary.fixedDim,
+        'on-primary-fixed': primary.onFixed,
+        'on-primary-fixed-variant': primary.onFixedVariant,
+        'surface-tint': primary.tint,
 
         // Design System — Secondary
-        'secondary-color': '#0061a7',
-        'secondary-container': '#4da4fe',
-        'on-secondary': '#ffffff',
-        'on-secondary-container': '#003965',
-        'secondary-fixed': '#d2e4ff',
-        'secondary-fixed-dim': '#a1c9ff',
-        'on-secondary-fixed': '#001c37',
-        'on-secondary-fixed-variant': '#00487f',
+        'secondary-color': secondary.DEFAULT,
+        'secondary-container': secondary.container,
+        'on-secondary': secondary.onSecondary,
+        'on-secondary-container': secondary.onContainer,
+        'secondary-fixed': secondary.fixed,
+        'secondary-fixed-dim': secondary.fixedDim,
+        'on-secondary-fixed': secondary.onFixed,
+        'on-secondary-fixed-variant': secondary.onFixedVariant,
 
         // Design System — Tertiary
-        tertiary: '#1a59b6',
-        'tertiary-container': '#3d72d0',
-        'on-tertiary': '#ffffff',
-        'on-tertiary-container': '#fefcff',
-        'tertiary-fixed': '#d8e2ff',
-        'tertiary-fixed-dim': '#aec6ff',
-        'on-tertiary-fixed': '#001a42',
-        'on-tertiary-fixed-variant': '#004395',
+        tertiary: tertiary.DEFAULT,
+        'tertiary-container': tertiary.container,
+        'on-tertiary': tertiary.onTertiary,
+        'on-tertiary-container': tertiary.onContainer,
+        'tertiary-fixed': tertiary.fixed,
+        'tertiary-fixed-dim': tertiary.fixedDim,
+        'on-tertiary-fixed': tertiary.onFixed,
+        'on-tertiary-fixed-variant': tertiary.onFixedVariant,
 
         // Design System — Error
-        error: '#ba1a1a',
-        'on-error': '#ffffff',
-        'error-container': '#ffdad6',
-        'on-error-container': '#93000a',
+        error: errorColors.DEFAULT,
+        'on-error': errorColors.onError,
+        'error-container': errorColors.container,
+        'on-error-container': errorColors.onContainer,
 
         // Design System — Background
-        'on-background': '#191c1e',
+        'on-background': onSurface.DEFAULT,
 
         // Shadcn token set — CSS-variable backed so the admin console can
         // redefine them locally (`.admin-console`) without touching the

@@ -6,28 +6,36 @@
 
 /* -------------------------------------------------------
    Design tokens — unified light theme (shadcn-compatible names)
-   One "Academic Precision" (Stitch project 14391907357742829862)
-   system across the student app AND the admin console
-   (#207BFF primary, #f7f9fc surface, white cards, #e1e8f0 borders).
-   The admin console no longer defines a dark scope.
+   SOURCE OF TRUTH: lib/colors.ts (hex values defined there;
+   CSS can't import TS, so these HSL values are duplicated here).
+   Keep in sync when changing lib/colors.ts.
 ------------------------------------------------------ */
 :root {
+  /* background: surface.DEFAULT #f7f9fc → hsl(213 33% 97%) */
   --background: 213 33% 97%;
+  /* foreground: onSurface.DEFAULT #191c1e → hsl(218 10% 11%) */
   --foreground: 218 10% 11%;
+  /* card: surface.containerLowest #ffffff → hsl(0 0% 100%) */
   --card: 0 0% 100%;
   --card-foreground: 218 10% 11%;
   --popover: 0 0% 100%;
   --popover-foreground: 218 10% 11%;
+  /* primary: primary.DEFAULT #207bff → hsl(214 100% 56%) */
   --primary: 214 100% 56%;
   --primary-foreground: 0 0% 100%;
+  /* secondary: secondary.DEFAULT #0061a7 → hsl(207 100% 65%) */
   --secondary: 207 100% 65%;
   --secondary-foreground: 0 0% 100%;
+  /* muted: surface.containerLow #f2f4f7 → hsl(213 24% 96%) */
   --muted: 213 24% 96%;
   --muted-foreground: 220 25% 29%;
+  /* accent: primary.pale #eef6ff → hsl(214 100% 93%) */
   --accent: 214 100% 93%;
   --accent-foreground: 215 25% 27%;
+  /* destructive: error.DEFAULT #ba1a1a → hsl(0 84% 60%) */
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
+  /* border: outline.variant #c1c6d7 → hsl(213 37% 91%) */
   --border: 213 37% 91%;
   --input: 213 37% 91%;
   --ring: 214 100% 56%;
@@ -89,6 +97,16 @@
 .dot-grid-bg {
   background-image: radial-gradient(circle at 2px 2px, #207bff22 1px, transparent 0);
   background-size: 32px 32px;
+}
+
+/* -------------------------------------------------------
+   Liquid-glass film grain (SVG feTurbulence noise texture).
+   Layer over a backdrop-blur surface at low opacity for a
+   subtle "liquid glass with grain" finish.
+------------------------------------------------------ */
+.glass-noise {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
 }
 
 /* -------------------------------------------------------

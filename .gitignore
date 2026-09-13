@@ -48,3 +48,6 @@ fe*.log
 fe*.err.log
 
 design-ref/
+
+# graphify knowledge-graph outputs (regenerable via the graphify skill)
+graphify-out/

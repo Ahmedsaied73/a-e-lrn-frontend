@@ -13,7 +13,7 @@ export default function MePage() {
 
   return (
     <div className="account-page flex items-center justify-center">
-      <div className="text-white text-xl">جاري التحميل...</div>
+      <div className="text-on-surface text-xl">جاري التحميل...</div>
     </div>
   );
 }

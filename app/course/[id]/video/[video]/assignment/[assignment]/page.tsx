@@ -48,12 +48,12 @@ function AssignmentResultsDialog({ open, onOpenChange, assignmentResults, course
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#111827] border-[#1f2937] text-white max-w-md">
+      <DialogContent className="bg-white border-outline-variant text-on-surface max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center text-xl">
-            <span className="text-blue-400">★</span> نتيجة الواجب <span className="text-blue-400">★</span>
+            <span className="text-primary-color">★</span> نتيجة الواجب <span className="text-primary-color">★</span>
           </DialogTitle>
-          <DialogDescription className="text-center text-gray-400">
+          <DialogDescription className="text-center text-on-surface-variant">
             لقد تم تقديم الواجب بنجاح
           </DialogDescription>
         </DialogHeader>
@@ -61,12 +61,12 @@ function AssignmentResultsDialog({ open, onOpenChange, assignmentResults, course
         <div className="text-center py-4">
           {assignmentResults.mcqScore !== undefined && (
             <div className="mb-4">
-              <span className="text-2xl font-bold text-blue-400">{assignmentResults.mcqScore}%</span>
-              <p className="text-sm text-gray-400 mt-1">
+              <span className="text-2xl font-bold text-primary-color">{assignmentResults.mcqScore}%</span>
+              <p className="text-sm text-on-surface-variant mt-1">
                 {assignmentResults.passed ? (
-                  <span className="text-green-400">لقد اجتزت الواجب بنجاح!</span>
+                  <span className="text-emerald-600">لقد اجتزت الواجب بنجاح!</span>
                 ) : (
-                  <span className="text-red-400">لم تجتز الواجب. حاول مرة أخرى!</span>
+                  <span className="text-error">لم تجتز الواجب. حاول مرة أخرى!</span>
                 )}
               </p>
             </div>
@@ -74,8 +74,8 @@ function AssignmentResultsDialog({ open, onOpenChange, assignmentResults, course
           
           {assignmentResults.status === 'PENDING' && (
             <div className="mb-4">
-              <p className="text-yellow-400 text-lg">تم تقديم الواجب وهو قيد المراجعة</p>
-              <p className="text-sm text-gray-400 mt-1">سيتم إشعارك عند الانتهاء من تقييم الواجب</p>
+              <p className="text-amber-600 text-lg">تم تقديم الواجب وهو قيد المراجعة</p>
+              <p className="text-sm text-on-surface-variant mt-1">سيتم إشعارك عند الانتهاء من تقييم الواجب</p>
             </div>
           )}
         </div>
@@ -84,14 +84,14 @@ function AssignmentResultsDialog({ open, onOpenChange, assignmentResults, course
           {assignmentResults.mcqScore !== undefined && (
             <Button
               onClick={handleViewResults}
-              className="bg-blue-600 hover:bg-blue-700 flex-1"
+              className="bg-primary-color hover:bg-primary-hover flex-1"
             >
               عرض النتيجة التفصيلية
             </Button>
           )}
           <Button
             onClick={handleReturnToCourse}
-            className="bg-[#61B846] hover:bg-[#61B846]/90 flex-1"
+            className="bg-emerald-600 hover:bg-emerald-700 flex-1"
           >
             الرجوع للكورس
           </Button>
@@ -235,8 +235,8 @@ export default function AssignmentPage() {
     return (
       <div className="container mx-auto py-10 px-4 flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-          <p className="mt-4 text-white">جاري تحميل الواجب...</p>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary-color border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="mt-4 text-on-surface">جاري تحميل الواجب...</p>
         </div>
       </div>
     );
@@ -245,14 +245,14 @@ export default function AssignmentPage() {
   if (error) {
     return (
       <div className="container mx-auto py-10 px-4">
-        <Card className="bg-[#111827] border-[#1f2937] text-white">
+        <Card className="bg-white border-outline-variant text-on-surface">
           <CardHeader>
             <CardTitle className="text-center text-red-500">خطأ</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
             <p>{error}</p>
             <Link href={`/course/${courseId}/video/${videoId}`}>
-              <Button className="mt-4 bg-blue-600 hover:bg-blue-700">العودة للفيديو</Button>
+              <Button className="mt-4 bg-primary-color hover:bg-primary-hover">العودة للفيديو</Button>
             </Link>
           </CardContent>
         </Card>
@@ -263,14 +263,14 @@ export default function AssignmentPage() {
   if (!assignment) {
     return (
       <div className="container mx-auto py-10 px-4">
-        <Card className="bg-[#111827] border-[#1f2937] text-white">
+        <Card className="bg-white border-outline-variant text-on-surface">
           <CardHeader>
             <CardTitle className="text-center">الواجب غير متوفر</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
             <p>لم يتم العثور على الواجب المطلوب</p>
             <Link href={`/course/${courseId}/video/${videoId}`}>
-              <Button className="mt-4 bg-blue-600 hover:bg-blue-700">العودة للفيديو</Button>
+              <Button className="mt-4 bg-primary-color hover:bg-primary-hover">العودة للفيديو</Button>
             </Link>
           </CardContent>
         </Card>
@@ -283,30 +283,30 @@ export default function AssignmentPage() {
   
   return (
     <div className="container mx-auto py-10 px-4">
-      <Card className="bg-[#111827] border-[#1f2937] text-white mb-8">
+      <Card className="bg-white border-outline-variant text-on-surface mb-8">
         <CardHeader>
           <CardTitle className="text-center text-xl md:text-2xl">
-            <span className="text-blue-400">★</span> {assignment.title} <span className="text-blue-400">★</span>
+            <span className="text-primary-color">★</span> {assignment.title} <span className="text-primary-color">★</span>
           </CardTitle>
-          <CardDescription className="text-center text-gray-400">
+          <CardDescription className="text-center text-on-surface-variant">
             {assignment.description}
           </CardDescription>
           <div className="text-center mt-2">
-            <span className="text-yellow-400 text-sm">
+            <span className="text-amber-600 text-sm">
               تاريخ التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
-              {isPastDue && <span className="text-red-500 mr-2">(انتهى موعد التسليم)</span>}
+              {isPastDue && <span className="text-error mr-2">(انتهى موعد التسليم)</span>}
             </span>
           </div>
         </CardHeader>
         <CardContent>
           {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-4 rounded-md mb-6 text-center">
+            <div className="bg-red-50 border border-red-200 text-error p-4 rounded-md mb-6 text-center">
               {error}
             </div>
           )}
           
           {isPastDue && !assignment.hasSubmitted && (
-            <div className="bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 p-4 rounded-md mb-6 text-center">
+            <div className="bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-md mb-6 text-center">
               انتهى موعد تسليم هذا الواجب. يمكنك المحاولة ولكن قد لا يتم احتساب درجتك.
             </div>
           )}
@@ -315,9 +315,9 @@ export default function AssignmentPage() {
             // MCQ Assignment
             <div className="space-y-8">
               {assignment.AssignmentQuestion?.map((question, index) => (
-                <div key={question.id} className="border border-gray-700 rounded-lg p-6">
+                <div key={question.id} className="border border-outline-variant rounded-lg p-6">
                   <h3 className="text-lg font-medium mb-4 flex items-start gap-2">
-                    <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="bg-primary-color text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">
                       {index + 1}
                     </span>
                     <span>{question.text}</span>
@@ -342,7 +342,7 @@ export default function AssignmentPage() {
                           />
                           <Label
                             htmlFor={`q${question.id}-opt${optionId}`}
-                            className="flex-1 cursor-pointer py-2 px-3 rounded-md hover:bg-gray-800"
+                            className="flex-1 cursor-pointer py-2 px-3 rounded-md hover:bg-surface-container-low"
                           >
                             {optionText}
                           </Label>
@@ -363,7 +363,7 @@ export default function AssignmentPage() {
                 <Textarea
                   id="assignment-content"
                   placeholder="اكتب محتوى الواجب هنا..."
-                  className="min-h-[200px] bg-gray-800 border-gray-700 text-white"
+                  className="min-h-[200px] bg-surface-container-low border-outline-variant text-on-surface"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                 />
@@ -373,12 +373,12 @@ export default function AssignmentPage() {
                 <Label htmlFor="assignment-file" className="text-lg font-medium mb-2 block">
                   تحميل ملف (اختياري)
                 </Label>
-                <div className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center">
+                <div className="border-2 border-dashed border-outline-variant rounded-lg p-6 text-center">
                   {fileUrl ? (
                     <div className="space-y-2">
-                      <CheckCircle className="h-8 w-8 text-green-500 mx-auto" />
-                      <p className="text-green-500">تم تحميل الملف بنجاح</p>
-                      <p className="text-sm text-gray-400">{file?.name}</p>
+                      <CheckCircle className="h-8 w-8 text-emerald-600 mx-auto" />
+                      <p className="text-emerald-600">تم تحميل الملف بنجاح</p>
+                      <p className="text-sm text-on-surface-variant">{file?.name}</p>
                       <Button 
                         variant="outline" 
                         className="mt-2"
@@ -392,8 +392,8 @@ export default function AssignmentPage() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto" />
-                      <p className="text-gray-400">اسحب وأفلت الملف هنا أو انقر للتصفح</p>
+                      <Upload className="h-8 w-8 text-on-surface-variant mx-auto" />
+                      <p className="text-on-surface-variant">اسحب وأفلت الملف هنا أو انقر للتصفح</p>
                       <Input
                         id="assignment-file"
                         type="file"
@@ -418,7 +418,7 @@ export default function AssignmentPage() {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || (assignment.hasSubmitted && !assignment.isMCQ)}
-            className="bg-[#61B846] hover:bg-[#61B846]/90 text-white px-8 py-2 text-lg"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2 text-lg"
           >
             {isSubmitting ? (
               <>

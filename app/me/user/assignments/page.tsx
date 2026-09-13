@@ -127,10 +127,10 @@ export default function AssignmentsPage() {
   if (isLoading) {
     return (
       <div className="account-page">
-        <Card className="bg-[#111827] border-[#1f2937] text-white mb-8">
+        <Card className="bg-white border-outline-variant text-on-surface mb-8 shadow-level-2">
           <CardHeader>
             <CardTitle className="text-center">
-              <span className="text-blue-400">★</span> الواجبات المقدمة <span className="text-blue-400">★</span>
+              <span className="text-primary-color">★</span> الواجبات المقدمة <span className="text-primary-color">★</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -146,14 +146,14 @@ export default function AssignmentsPage() {
   if (error) {
     return (
       <div className="account-page">
-        <Card className="bg-[#111827] border-[#1f2937] text-white">
+        <Card className="bg-white border-outline-variant text-on-surface shadow-level-2">
           <CardHeader>
             <CardTitle className="text-center text-red-500">خطأ</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
             <p>{error}</p>
             <Link href="/">
-              <Button className="mt-4 bg-blue-600 hover:bg-blue-700">العودة للصفحة الرئيسية</Button>
+              <Button className="mt-4 bg-primary-color hover:bg-primary-hover text-white">العودة للصفحة الرئيسية</Button>
             </Link>
           </CardContent>
         </Card>
@@ -164,14 +164,14 @@ export default function AssignmentsPage() {
   if (!submissionsData || submissionsData.submissions?.length === 0) {
     return (
       <div className="account-page">
-        <Card className="bg-[#111827] border-[#1f2937] text-white">
+        <Card className="bg-white border-outline-variant text-on-surface shadow-level-2">
           <CardHeader>
             <CardTitle className="text-center">لا توجد واجبات مقدمة</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
             <p>لم يتم العثور على واجبات مقدمة</p>
             <Link href="/">
-              <Button className="mt-4 bg-blue-600 hover:bg-blue-700">العودة للصفحة الرئيسية</Button>
+              <Button className="mt-4 bg-primary-color hover:bg-primary-hover text-white">العودة للصفحة الرئيسية</Button>
             </Link>
           </CardContent>
         </Card>
@@ -197,49 +197,49 @@ export default function AssignmentsPage() {
         : submission.assignment.description;
     
     return (
-      <div className="border border-gray-700 rounded-lg p-4">
+      <div className="border border-outline-variant rounded-lg p-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div>
-            <h4 className="text-lg font-bold text-blue-400">{submission.assignment.title}</h4>
-            <p className="text-gray-400 mt-1">{displayDescription}</p>
+            <h4 className="text-lg font-bold text-primary-color">{submission.assignment.title}</h4>
+            <p className="text-on-surface-variant mt-1">{displayDescription}</p>
             {submission.assignment.description?.length > 100 && (
               <button 
                 onClick={() => setIsExpanded(!isExpanded)} 
-                className="text-blue-400 text-sm mt-1 hover:underline"
+                className="text-primary-color text-sm mt-1 hover:underline"
               >
                 {isExpanded ? 'عرض أقل' : 'عرض المزيد'}
               </button>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div className={`px-3 py-1 rounded-full text-sm font-medium ${submission.status === 'GRADED' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+            <div className={`px-3 py-1 rounded-full text-sm font-medium ${submission.status === 'GRADED' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
               {submission.status === 'GRADED' ? 'تم التقييم' : 'قيد المراجعة'}
             </div>
           </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="bg-[#1f2937] p-3 rounded-lg">
+          <div className="bg-surface-container-low p-3 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-300">تاريخ التقديم:</span>
+              <Clock className="h-5 w-5 text-on-surface-variant" />
+              <span className="text-on-surface-variant">تاريخ التقديم:</span>
             </div>
             <p>{formattedDate}</p>
           </div>
           
           {submission.status === 'GRADED' && (
-            <div className="bg-[#1f2937] p-3 rounded-lg">
+            <div className="bg-surface-container-low p-3 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Award className="h-5 w-5 text-blue-400" />
-                <span className="text-gray-300">الدرجة:</span>
+                <Award className="h-5 w-5 text-primary-color" />
+                <span className="text-on-surface-variant">الدرجة:</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-blue-400">{submission.grade}</span>
-                <span className="text-gray-400">/ 100</span>
+                <span className="text-2xl font-bold text-primary-color">{submission.grade}</span>
+                <span className="text-on-surface-variant">/ 100</span>
                 {submission.grade >= submission.assignment.passingScore ? (
-                  <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full ml-2">اجتياز</span>
+                  <span className="bg-emerald-50 text-emerald-600 text-xs px-2 py-1 rounded-full ml-2">اجتياز</span>
                 ) : (
-                  <span className="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded-full ml-2">لم يجتاز</span>
+                  <span className="bg-red-50 text-error text-xs px-2 py-1 rounded-full ml-2">لم يجتاز</span>
                 )}
               </div>
             </div>
@@ -247,19 +247,19 @@ export default function AssignmentsPage() {
         </div>
         
         {submission.status === 'GRADED' && submission.feedback && (
-          <div className="bg-[#1f2937] p-4 rounded-lg mb-4">
+          <div className="bg-surface-container-low p-4 rounded-lg mb-4">
             <div className="flex items-center gap-2 mb-2">
-              <FileText className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-300">ملاحظات المعلم:</span>
+              <FileText className="h-5 w-5 text-on-surface-variant" />
+              <span className="text-on-surface-variant">ملاحظات المعلم:</span>
             </div>
-            <p className="text-gray-200">{submission.feedback}</p>
+            <p className="text-on-surface">{submission.feedback}</p>
           </div>
         )}
         
         {submission.assignment.isMCQ && submission.mcqScore !== null && (
-          <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/30">
+          <div className="bg-primary-pale p-3 rounded-lg border border-primary-color/20">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-blue-400" />
+              <CheckCircle className="h-5 w-5 text-primary-color" />
               <span>درجة الاختيار من متعدد: </span>
               <span className="font-bold">{submission.mcqScore}%</span>
             </div>
@@ -268,7 +268,7 @@ export default function AssignmentsPage() {
         
         <div className="mt-4 flex justify-end">
           <Link href={`/course/${submission.assignment.video.courseId}`}>
-            <Button className="bg-[#61B846] hover:bg-[#61B846]/90">الذهاب للكورس</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">الذهاب للكورس</Button>
           </Link>
         </div>
       </div>
@@ -280,10 +280,10 @@ export default function AssignmentsPage() {
   // Main render function
   return (
     <div className="account-page">
-      <Card className="bg-[#111827] border-[#1f2937] text-white mb-8">
+      <Card className="bg-white border-outline-variant text-on-surface mb-8 shadow-level-2">
         <CardHeader>
           <CardTitle className="text-center">
-            <span className="text-blue-400">★</span> الواجبات المقدمة <span className="text-blue-400">★</span>
+            <span className="text-primary-color">★</span> الواجبات المقدمة <span className="text-primary-color">★</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -292,14 +292,14 @@ export default function AssignmentsPage() {
             <Button 
               onClick={refreshData} 
               disabled={isRefreshing}
-              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+              className="bg-primary-color hover:bg-primary-hover text-white flex items-center gap-2"
             >
               <span>تحديث البيانات</span>
             </Button>
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold border-b border-gray-700 pb-2">تفاصيل الواجبات</h3>
+            <h3 className="text-lg font-semibold border-b border-outline-variant pb-2">تفاصيل الواجبات</h3>
             
             {submissionsData.submissions?.map((submission) => (
               <SubmissionItem key={submission.id} submission={submission} />
@@ -310,7 +310,7 @@ export default function AssignmentsPage() {
 
           <div className="flex justify-center mt-8">
             <Link href="/me/user">
-              <Button className="bg-blue-600 hover:bg-blue-700">العودة لملف المستخدم</Button>
+              <Button className="bg-primary-color hover:bg-primary-hover text-white">العودة لملف المستخدم</Button>
             </Link>
           </div>
         </CardContent>
