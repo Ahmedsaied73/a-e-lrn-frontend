@@ -199,7 +199,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
   return (
     <div className="w-full">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-margin-mobile pb-xl pt-6 lg:px-margin-desktop">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-16 pt-6 lg:px-12">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-[13px] font-medium text-on-surface-variant">
           <Link href="/" className="flex items-center gap-1 transition-colors hover:text-primary">
@@ -219,7 +219,7 @@ export default function Page({ params }: { params: { id: string } }) {
           {/* Main Content: Modules & Lessons */}
           <div className="flex w-full flex-col gap-6 lg:w-2/3">
             {/* Header Card with Filter Tabs */}
-            <div className="flex flex-col gap-5 rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-sm">
+            <div className="flex flex-col gap-5 rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-xs">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <div className="mb-1 flex items-center gap-3">
@@ -242,7 +242,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
               {/* Module Filter Tabs */}
               <div className="flex items-center gap-2 overflow-x-auto border-b border-outline-variant/40 pb-1">
-                <button className="whitespace-nowrap rounded-lg bg-primary px-4 py-2 text-[14px] font-bold text-on-primary shadow-sm transition-all">
+                <button className="whitespace-nowrap rounded-lg bg-primary px-4 py-2 text-[14px] font-bold text-on-primary shadow-xs transition-all">
                   جميع المحاضرات ({totalVideosCount})
                 </button>
               </div>
@@ -264,7 +264,7 @@ export default function Page({ params }: { params: { id: string } }) {
                   return (
                     <div
                       key={bvKey}
-                      className="group relative overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-5 shadow-sm transition-all hover:border-primary/50 hover:shadow-md"
+                      className="group relative overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-5 shadow-xs transition-all hover:border-primary/50 hover:shadow-md"
                     >
                       {/* Accent bar */}
                       <div
@@ -277,7 +277,7 @@ export default function Page({ params }: { params: { id: string } }) {
                         <div className="flex items-start gap-4 sm:items-center">
                           {/* Lesson number */}
                           <div
-                            className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl text-[18px] font-bold shadow-sm transition-all ${
+                            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-[18px] font-bold shadow-xs transition-all ${
                               completed
                                 ? 'bg-emerald-50 text-emerald-600'
                                 : 'bg-surface-container-high text-on-surface-variant group-hover:bg-primary group-hover:text-on-primary'
@@ -376,7 +376,7 @@ export default function Page({ params }: { params: { id: string } }) {
                                     sizes="(max-width: 640px) 100vw, 176px"
                                   />
                                   <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm">
                                       <Play size={16} className="text-primary" fill="currentColor" aria-hidden="true" />
                                     </div>
                                   </div>
@@ -547,7 +547,7 @@ export default function Page({ params }: { params: { id: string } }) {
             {remainingVideos > 0 && (
               <button
                 onClick={() => setVisibleCount(totalVideosCount)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-3.5 text-[14px] font-bold text-primary shadow-sm transition-all hover:bg-surface-container-low"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-3.5 text-[14px] font-bold text-primary shadow-xs transition-all hover:bg-surface-container-low"
               >
                 <ChevronDown size={20} aria-hidden="true" />
                 عرض باقي الحصص والمحاضرات ({remainingVideos} محاضرة متبقية)
@@ -556,7 +556,7 @@ export default function Page({ params }: { params: { id: string } }) {
           </div>
 
           {/* Sidebar: Course Overview & Enrollment Card */}
-          <aside className="w-full flex-shrink-0 lg:w-1/3">
+          <aside className="w-full shrink-0 lg:w-1/3">
             <EnrollmentCard
               courseId={params.id}
               isEnrolled={isEnrolled}

@@ -80,12 +80,12 @@ export function EnrollmentCard({
   return (
     <aside
       className={cn(
-        'flex flex-col gap-5 rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-5 shadow-sm',
+        'flex flex-col gap-5 rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-5 shadow-xs',
         className,
       )}
     >
       {/* Course Image with Badge */}
-      <div className="group relative aspect-video overflow-hidden rounded-xl shadow-sm">
+      <div className="group relative aspect-video overflow-hidden rounded-xl shadow-xs">
         {thumbnail ? (
           <Image
             src={thumbnail}
@@ -99,7 +99,7 @@ export function EnrollmentCard({
             <FlaskConical className="h-12 w-12 text-white/90" aria-hidden="true" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/10" />
         {gradeLabel && (
           <span className="absolute top-3 right-3 rounded-full bg-primary px-3 py-1 text-[11px] font-bold text-on-primary shadow-md">
             {gradeLabel}
@@ -127,7 +127,7 @@ export function EnrollmentCard({
       {/* Meta Information Grid */}
       <div className="grid grid-cols-2 gap-3 border-t border-outline-variant/40 pt-2">
         <div className="flex items-center gap-2.5 rounded-xl bg-surface-container-low p-3">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <CircleDollarSign size={20} aria-hidden="true" />
           </div>
           <div>
@@ -136,7 +136,7 @@ export function EnrollmentCard({
           </div>
         </div>
         <div className="flex items-center gap-2.5 rounded-xl bg-surface-container-low p-3">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-secondary-color/10 text-secondary-color">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary-color/10 text-secondary-color">
             <ListVideo size={20} aria-hidden="true" />
           </div>
           <div>
@@ -145,7 +145,7 @@ export function EnrollmentCard({
           </div>
         </div>
         <div className="flex items-center gap-2.5 rounded-xl bg-surface-container-low p-3">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-tertiary/10 text-tertiary">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tertiary/10 text-tertiary">
             <Timer size={20} aria-hidden="true" />
           </div>
           <div>
@@ -154,7 +154,7 @@ export function EnrollmentCard({
           </div>
         </div>
         <div className="flex items-center gap-2.5 rounded-xl bg-surface-container-low p-3">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
             <FileQuestion size={20} aria-hidden="true" />
           </div>
           <div>

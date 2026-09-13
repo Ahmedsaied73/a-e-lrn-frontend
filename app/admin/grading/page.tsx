@@ -190,7 +190,7 @@ export default function AdminGradingPage() {
           <h1 className="text-2xl font-bold text-on-surface">صندوق التصحيح</h1>
           <p className="mt-1 text-sm text-on-surface-variant">تصحيح المحاولات المقالية من جميع الاختبارات — {total} محاولة.</p>
         </div>
-        <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" onClick={() => void load()}>
+        <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-primary-color hover:text-[#0057c0]" onClick={() => void load()}>
           <RefreshCw className="mr-0 h-4 w-4" />
           تحديث
         </Button>
@@ -210,7 +210,7 @@ export default function AdminGradingPage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-                className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-emerald-500/70 focus:ring-2 focus:ring-[#207bff]/20"
+                className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-emerald-500/70 focus:ring-2 focus:ring-primary-color/20"
               />
             </div>
             <Select value={status} onValueChange={(v) => { setStatus(v as AttemptStatus | 'ALL'); setPage(1); }}>
@@ -221,7 +221,7 @@ export default function AdminGradingPage() {
                 {STATUS_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={applySearch}>
+            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={applySearch}>
               بحث
             </Button>
           </div>
@@ -266,7 +266,7 @@ export default function AdminGradingPage() {
                   type="button"
                   onClick={() => void openAttempt(attempt)}
                   disabled={resultLoading}
-                  className="mt-3 rounded-lg bg-[#207bff] px-3 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="mt-3 rounded-lg bg-primary-color px-3 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   فتح الإجابات
                 </button>
@@ -300,13 +300,13 @@ export default function AdminGradingPage() {
               {[10, 15, 25, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} / صفحة</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-primary-color hover:text-[#0057c0]" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
             السابق
           </Button>
           <span className="rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-sm text-on-surface-variant">
             صفحة {page} / {Math.max(1, totalPages)}
           </span>
-          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-primary-color hover:text-[#0057c0]" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
             التالي
           </Button>
         </div>
@@ -338,7 +338,7 @@ export default function AdminGradingPage() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-              className="w-full rounded-2xl border border-outline-variant/70 bg-surface-container-lowest py-2.5 pl-3 pr-9 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
+              className="w-full rounded-2xl border border-outline-variant/70 bg-surface-container-lowest py-2.5 pl-3 pr-9 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20"
             />
           </div>
 
@@ -351,7 +351,7 @@ export default function AdminGradingPage() {
                 className={cn(
                   'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
                   status === option.value
-                    ? 'bg-[#207bff] text-white'
+                    ? 'bg-primary-color text-white'
                     : 'border border-outline-variant/70 bg-surface-container-lowest text-on-surface-variant',
                 )}
               >
@@ -398,7 +398,7 @@ export default function AdminGradingPage() {
                     type="button"
                     onClick={() => void openAttempt(attempt)}
                     disabled={resultLoading}
-                    className="mt-3 w-full rounded-full bg-[#207bff] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mt-3 w-full rounded-full bg-primary-color px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     فتح الإجابات
                   </button>

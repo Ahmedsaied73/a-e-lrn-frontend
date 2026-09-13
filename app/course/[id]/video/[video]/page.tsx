@@ -228,7 +228,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     const blockingVideoId = quizGate.previousVideoId ?? quizGate.currentVideoId;
     playerContent = (
       <div className="w-full aspect-video rounded-lg bg-amber-50 border border-amber-200 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 mb-4 shadow-sm">
+        <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 mb-4 shadow-xs">
           <Lock className="w-8 h-8" />
         </div>
         <h3 className="text-xl font-bold text-amber-800 mb-2">هذه المحاضرة غير متاحة بعد</h3>
@@ -241,7 +241,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
         {blockingVideoId != null && (
           <Button
             onClick={() => router.push(`/course/${params.id}/video/${blockingVideoId}/quiz`)}
-            className="rounded-md bg-[#207bff] px-6 py-2.5 text-base font-semibold text-white transition-colors hover:bg-[#1a66d9]"
+            className="rounded-md bg-primary-color px-6 py-2.5 text-base font-semibold text-white transition-colors hover:bg-[#1a66d9]"
           >
             الانتقال إلى الاختبار
           </Button>
@@ -251,7 +251,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   } else if (isNotEnrolled) {
     playerContent = (
       <div className="w-full aspect-video rounded-lg bg-surface-container-low border border-outline-variant/60 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 mb-4 shadow-sm">
+        <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 mb-4 shadow-xs">
           <Lock className="w-8 h-8" />
         </div>
         <h3 className="text-xl font-bold text-on-surface mb-2">المحتوى محمي للمشتركين فقط</h3>
@@ -269,7 +269,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   } else if (isNotReady) {
     playerContent = (
       <div className="w-full aspect-video rounded-lg bg-surface-container-low border border-outline-variant/60 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-primary mb-4 shadow-sm">
+        <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-primary mb-4 shadow-xs">
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
         <h3 className="text-xl font-bold text-on-surface mb-2">الفيديو قيد المعالجة</h3>
@@ -289,7 +289,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
   } else if (error) {
     playerContent = (
       <div className="w-full aspect-video rounded-lg bg-surface-container-low border border-red-200 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center text-red-600 mb-4 shadow-sm">
+        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center text-red-600 mb-4 shadow-xs">
           <AlertCircle className="w-8 h-8" />
         </div>
         <h3 className="text-xl font-bold text-red-700 mb-2">تعذر تشغيل الفيديو</h3>

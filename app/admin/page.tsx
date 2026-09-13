@@ -191,9 +191,9 @@ export default function AdminOverviewPage() {
               <Link
                 key={action.label}
                 href={action.href}
-                className="group flex items-center gap-3 rounded-xl border border-outline-variant/70 bg-white p-4 transition-shadow duration-200 hover:border-[#4ea5ff] hover:shadow-level-2"
+                className="group flex items-center gap-3 rounded-xl border border-outline-variant/70 bg-white p-4 transition-shadow duration-200 hover:border-primary-light hover:shadow-level-2"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e8f2ff] text-[#207bff] transition-colors duration-200 group-hover:bg-[#207bff] group-hover:text-white">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e8f2ff] text-primary-color transition-colors duration-200 group-hover:bg-primary-color group-hover:text-white">
                   <action.icon className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
@@ -346,7 +346,7 @@ export default function AdminOverviewPage() {
               <p className="mt-0.5 text-xs text-on-surface-variant">إليك ملخص المنصة الآن</p>
             </div>
             {!loading && !error && (
-              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-secondary-fixed px-2.5 py-1 text-[10px] font-semibold text-[#00487f]">
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-secondary-fixed px-2.5 py-1 text-[10px] font-semibold text-on-secondary-fixed-variant">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -376,7 +376,7 @@ export default function AdminOverviewPage() {
           {loading ? (
             <Skeleton className="h-36 w-full rounded-2xl bg-muted" />
           ) : (
-            <div className="relative overflow-hidden rounded-2xl bg-[#207bff] p-5 text-on-primary">
+            <div className="relative overflow-hidden rounded-2xl bg-primary-color p-5 text-on-primary">
               <div className="absolute -left-6 -top-8 h-28 w-28 rounded-full bg-white/10" aria-hidden="true" />
               <div className="absolute -bottom-10 -right-4 h-24 w-24 rounded-full bg-white/5" aria-hidden="true" />
               <div className="relative">
@@ -414,10 +414,10 @@ export default function AdminOverviewPage() {
           <div className="grid grid-cols-2 gap-3">
             {(
               [
-                { label: 'الطلاب', value: data?.counts.students, icon: Users, chip: 'bg-primary-fixed text-[#004397]' },
-                { label: 'الدورات', value: data?.counts.courses, icon: BookOpen, chip: 'bg-secondary-fixed text-[#00487f]' },
-                { label: 'الاشتراكات', value: data?.counts.enrollments, icon: GraduationCap, chip: 'bg-tertiary-fixed text-[#004395]' },
-                { label: 'بانتظار التصحيح', value: data?.counts.attempts.GRADING, icon: ClipboardCheck, chip: 'bg-error-container text-[#93000a]' },
+                { label: 'الطلاب', value: data?.counts.students, icon: Users, chip: 'bg-primary-fixed text-on-primary-fixed-variant' },
+                { label: 'الدورات', value: data?.counts.courses, icon: BookOpen, chip: 'bg-secondary-fixed text-on-secondary-fixed-variant' },
+                { label: 'الاشتراكات', value: data?.counts.enrollments, icon: GraduationCap, chip: 'bg-tertiary-fixed text-on-tertiary-fixed-variant' },
+                { label: 'بانتظار التصحيح', value: data?.counts.attempts.GRADING, icon: ClipboardCheck, chip: 'bg-error-container text-on-error-container' },
               ] as {
                 label: string;
                 value: number | undefined;
@@ -447,7 +447,7 @@ export default function AdminOverviewPage() {
               {QUICK_ACTIONS.slice(0, 4).map((action) => (
                 <Link key={action.label} href={action.href} className="snap-start">
                   <div className="flex w-[150px] flex-col items-start gap-2 rounded-2xl border border-outline-variant/70 bg-surface-container-lowest p-3.5 transition-transform active:scale-[0.98]">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e8f2ff] text-[#207bff]">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e8f2ff] text-primary-color">
                       <action.icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="text-xs font-bold text-on-surface">{action.label}</span>
@@ -475,7 +475,7 @@ export default function AdminOverviewPage() {
                 data!.recent.users.slice(0, 3).map((u) => (
                   <li key={u.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-xs font-bold text-[#004397]">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-xs font-bold text-on-primary-fixed-variant">
                         {u.name.trim().charAt(0)}
                       </span>
                       <span className="truncate text-xs font-semibold text-on-surface">{u.name}</span>
@@ -505,7 +505,7 @@ export default function AdminOverviewPage() {
                 data!.recent.enrollments.slice(0, 3).map((e) => (
                   <li key={e.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-fixed text-xs font-bold text-[#00487f]">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-fixed text-xs font-bold text-on-secondary-fixed-variant">
                         {e.user.name.trim().charAt(0)}
                       </span>
                       <div className="min-w-0">
@@ -538,7 +538,7 @@ export default function AdminOverviewPage() {
                 data!.recent.attempts.slice(0, 3).map((a) => (
                   <li key={a.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-error-container text-xs font-bold text-[#93000a]">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-error-container text-xs font-bold text-on-error-container">
                         {a.user.name.trim().charAt(0)}
                       </span>
                       <div className="min-w-0">
@@ -557,10 +557,10 @@ export default function AdminOverviewPage() {
 
           {/* Motivation micro-card */}
           <div className="flex items-center gap-3 rounded-2xl bg-primary-fixed/70 px-4 py-3.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#207bff] text-on-primary">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-color text-on-primary">
               <Rocket className="h-4 w-4" aria-hidden="true" />
             </span>
-            <p className="text-xs font-semibold leading-relaxed text-[#001a43]">
+            <p className="text-xs font-semibold leading-relaxed text-on-primary-fixed">
               واصل التقدم — أنت تبني مستقبل طلابك خطوة بخطوة
             </p>
           </div>

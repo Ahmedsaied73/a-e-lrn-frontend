@@ -27,10 +27,10 @@ export function ConfirmDialog({ open, title, description, confirmLabel, busy = f
           <DialogDescription className="text-on-surface-variant">{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2">
-          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" onClick={() => onOpenChange(false)} disabled={busy}>
+          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-primary-color hover:text-[#0057c0]" onClick={() => onOpenChange(false)} disabled={busy}>
             إلغاء
           </Button>
-          <Button className="bg-error text-white hover:bg-[#93000a]" onClick={onConfirm} disabled={busy}>
+          <Button className="bg-error text-white hover:bg-on-error-container" onClick={onConfirm} disabled={busy}>
             {busy ? 'جارٍ الحذف...' : confirmLabel}
           </Button>
         </DialogFooter>

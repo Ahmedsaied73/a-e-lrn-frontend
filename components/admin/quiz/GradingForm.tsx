@@ -63,7 +63,7 @@ export default function GradingForm({ attempt, result, onGraded }: GradingFormPr
   return (
     <div className="space-y-5">
       {essayQuestions.some((q) => q.gradedBy === "ai") && (
-        <p className="rounded-lg border border-[#207bff]/30 bg-[#e8f2ff]/60 p-3 text-xs font-semibold text-[#0057c0]">
+        <p className="rounded-lg border border-primary-color/30 bg-[#e8f2ff]/60 p-3 text-xs font-semibold text-[#0057c0]">
           🤖 تتضمن هذه المحاولة أسئلة صُححت تلقائياً — راجع الدرجات والثقة قبل الاعتماد (الاعتماد يستبدلها).
         </p>
       )}
@@ -77,7 +77,7 @@ export default function GradingForm({ attempt, result, onGraded }: GradingFormPr
           <p className="font-bold text-on-surface">
             {question.name}
             {question.gradedBy === "ai" && (
-              <span className="mr-2 rounded-full border border-[#207bff]/30 bg-[#e8f2ff]/60 px-2 py-0.5 text-[11px] font-bold text-[#0057c0]">
+              <span className="mr-2 rounded-full border border-primary-color/30 bg-[#e8f2ff]/60 px-2 py-0.5 text-[11px] font-bold text-[#0057c0]">
                 🤖 تلقائي{typeof question.confidence === "number" ? ` (الثقة ${Math.round(question.confidence * 100)}%)` : ""}
               </span>
             )}
@@ -96,7 +96,7 @@ export default function GradingForm({ attempt, result, onGraded }: GradingFormPr
                 step="1"
                 value={scores[question.name] ?? ""}
                 onChange={(event) => setScores((current) => ({ ...current, [question.name]: event.target.value }))}
-                className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
+                className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20"
               />
             </label>
             <label className="text-sm font-semibold text-on-surface/80">
@@ -104,7 +104,7 @@ export default function GradingForm({ attempt, result, onGraded }: GradingFormPr
               <textarea
                 value={feedback[question.name] ?? ""}
                 onChange={(event) => setFeedback((current) => ({ ...current, [question.name]: event.target.value }))}
-                className="mt-1 min-h-20 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
+                className="mt-1 min-h-20 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20"
               />
             </label>
           </div>
@@ -116,7 +116,7 @@ export default function GradingForm({ attempt, result, onGraded }: GradingFormPr
           type="button"
           onClick={() => void submitGrade()}
           disabled={working}
-          className="rounded-lg bg-[#207bff] px-4 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg bg-primary-color px-4 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {working ? "جاري الحفظ..." : "اعتماد التصحيح"}
         </button>

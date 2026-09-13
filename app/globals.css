@@ -1,50 +1,258 @@
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap')
+layer(base);
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
-/* -------------------------------------------------------
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
+
+@theme {
+  --color-primary: hsl(var(--primary));
+  --color-secondary: hsl(var(--secondary));
+  --color-surface: #f7f9fc;
+  --color-surface-dim: #d8dadd;
+  --color-surface-bright: #f7f9fc;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2f4f7;
+  --color-surface-container: #eceef1;
+  --color-surface-container-high: #e6e8eb;
+  --color-surface-container-highest: #e0e3e6;
+  --color-surface-variant: #e0e3e6;
+  --color-surface-white: #ffffff;
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #414754;
+  --color-inverse-surface: #2d3133;
+  --color-inverse-on-surface: #eff1f4;
+  --color-outline: #727786;
+  --color-outline-variant: #c1c6d7;
+  --color-outline-border: #e6e8eb;
+  --color-dark: #111827;
+  --color-dark-hover: #2d3748;
+  --color-dark-border: #374151;
+  --color-dark-gray400: #9ca3af;
+  --color-primary-color: #207bff;
+  --color-primary-hover: #1a6bdf;
+  --color-primary-light: #4ea5ff;
+  --color-primary-pale: #eef6ff;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #006ff0;
+  --color-on-primary-container: #fefcff;
+  --color-inverse-primary: #aec6ff;
+  --color-primary-fixed: #d8e2ff;
+  --color-primary-fixed-dim: #aec6ff;
+  --color-on-primary-fixed: #001a43;
+  --color-on-primary-fixed-variant: #004397;
+  --color-surface-tint: #005ac5;
+  --color-secondary-color: #0061a7;
+  --color-secondary-container: #4da4fe;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #003965;
+  --color-secondary-fixed: #d2e4ff;
+  --color-secondary-fixed-dim: #a1c9ff;
+  --color-on-secondary-fixed: #001c37;
+  --color-on-secondary-fixed-variant: #00487f;
+  --color-tertiary: #1a59b6;
+  --color-tertiary-container: #3d72d0;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #fefcff;
+  --color-tertiary-fixed: #d8e2ff;
+  --color-tertiary-fixed-dim: #aec6ff;
+  --color-on-tertiary-fixed: #001a42;
+  --color-on-tertiary-fixed-variant: #004395;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-on-background: #191c1e;
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius: 0.5rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --font-sans: Cairo, sans-serif;
+  --font-cairo: Cairo, sans-serif;
+  --font-mono: Fira Code, Fira Sans, monospace;
+  --font-code: Fira Code, Fira Sans, monospace;
+
+  --text-headline-xl: 48px;
+  --text-headline-xl--line-height: 1.2;
+  --text-headline-xl--font-weight: 700;
+  --text-headline-xl--letter-spacing: -0.02em;
+  --text-headline-xl-mobile: 32px;
+  --text-headline-xl-mobile--line-height: 1.2;
+  --text-headline-xl-mobile--font-weight: 700;
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 1.3;
+  --text-headline-lg--font-weight: 700;
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 1.4;
+  --text-headline-md--font-weight: 600;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.6;
+  --text-body-lg--font-weight: 400;
+  --text-body-md: 16px;
+  --text-body-md--line-height: 1.6;
+  --text-body-md--font-weight: 400;
+  --text-label-md: 14px;
+  --text-label-md--line-height: 1;
+  --text-label-md--font-weight: 600;
+  --text-label-md--letter-spacing: 0.05em;
+  --text-caption: 12px;
+  --text-caption--line-height: 1.4;
+  --text-caption--font-weight: 400;
+
+  --shadow-level-1: 0px 0px 0px 1px #e1e8f0;
+  --shadow-level-2: 0px 4px 20px rgba(0, 0, 0, 0.04);
+  --shadow-level-3: 0px 12px 32px rgba(0, 0, 0, 0.08);
+  --shadow-primary-glow: 0px 4px 20px rgba(32, 123, 255, 0.3);
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+/* NOTE: plain CSS on purpose (NOT @utility): an @utility named the same as a
+   built-in (text-white and friends) would shadow it globally. These rules
+   only ever apply inside .lesson-body. */
+.lesson-body .text-white {
+  color: #191c1e !important;
+}
+.lesson-body .text-gray-300,
+.lesson-body .text-gray-400 {
+  color: #414754 !important;
+}
+.lesson-body .border-gray-700 {
+  border-color: #c1c6d7 !important;
+}
+
+@utility account-page {
+  @apply mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12 lg:py-16;
+
+  & [class*='bg-[#111827]'] {
+    background-color: #ffffff !important;
+    border-color: #e1e8f0 !important;
+    box-shadow: 0 4px 20px rgb(0 0 0 / 0.04);
+  }
+
+  & [class*='bg-[#1f2937]'] {
+    background-color: #f2f4f7 !important;
+    border-color: #e1e8f0 !important;
+  }
+
+  & :is(button, input)[class*='bg-[#111827]'] {
+    background-color: #ffffff !important;
+    color: #191c1e !important;
+    border-color: #c1c6d7 !important;
+  }
+
+  & [class*='bg-gray-800'] {
+    background-color: #f2f4f7 !important;
+  }
+
+  & :is(div, h1, h2, h3, h4, p, span, td, th)[class*='text-white'] {
+    color: #191c1e !important;
+  }
+
+  & [class*='text-gray-400'] {
+    color: #414754 !important;
+  }
+  & [class*='text-gray-300'] {
+    color: #414754 !important;
+  }
+  & [class*='border-gray-700'] {
+    border-color: #c1c6d7 !important;
+  }
+  & [class*='border-[#374151]'] {
+    border-color: #c1c6d7 !important;
+  }
+}
+
+@layer utilities {
+  /* -------------------------------------------------------
    Design tokens — unified light theme (shadcn-compatible names)
    SOURCE OF TRUTH: lib/colors.ts (hex values defined there;
    CSS can't import TS, so these HSL values are duplicated here).
    Keep in sync when changing lib/colors.ts.
 ------------------------------------------------------ */
-:root {
-  /* background: surface.DEFAULT #f7f9fc → hsl(213 33% 97%) */
-  --background: 213 33% 97%;
-  /* foreground: onSurface.DEFAULT #191c1e → hsl(218 10% 11%) */
-  --foreground: 218 10% 11%;
-  /* card: surface.containerLowest #ffffff → hsl(0 0% 100%) */
-  --card: 0 0% 100%;
-  --card-foreground: 218 10% 11%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 218 10% 11%;
-  /* primary: primary.DEFAULT #207bff → hsl(214 100% 56%) */
-  --primary: 214 100% 56%;
-  --primary-foreground: 0 0% 100%;
-  /* secondary: secondary.DEFAULT #0061a7 → hsl(207 100% 65%) */
-  --secondary: 207 100% 65%;
-  --secondary-foreground: 0 0% 100%;
-  /* muted: surface.containerLow #f2f4f7 → hsl(213 24% 96%) */
-  --muted: 213 24% 96%;
-  --muted-foreground: 220 25% 29%;
-  /* accent: primary.pale #eef6ff → hsl(214 100% 93%) */
-  --accent: 214 100% 93%;
-  --accent-foreground: 215 25% 27%;
-  /* destructive: error.DEFAULT #ba1a1a → hsl(0 84% 60%) */
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
-  /* border: outline.variant #c1c6d7 → hsl(213 37% 91%) */
-  --border: 213 37% 91%;
-  --input: 213 37% 91%;
-  --ring: 214 100% 56%;
-  --radius: 0.5rem;
-}
+  :root {
+    /* background: surface.DEFAULT #f7f9fc → hsl(213 33% 97%) */
+    --background: 213 33% 97%;
+    /* foreground: onSurface.DEFAULT #191c1e → hsl(218 10% 11%) */
+    --foreground: 218 10% 11%;
+    /* card: surface.containerLowest #ffffff → hsl(0 0% 100%) */
+    --card: 0 0% 100%;
+    --card-foreground: 218 10% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 218 10% 11%;
+    /* primary: primary.DEFAULT #207bff → hsl(214 100% 56%) */
+    --primary: 214 100% 56%;
+    --primary-foreground: 0 0% 100%;
+    /* secondary: secondary.DEFAULT #0061a7 → hsl(207 100% 65%) */
+    --secondary: 207 100% 65%;
+    --secondary-foreground: 0 0% 100%;
+    /* muted: surface.containerLow #f2f4f7 → hsl(213 24% 96%) */
+    --muted: 213 24% 96%;
+    --muted-foreground: 220 25% 29%;
+    /* accent: primary.pale #eef6ff → hsl(214 100% 93%) */
+    --accent: 214 100% 93%;
+    --accent-foreground: 215 25% 27%;
+    /* destructive: error.DEFAULT #ba1a1a → hsl(0 84% 60%) */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    /* border: outline.variant #c1c6d7 → hsl(213 37% 91%) */
+    --border: 213 37% 91%;
+    --input: 213 37% 91%;
+    --ring: 214 100% 56%;
+    --radius: 0.5rem;
+  }
 
-/* -------------------------------------------------------
+  /* -------------------------------------------------------
    Base layer — light theme, Cairo font, RTL
 ------------------------------------------------------ */
+}
 @layer base {
   html,
   body {
@@ -77,90 +285,58 @@
   }
 }
 
-/* -------------------------------------------------------
+@layer utilities {
+  /* -------------------------------------------------------
    Legacy gradient utilities (kept for inner pages)
 ------------------------------------------------------ */
-.primary-gradient {
-  background: linear-gradient(135deg, #207bff 0%, #4ea5ff 100%);
-}
+  .primary-gradient {
+    background: linear-gradient(135deg, #207bff 0%, #4ea5ff 100%);
+  }
 
-.primary-text-gradient {
-  background: linear-gradient(135deg, #207bff 0%, #4ea5ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+  .primary-text-gradient {
+    background: linear-gradient(135deg, #207bff 0%, #4ea5ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-/* -------------------------------------------------------
+  /* -------------------------------------------------------
    Dot-grid hero background (used on homepage)
 ------------------------------------------------------ */
-.dot-grid-bg {
-  background-image: radial-gradient(circle at 2px 2px, #207bff22 1px, transparent 0);
-  background-size: 32px 32px;
-}
+  .dot-grid-bg {
+    background-image: radial-gradient(
+      circle at 2px 2px,
+      #207bff22 1px,
+      transparent 0
+    );
+    background-size: 32px 32px;
+  }
 
-/* -------------------------------------------------------
+  /* -------------------------------------------------------
    Liquid-glass film grain (SVG feTurbulence noise texture).
    Layer over a backdrop-blur surface at low opacity for a
    subtle "liquid glass with grain" finish.
 ------------------------------------------------------ */
-.glass-noise {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 140px 140px;
-}
+  .glass-noise {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 140px 140px;
+  }
 
-/* -------------------------------------------------------
+  /* -------------------------------------------------------
    Smooth transitions for interactive elements
 ------------------------------------------------------ */
-.interactive {
-  @apply transition-all duration-300 ease-in-out;
-}
-
-/* Safe-area helpers for fixed mobile shell chrome. */
-.pt-safe {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* Shared treatment for the authenticated learning workspace. */
-@layer components {
-  .lesson-body .text-white { color: #191c1e !important; }
-  .lesson-body .text-gray-300,
-  .lesson-body .text-gray-400 { color: #414754 !important; }
-  .lesson-body .border-gray-700 { border-color: #c1c6d7 !important; }
-
-  .account-page {
-    @apply mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 lg:px-12 lg:py-16;
+  .interactive {
+    @apply transition-all duration-300 ease-in-out;
   }
 
-  .account-page [class*='bg-[#111827]'] {
-    background-color: #ffffff !important;
-    border-color: #e1e8f0 !important;
-    box-shadow: 0 4px 20px rgb(0 0 0 / 0.04);
+  /* Safe-area helpers for fixed mobile shell chrome. */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
-  .account-page [class*='bg-[#1f2937]'] {
-    background-color: #f2f4f7 !important;
-    border-color: #e1e8f0 !important;
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  .account-page :is(button, input)[class*='bg-[#111827]'] {
-    background-color: #ffffff !important;
-    color: #191c1e !important;
-    border-color: #c1c6d7 !important;
-  }
-
-  .account-page [class*='bg-gray-800'] { background-color: #f2f4f7 !important; }
-
-  .account-page :is(div, h1, h2, h3, h4, p, span, td, th)[class*='text-white'] {
-    color: #191c1e !important;
-  }
-
-  .account-page [class*='text-gray-400'] { color: #414754 !important; }
-  .account-page [class*='text-gray-300'] { color: #414754 !important; }
-  .account-page [class*='border-gray-700'],
-  .account-page [class*='border-[#374151]'] { border-color: #c1c6d7 !important; }
+  /* Shared treatment for the authenticated learning workspace. */
 }

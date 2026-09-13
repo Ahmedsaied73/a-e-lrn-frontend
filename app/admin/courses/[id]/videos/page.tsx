@@ -178,10 +178,10 @@ export default function AdminCourseVideosPage() {
         </span>
       )}
       <div className="flex shrink-0 items-center gap-1.5">
-        <button type="button" title="لأعلى" disabled={index === 0} onClick={() => void doReorder(index, -1)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-on-surface disabled:opacity-30">
+        <button type="button" title="لأعلى" disabled={index === 0} onClick={() => void doReorder(index, -1)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-on-surface disabled:opacity-30">
           <ArrowUp className="h-3.5 w-3.5" />
         </button>
-        <button type="button" title="لأسفل" disabled={index === videos.length - 1} onClick={() => void doReorder(index, 1)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-on-surface disabled:opacity-30">
+        <button type="button" title="لأسفل" disabled={index === videos.length - 1} onClick={() => void doReorder(index, 1)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-on-surface disabled:opacity-30">
           <ArrowDown className="h-3.5 w-3.5" />
         </button>
         {isReUploadable(video.status) && (
@@ -216,11 +216,11 @@ export default function AdminCourseVideosPage() {
           <p className="mt-1 text-sm text-on-surface-variant">إدارة فيديوهات الدورة #{courseId} — {videos.length} فيديو.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => void load()}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => void load()}>
             <RefreshCw className="mr-0 h-4 w-4" />
             تحديث
           </Button>
-          <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => setCreateOpen(true)}>
+          <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={() => setCreateOpen(true)}>
             <Plus className="mr-0 h-4 w-4" />
             فيديو جديد
           </Button>
@@ -234,7 +234,7 @@ export default function AdminCourseVideosPage() {
           <CardContent className="pt-5">
             <div className="mb-2 text-sm text-on-surface-variant">{bpLabel}</div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-[#e6e8eb]">
-              <div className="h-full bg-[#4ea5ff] transition-all duration-200" style={{ width: `${bp}%` }} />
+              <div className="h-full bg-primary-light transition-all duration-200" style={{ width: `${bp}%` }} />
             </div>
           </CardContent>
         </Card>
@@ -270,7 +270,7 @@ export default function AdminCourseVideosPage() {
                   placeholder="ابحث باسم الفيديو..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20"
+                  className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20"
                 />
               </div>
             )}
@@ -289,11 +289,11 @@ export default function AdminCourseVideosPage() {
           </DialogHeader>
           <div className="space-y-1.5">
             <Label htmlFor="video-title" className="text-on-surface/80">عنوان الفيديو *</Label>
-            <Input id="video-title" dir="rtl" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+            <Input id="video-title" dir="rtl" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => setCreateOpen(false)} disabled={createBusy}>إلغاء</Button>
-            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void doCreate()} disabled={createBusy || !newTitle.trim()}>
+            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => setCreateOpen(false)} disabled={createBusy}>إلغاء</Button>
+            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={() => void doCreate()} disabled={createBusy || !newTitle.trim()}>
               {createBusy ? 'جارٍ الإنشاء...' : 'إنشاء الفيديو'}
             </Button>
           </DialogFooter>
@@ -320,8 +320,8 @@ export default function AdminCourseVideosPage() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => { setUploadingFor(null); setSelectedFile(null); }} disabled={uploadBusy}>إلغاء</Button>
-            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void doUpload()} disabled={uploadBusy || !selectedFile}>
+            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => { setUploadingFor(null); setSelectedFile(null); }} disabled={uploadBusy}>إلغاء</Button>
+            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={() => void doUpload()} disabled={uploadBusy || !selectedFile}>
               {uploadBusy ? 'جارٍ الرفع...' : 'رفع'}
             </Button>
           </DialogFooter>

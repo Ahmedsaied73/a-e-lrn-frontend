@@ -153,7 +153,7 @@ export default function AdminEnrollmentsPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[#e6e8eb]">
-              <div className="h-full bg-[#4ea5ff]" style={{ width: `${Math.min(100, Math.round(row.original.progress * 100))}%` }} />
+              <div className="h-full bg-primary-light" style={{ width: `${Math.min(100, Math.round(row.original.progress * 100))}%` }} />
             </div>
             <span className="text-xs text-on-surface-variant">{Math.round(row.original.progress * 100)}%</span>
           </div>
@@ -215,11 +215,11 @@ export default function AdminEnrollmentsPage() {
           <p className="mt-1 text-sm text-on-surface-variant">تسجيل الطلاب في المقررات وإدارتها — {total} تسجيل.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => void load()}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => void load()}>
             <RefreshCw className="mr-0 h-4 w-4" />
             تحديث
           </Button>
-          <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void openEnrollDialog()}>
+          <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={() => void openEnrollDialog()}>
             <Plus className="mr-0 h-4 w-4" />
             تسجيل طالب
           </Button>
@@ -240,7 +240,7 @@ export default function AdminEnrollmentsPage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-                className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20"
+                className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20"
               />
             </div>
             <Select value={isPaid} onValueChange={(v) => { setIsPaid(v as 'ALL' | 'true' | 'false'); setPage(1); }}>
@@ -263,7 +263,7 @@ export default function AdminEnrollmentsPage() {
                 <SelectItem value="false">قيد الدراسة</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={applySearch}>
+            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={applySearch}>
               بحث
             </Button>
           </div>
@@ -287,13 +287,13 @@ export default function AdminEnrollmentsPage() {
               {[10, 15, 25, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} / صفحة</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
             السابق
           </Button>
           <span className="rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-sm text-on-surface-variant">
             صفحة {page} / {Math.max(1, totalPages)}
           </span>
-          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
             التالي
           </Button>
         </div>
@@ -330,8 +330,8 @@ export default function AdminEnrollmentsPage() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => setEnrollOpen(false)} disabled={enrollBusy}>إلغاء</Button>
-            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void doEnroll()} disabled={enrollBusy || !enrollStudentId || !enrollCourseId}>
+            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => setEnrollOpen(false)} disabled={enrollBusy}>إلغاء</Button>
+            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={() => void doEnroll()} disabled={enrollBusy || !enrollStudentId || !enrollCourseId}>
               {enrollBusy ? 'جارٍ التسجيل...' : 'تسجيل الآن'}
             </Button>
           </DialogFooter>

@@ -317,7 +317,7 @@ export default function AssignmentPage() {
               {assignment.AssignmentQuestion?.map((question, index) => (
                 <div key={question.id} className="border border-outline-variant rounded-lg p-6">
                   <h3 className="text-lg font-medium mb-4 flex items-start gap-2">
-                    <span className="bg-primary-color text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="bg-primary-color text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">
                       {index + 1}
                     </span>
                     <span>{question.text}</span>

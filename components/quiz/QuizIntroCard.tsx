@@ -22,7 +22,7 @@ function formatSeconds(sec: number): string {
 /** Skeleton shown while meta is loading */
 function QuizIntroSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-pulse">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden animate-pulse">
       <div className="bg-slate-100 h-24 w-full" />
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -117,17 +117,17 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
 
   const currentScore = meta.bestScore != null ? meta.bestScore : null;
   return (
-    <div dir="rtl" className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+    <div dir="rtl" className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
       {/* Card Header Banner */}
       <div className="bg-slate-50/80 px-6 sm:px-8 py-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="inline-block px-3 py-1 bg-[#eef6ff] text-[#207bff] text-xs font-bold rounded-full mb-2 border border-blue-100">
+          <span className="inline-block px-3 py-1 bg-primary-pale text-primary-color text-xs font-bold rounded-full mb-2 border border-blue-100">
             الاختبار الأسبوعي
           </span>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{meta.title}</h2>
         </div>
         {currentScore != null && (
-          <div className="flex flex-col items-center justify-center bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm">
+          <div className="flex flex-col items-center justify-center bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-xs">
             <span className="text-xs font-medium text-slate-500 mb-0.5">الدرجة الحالية</span>
             <span className="text-xl font-extrabold text-slate-900 tracking-tight" dir="ltr">
               {currentScore}%
@@ -151,7 +151,7 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           {/* Time limit */}
           <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 text-center flex flex-col justify-center">
-            <div className="w-8 h-8 rounded-lg bg-blue-100 text-[#207bff] mx-auto flex items-center justify-center mb-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 text-primary-color mx-auto flex items-center justify-center mb-2">
               <Clock className="w-4 h-4" />
             </div>
             <span className="text-xs font-semibold text-slate-500 block">وقت الامتحان</span>
@@ -199,7 +199,7 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
         {!isLocked && (
           <div className="bg-blue-50/40 rounded-xl p-5 sm:p-6 border border-blue-100">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-              <svg className="w-5 h-5 text-[#207bff] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-primary-color shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
               </svg>
               تعليمات هامة قبل بدء الاختبار:
@@ -270,7 +270,7 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
             <div className="w-full sm:w-2/3 flex flex-col items-center gap-3">
               <button
                 onClick={handleStartOrResume}
-                className="w-full py-3.5 px-6 rounded-xl bg-[#207bff] hover:bg-[#1a66d9] active:bg-[#1451b2] text-white font-bold text-base flex items-center justify-center gap-3 transition-all shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/30"
+                className="w-full py-3.5 px-6 rounded-xl bg-primary-color hover:bg-[#1a66d9] active:bg-[#1451b2] text-white font-bold text-base flex items-center justify-center gap-3 transition-all shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/30"
               >
                 <span>{btnLabel}</span>
                 {btnIcon}

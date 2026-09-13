@@ -111,7 +111,7 @@ export default function NotificationBell() {
       <button
         aria-label="الإشعارات"
         onClick={() => setOpen((v) => !v)}
-        className="relative p-2 rounded-full border-2 border-[#4ea5ff]/60 text-[#4ea5ff] hover:bg-[#207bff]/8 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#207bff]/30"
+        className="relative p-2 rounded-full border-2 border-primary-light/60 text-primary-light hover:bg-primary-color/8 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-primary-color/30"
       >
         <Bell className="w-5 h-5" />
         {unread > 0 && (

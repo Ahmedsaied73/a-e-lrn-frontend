@@ -254,13 +254,13 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
         <p className="mt-1 text-sm text-on-surface-variant">الحفظ يستبدل تعريف الاختبار الحالي لهذا الفيديو.</p>
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
           <label className="sm:col-span-3 text-sm font-semibold text-on-surface/80">عنوان الاختبار
-            <input value={title} onChange={(event) => setTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+            <input value={title} onChange={(event) => setTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
           </label>
           <label className="text-sm font-semibold text-on-surface/80">المدة بالثواني (اختياري)
-            <input type="number" min="1" value={timeLimit} onChange={(event) => setTimeLimit(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+            <input type="number" min="1" value={timeLimit} onChange={(event) => setTimeLimit(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
           </label>
           <label className="text-sm font-semibold text-on-surface/80">نسبة النجاح
-            <input type="number" min="0" max="100" value={passingScore} onChange={(event) => setPassingScore(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+            <input type="number" min="0" max="100" value={passingScore} onChange={(event) => setPassingScore(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
           </label>
         </div>
       </section>
@@ -269,19 +269,19 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
         <section key={question.id} className="rounded-xl border border-outline-variant/70 bg-card p-6">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-bold text-on-surface">العنصر {index + 1}</h2>
-            <button type="button" onClick={() => setQuestions((current) => current.filter((item) => item.id !== question.id))} disabled={questions.length === 1} className="text-sm font-semibold text-error transition-colors duration-150 hover:text-[#93000a] disabled:opacity-40">حذف</button>
+            <button type="button" onClick={() => setQuestions((current) => current.filter((item) => item.id !== question.id))} disabled={questions.length === 1} className="text-sm font-semibold text-error transition-colors duration-150 hover:text-on-error-container disabled:opacity-40">حذف</button>
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold text-on-surface/80">النوع
-              <select value={question.type} onChange={(event) => updateQuestion(question.id, { type: event.target.value as QuestionType })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20">
+              <select value={question.type} onChange={(event) => updateQuestion(question.id, { type: event.target.value as QuestionType })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20">
                 <option value="radiogroup">اختيار من متعدد</option><option value="comment">مقالي</option><option value="html">HTML للعرض</option><option value="image">صورة للعرض</option>
               </select>
             </label>
             <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">العنوان
-              <input value={question.title} onChange={(event) => updateQuestion(question.id, { title: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+              <input value={question.title} onChange={(event) => updateQuestion(question.id, { title: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
             </label>
             {(question.type === "radiogroup" || question.type === "comment") && <label className="text-sm font-semibold text-on-surface/80">النقاط
-              <input type="number" min="1" value={question.points} onChange={(event) => updateQuestion(question.id, { points: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+              <input type="number" min="1" value={question.points} onChange={(event) => updateQuestion(question.id, { points: event.target.value })} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
             </label>}
             {question.type === "radiogroup" && <div className="sm:col-span-2">
               <p className="text-sm font-semibold text-on-surface/80">الخيارات <span className="font-normal text-on-surface-variant">— حدد الإجابة الصحيحة بالزر</span></p>
@@ -295,13 +295,13 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
                       onChange={() => updateQuestion(question.id, { correctChoiceId: choice.id })}
                       title="إجابة صحيحة"
                       aria-label="إجابة صحيحة"
-                      className="h-4 w-4 shrink-0 accent-[#207bff]"
+                      className="h-4 w-4 shrink-0 accent-primary-color"
                     />
                     <input
                       value={choice.text}
                       onChange={(event) => updateChoice(question.id, choice.id, event.target.value)}
                       placeholder="نص الخيار"
-                      className="w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
+                      className="w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20"
                     />
                     <button
                       type="button"
@@ -319,7 +319,7 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
               <button
                 type="button"
                 onClick={() => addChoice(question.id)}
-                className="mt-2 rounded-lg border border-dashed border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0]"
+                className="mt-2 rounded-lg border border-dashed border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-[#0057c0]"
               >
                 ＋ إضافة خيار
               </button>
@@ -337,17 +337,17 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
             </div>}
             {question.type === "comment" && <div className="sm:col-span-2 space-y-3">
               <label className="block text-sm font-semibold text-on-surface/80">الإجابة النموذجية
-                <textarea value={question.modelAnswer} onChange={(event) => updateQuestion(question.id, { modelAnswer: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+                <textarea value={question.modelAnswer} onChange={(event) => updateQuestion(question.id, { modelAnswer: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
               </label>
               <label className="block text-sm font-semibold text-on-surface/80">معايير التصحيح (اختياري)
-                <textarea value={question.rubric} onChange={(event) => updateQuestion(question.id, { rubric: event.target.value })} placeholder="مثال: ذكر العاصمة = ٥ درجات، ذكر السبب = ٥ درجات" className="mt-1 min-h-20 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+                <textarea value={question.rubric} onChange={(event) => updateQuestion(question.id, { rubric: event.target.value })} placeholder="مثال: ذكر العاصمة = ٥ درجات، ذكر السبب = ٥ درجات" className="mt-1 min-h-20 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
               </label>
               <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-on-surface/80">
                 <input
                   type="checkbox"
                   checked={question.aiEnabled}
                   onChange={(event) => updateQuestion(question.id, { aiEnabled: event.target.checked })}
-                  className="h-4 w-4 shrink-0 accent-[#207bff]"
+                  className="h-4 w-4 shrink-0 accent-primary-color"
                 />
                 تصحيح تلقائي بالذكاء الاصطناعي
                 <span className="font-normal text-on-surface-variant">(تُصحَّح الإجابة آلياً عند الثقة العالية، وإلا تذهب للمصحح)</span>
@@ -363,7 +363,7 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
               />
             </div>}
             {question.type === "html" && <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">محتوى العرض
-              <textarea value={question.html} onChange={(event) => updateQuestion(question.id, { html: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+              <textarea value={question.html} onChange={(event) => updateQuestion(question.id, { html: event.target.value })} className="mt-1 min-h-28 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
             </label>}
             {question.type === "image" && <div className="sm:col-span-2">
               <QuestionImagePicker
@@ -382,11 +382,11 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
       {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
       {savedQuiz && <div className="flex flex-wrap items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">
         <span>تم حفظ الاختبار بنجاح.</span>
-        <button type="button" onClick={() => router.push(`/admin/quizzes/quiz/${savedQuiz.id}/attempts`)} className="rounded-lg bg-[#207bff] px-3 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0]">فتح طابور التصحيح</button>
+        <button type="button" onClick={() => router.push(`/admin/quizzes/quiz/${savedQuiz.id}/attempts`)} className="rounded-lg bg-primary-color px-3 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0]">فتح طابور التصحيح</button>
       </div>}
       <div className="flex gap-3">
-        <button type="button" onClick={() => setQuestions((current) => [...current, newQuestion()])} className="rounded-lg border border-outline-variant px-4 py-2.5 font-semibold text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0]">إضافة عنصر</button>
-        <button type="submit" disabled={isSaving || anyUploading} className="rounded-lg bg-[#207bff] px-5 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-60 disabled:cursor-not-allowed">{isSaving ? "جاري الحفظ..." : "حفظ الاختبار"}</button>
+        <button type="button" onClick={() => setQuestions((current) => [...current, newQuestion()])} className="rounded-lg border border-outline-variant px-4 py-2.5 font-semibold text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-[#0057c0]">إضافة عنصر</button>
+        <button type="submit" disabled={isSaving || anyUploading} className="rounded-lg bg-primary-color px-5 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-60 disabled:cursor-not-allowed">{isSaving ? "جاري الحفظ..." : "حفظ الاختبار"}</button>
       </div>
     </form>
   );

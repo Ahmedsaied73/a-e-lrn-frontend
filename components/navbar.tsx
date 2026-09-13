@@ -71,8 +71,8 @@ export function Navbar() {
       <div className="relative flex items-center justify-between px-4 lg:px-6 h-16 w-full max-w-7xl mx-auto">
 
         {/* ── Logo ── */}
-        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-          <div className="primary-gradient w-9 h-9 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-200">
+        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+          <div className="primary-gradient w-9 h-9 rounded-xl flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform duration-200">
             <BookOpen className="w-5 h-5 text-on-primary" />
           </div>
           <span className="flex flex-col leading-tight">
@@ -96,7 +96,7 @@ export function Navbar() {
                   href={link.href}
                   className={`px-4 py-2 text-[14px] font-semibold rounded-full transition-all duration-200 ${
                     active
-                      ? "bg-primary text-on-primary shadow-sm"
+                      ? "bg-primary text-on-primary shadow-xs"
                       : "text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest"
                   }`}
                 >
@@ -120,7 +120,7 @@ export function Navbar() {
                   className="flex items-center gap-2 group"
                   aria-label="قائمة المستخدم"
                 >
-                  <div className="primary-gradient h-9 w-9 rounded-full flex items-center justify-center font-bold text-sm text-on-primary shadow-sm group-hover:ring-2 group-hover:ring-primary-light transition-all duration-200">
+                  <div className="primary-gradient h-9 w-9 rounded-full flex items-center justify-center font-bold text-sm text-on-primary shadow-xs group-hover:ring-2 group-hover:ring-primary-light transition-all duration-200">
                     {initials}
                   </div>
                   <div className="text-right hidden sm:block">
@@ -212,7 +212,7 @@ export function Navbar() {
         >
           {/* User block */}
           <div className="flex items-center gap-3 px-2 py-3 border-b border-outline-variant/60 mb-2">
-            <div className="primary-gradient h-11 w-11 rounded-full flex items-center justify-center font-bold text-sm text-on-primary shadow-sm">
+            <div className="primary-gradient h-11 w-11 rounded-full flex items-center justify-center font-bold text-sm text-on-primary shadow-xs">
               {initials}
             </div>
             <div className="min-w-0">

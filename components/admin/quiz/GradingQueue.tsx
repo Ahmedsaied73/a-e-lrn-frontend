@@ -91,13 +91,13 @@ export default function GradingQueue({ quizId }: GradingQueueProps) {
       <section className="rounded-xl border border-outline-variant/70 bg-card p-6">
         <div className="flex items-center justify-between gap-3">
           <div><h1 className="text-xl font-bold text-on-surface">طابور التصحيح</h1><p className="text-sm text-on-surface-variant">المحاولات التي تنتظر تصحيح الأسئلة المقالية.</p></div>
-          <button type="button" onClick={() => void loadAttempts()} className="rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0]">تحديث</button>
+          <button type="button" onClick={() => void loadAttempts()} className="rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-[#0057c0]">تحديث</button>
         </div>
         {loading ? <p className="mt-6 text-sm text-on-surface-variant">جاري التحميل...</p> : attempts.length === 0 ? <p className="mt-6 text-sm text-on-surface-variant">لا توجد محاولات معلقة.</p> : <div className="mt-5 space-y-3">
           {attempts.map((attempt) => <div key={attempt.id} className="rounded-xl border border-outline-variant/50 bg-surface p-4">
             <div className="flex items-start justify-between gap-3"><div><p className="font-bold text-on-surface">{attempt.user?.name || attempt.user?.email || `المستخدم ${attempt.userId}`}</p><p className="text-xs text-on-surface-variant/70">محاولة {attempt.attemptNumber} — {new Date(attempt.startedAt).toLocaleString("ar-EG")}</p></div><span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">{STATUS_LABELS[attempt.status] ?? attempt.status}</span></div>
             <div className="mt-3 flex gap-2">
-              <button type="button" onClick={() => void openAttempt(attempt)} disabled={working} className="rounded-lg bg-[#207bff] px-3 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed">فتح الإجابات</button>
+              <button type="button" onClick={() => void openAttempt(attempt)} disabled={working} className="rounded-lg bg-primary-color px-3 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed">فتح الإجابات</button>
               <button type="button" onClick={() => void resetAttempt(attempt)} disabled={working} className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition-colors duration-150 hover:border-red-400 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">إعادة المحاولة</button>
             </div>
           </div>)}

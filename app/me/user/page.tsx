@@ -210,7 +210,7 @@ export default function UserProfilePage() {
 
   return (
     <div className="w-full">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-margin-mobile pb-xl pt-6 lg:px-margin-desktop">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-16 pt-6 lg:px-12">
         {/* Breadcrumbs */}
         <FadeIn>
         <nav className="flex items-center gap-2 text-[13px] font-medium text-on-surface-variant">
@@ -233,7 +233,7 @@ export default function UserProfilePage() {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href={nextLessonHref}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-on-primary shadow-sm transition-all hover:bg-on-primary-fixed-variant hover:shadow-md"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-on-primary shadow-xs transition-all hover:bg-on-primary-fixed-variant hover:shadow-md"
             >
               <Play size={16} fill="currentColor" aria-hidden="true" />
               متابعة آخر محاضرة
@@ -254,7 +254,7 @@ export default function UserProfilePage() {
           {/* ── Left sidebar ── */}
           <aside className="flex flex-col gap-6 lg:col-span-4 xl:col-span-3">
             {/* Profile card */}
-            <div className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-sm">
+            <div className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-xs">
               <div className="flex flex-col items-center">
                 <div className="relative">
                   <div className="primary-gradient flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-on-primary shadow-md">
@@ -275,7 +275,7 @@ export default function UserProfilePage() {
 
               <div className="space-y-3.5">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-container text-primary">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-container text-primary">
                     <Mail size={16} aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
@@ -286,7 +286,7 @@ export default function UserProfilePage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-container text-primary">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-container text-primary">
                     <Phone size={16} aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
@@ -297,7 +297,7 @@ export default function UserProfilePage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-container text-primary">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-container text-primary">
                     <CalendarDays size={16} aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
@@ -308,7 +308,7 @@ export default function UserProfilePage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-container text-primary">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-container text-primary">
                     <ShieldCheck size={16} aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
@@ -323,7 +323,7 @@ export default function UserProfilePage() {
             </div>
 
             {/* Account nav */}
-            <div className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-3 shadow-sm">
+            <div className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-3 shadow-xs">
               <nav className="flex flex-col gap-1">
                 <Link
                   href="/me/user"
@@ -386,7 +386,7 @@ export default function UserProfilePage() {
           <section className="flex flex-col gap-6 lg:col-span-8 xl:col-span-9">
             {/* Welcome card */}
             <FadeIn>
-            <div className="relative overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-sm">
+            <div className="relative overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-xs">
               <div className="dot-grid-bg absolute inset-0 opacity-60" aria-hidden="true" />
               <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -410,7 +410,7 @@ export default function UserProfilePage() {
 
             {/* Continue learning */}
             <FadeIn>
-            <div className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-sm">
+            <div className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-xs">
               <div className="mb-5 flex items-center justify-between">
                 <h3 className="flex items-center gap-2 text-[16px] font-bold text-on-surface">
                   <PlayCircle size={19} className="text-primary" aria-hidden="true" />
@@ -446,7 +446,7 @@ export default function UserProfilePage() {
                   </span>
                   <div className="flex flex-col justify-between gap-4 rounded-xl bg-surface-container-low p-4 sm:flex-row sm:items-center">
                     <div className="flex items-start gap-3">
-                      <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-on-primary shadow-sm">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-on-primary shadow-xs">
                         <Play size={18} fill="currentColor" aria-hidden="true" />
                       </span>
                       <div>
@@ -466,7 +466,7 @@ export default function UserProfilePage() {
                       </p>
                       <Link
                         href={`/course/${continueItem.course.id}/video/${continueItem.video.id}`}
-                        className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-on-primary shadow-sm transition-colors hover:bg-on-primary-fixed-variant"
+                        className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-on-primary shadow-xs transition-colors hover:bg-on-primary-fixed-variant"
                       >
                         استكمال الدرس الآن
                         <ArrowUpRight size={15} aria-hidden="true" />
@@ -492,7 +492,7 @@ export default function UserProfilePage() {
 
             {/* Recent assignments */}
             <FadeIn delay={0.1}>
-            <div className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-sm">
+            <div className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-6 shadow-xs">
               <div className="mb-5 flex items-center justify-between">
                 <h3 className="flex items-center gap-2 text-[16px] font-bold text-on-surface">
                   <FileText size={19} className="text-primary" aria-hidden="true" />
@@ -525,7 +525,7 @@ export default function UserProfilePage() {
                       >
                         <div className="flex items-start gap-3">
                           <span
-                            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                               isGraded ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
                             }`}
                           >

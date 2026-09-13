@@ -25,7 +25,7 @@ export default function RootLayout({
         <ReduxProvider>
           <AuthInitializer>
             <Navbar />
-            <main className="flex-grow pt-16">
+            <main className="grow pt-16">
               {children}
             </main>
             <Footer />

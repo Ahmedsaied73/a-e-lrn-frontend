@@ -217,7 +217,7 @@ export default function AdminCoursesPage() {
               type="button"
               title="تعديل"
               onClick={() => openEdit(row.original)}
-              className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-on-surface"
+              className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-on-surface"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -258,11 +258,11 @@ export default function AdminCoursesPage() {
           <p className="mt-1 text-sm text-on-surface-variant">إدارة الدورات وفيديوهاتها — {total} دورة.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => void load()}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => void load()}>
             <RefreshCw className="mr-0 h-4 w-4" />
             تحديث
           </Button>
-          <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={openCreate}>
+          <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={openCreate}>
             <Plus className="mr-0 h-4 w-4" />
             دورة جديدة
           </Button>
@@ -279,7 +279,7 @@ export default function AdminCoursesPage() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-              className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20"
+              className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20"
             />
           </div>
         </CardContent>
@@ -300,13 +300,13 @@ export default function AdminCoursesPage() {
               {[10, 15, 25, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} / صفحة</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
             السابق
           </Button>
           <span className="rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-sm text-on-surface-variant">
             صفحة {page} / {Math.max(1, totalPages)}
           </span>
-          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
             التالي
           </Button>
         </div>
@@ -333,7 +333,7 @@ export default function AdminCoursesPage() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-[#207bff] px-4 text-xs font-bold text-white transition-transform active:scale-95"
+                className="flex h-10 items-center gap-1.5 rounded-full bg-primary-color px-4 text-xs font-bold text-white transition-transform active:scale-95"
               >
                 <Plus className="h-4 w-4" />
                 جديد
@@ -349,7 +349,7 @@ export default function AdminCoursesPage() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-              className="w-full rounded-2xl border border-outline-variant/70 bg-surface-container-lowest py-2.5 pl-3 pr-9 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
+              className="w-full rounded-2xl border border-outline-variant/70 bg-surface-container-lowest py-2.5 pl-3 pr-9 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20"
             />
           </div>
 
@@ -373,19 +373,19 @@ export default function AdminCoursesPage() {
                     className="flex w-full items-start justify-between gap-2 px-4 py-3 text-right"
                   >
                     <div className="flex min-w-0 items-start gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-fixed text-[#004397]">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-fixed text-on-primary-fixed-variant">
                         <Film className="h-5 w-5" aria-hidden="true" />
                       </span>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-on-surface">{c.title}</p>
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                          <span className="rounded-full bg-secondary-fixed px-2 py-0.5 text-[10px] font-semibold text-[#00487f]">
+                          <span className="rounded-full bg-secondary-fixed px-2 py-0.5 text-[10px] font-semibold text-on-secondary-fixed-variant">
                             {GRADE_LABEL[c.grade] ?? c.grade}
                           </span>
-                          <span className="rounded-full bg-primary-fixed px-2 py-0.5 text-[10px] font-semibold text-[#004397]">
+                          <span className="rounded-full bg-primary-fixed px-2 py-0.5 text-[10px] font-semibold text-on-primary-fixed-variant">
                             {c._count.videos} فيديو
                           </span>
-                          <span className="rounded-full bg-tertiary-fixed px-2 py-0.5 text-[10px] font-semibold text-[#004395]">
+                          <span className="rounded-full bg-tertiary-fixed px-2 py-0.5 text-[10px] font-semibold text-on-tertiary-fixed-variant">
                             {c._count.enrollments} طالب
                           </span>
                           {(c.category ?? '').trim() !== '' && (
@@ -466,7 +466,7 @@ export default function AdminCoursesPage() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="course-title" className="text-on-surface/80">العنوان *</Label>
-              <Input id="course-title" dir="rtl" value={form.title} onChange={set('title')} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+              <Input id="course-title" dir="rtl" value={form.title} onChange={set('title')} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="course-desc" className="text-on-surface/80">الوصف *</Label>
@@ -476,13 +476,13 @@ export default function AdminCoursesPage() {
                 value={form.description}
                 onChange={set('description')}
                 rows={3}
-                className="w-full resize-none rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
+                className="w-full resize-none rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="course-price" className="text-on-surface/80">السعر (ج.م) *</Label>
-                <Input id="course-price" dir="ltr" type="number" value={form.price} onChange={set('price')} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+                <Input id="course-price" dir="ltr" type="number" value={form.price} onChange={set('price')} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-on-surface/80">الصف *</Label>
@@ -501,12 +501,12 @@ export default function AdminCoursesPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="course-category" className="text-on-surface/80">التصنيف</Label>
-              <Input id="course-category" dir="rtl" value={form.category} onChange={set('category')} placeholder="مثال: كيمياء" className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+              <Input id="course-category" dir="rtl" value={form.category} onChange={set('category')} placeholder="مثال: كيمياء" className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => setDialogOpen(false)} disabled={formBusy}>إلغاء</Button>
-            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void save()} disabled={formBusy}>
+            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => setDialogOpen(false)} disabled={formBusy}>إلغاء</Button>
+            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={() => void save()} disabled={formBusy}>
               {formBusy ? 'جارٍ الحفظ...' : (editingCourse ? 'حفظ التغييرات' : 'إنشاء الدورة')}
             </Button>
           </DialogFooter>

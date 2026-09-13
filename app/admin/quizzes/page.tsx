@@ -107,7 +107,7 @@ export default function AdminQuizzesPage() {
             <button type="button" title="الوصول والاستثناءات" onClick={() => router.push(`/admin/quizzes/${row.original.videoId}/access`)} className="rounded-lg border border-sky-200 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:bg-sky-50">
               <Lock className="h-3.5 w-3.5" />
             </button>
-            <button type="button" title="إنشاء / تعديل" onClick={() => router.push(`/admin/quizzes/${row.original.videoId}`)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0]">
+            <button type="button" title="إنشاء / تعديل" onClick={() => router.push(`/admin/quizzes/${row.original.videoId}`)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-[#0057c0]">
               <FileQuestion className="h-3.5 w-3.5" />
             </button>
             <button type="button" title="حذف" onClick={() => setDeleting(row.original)} className="rounded-lg border border-red-200 p-2 text-red-700 transition-colors duration-150 hover:border-red-400 hover:bg-red-50">
@@ -154,7 +154,7 @@ export default function AdminQuizzesPage() {
           <h1 className="text-2xl font-bold text-on-surface">الاختبارات</h1>
           <p className="mt-1 text-sm text-on-surface-variant">جميع الاختبارات المرتبطة بالفيديوهات — {total} اختبار.</p>
         </div>
-        <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" onClick={() => void load()}>
+        <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-primary-color hover:text-[#0057c0]" onClick={() => void load()}>
           <RefreshCw className="mr-0 h-4 w-4" />
           تحديث
         </Button>
@@ -175,11 +175,11 @@ export default function AdminQuizzesPage() {
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-                  className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-emerald-500/70 focus:ring-2 focus:ring-[#207bff]/20"
+                  className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-emerald-500/70 focus:ring-2 focus:ring-primary-color/20"
                 />
               </div>
             </div>
-            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={applySearch}>
+            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={applySearch}>
               بحث
             </Button>
           </div>
@@ -203,13 +203,13 @@ export default function AdminQuizzesPage() {
               {[10, 15, 25, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} / صفحة</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-primary-color hover:text-[#0057c0]" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
             السابق
           </Button>
           <span className="rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-sm text-on-surface-variant">
             صفحة {page} / {Math.max(1, totalPages)}
           </span>
-          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-[#207bff] hover:text-[#0057c0]" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-primary-color hover:text-[#0057c0]" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
             التالي
           </Button>
         </div>

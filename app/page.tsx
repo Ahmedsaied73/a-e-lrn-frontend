@@ -68,9 +68,9 @@ export default function Home() {
           }}
         />
         {/* Radial blue glow */}
-        <div className="absolute -left-[20%] top-[10%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl pointer-events-none" />
+        <div className="absolute left-[-20%] top-[10%] w-[600px] h-[600px] rounded-full bg-linear-to-br from-primary/10 to-transparent blur-3xl pointer-events-none" />
         {/* Ring decoration */}
-        <div className="absolute -left-[10%] top-[5%] w-[700px] h-[700px] rounded-full border-[3px] border-primary/10 pointer-events-none" />
+        <div className="absolute left-[-10%] top-[5%] w-[700px] h-[700px] rounded-full border-[3px] border-primary/10 pointer-events-none" />
 
         <div className="max-w-7xl mx-auto w-full px-4 lg:px-12 py-16 relative z-10">
           <div className="flex flex-col-reverse md:flex-row items-center gap-12 md:gap-16">
@@ -142,12 +142,12 @@ export default function Home() {
             </FadeIn>
 
             {/* ── Teacher Image ── */}
-            <ScaleIn className="flex-shrink-0 flex justify-center md:justify-start">
+            <ScaleIn className="shrink-0 flex justify-center md:justify-start">
               <div className="relative">
                 {/* Glow ring behind image */}
                 <div className="absolute inset-0 rounded-full bg-primary/15 blur-2xl scale-110" />
                 {/* Image container */}
-                <div className="relative w-[260px] h-[260px] md:w-[420px] md:h-[420px] rounded-full overflow-hidden border-[4px] border-primary shadow-[0_8px_40px_rgba(32,123,255,0.25)]">
+                <div className="relative w-[260px] h-[260px] md:w-[420px] md:h-[420px] rounded-full overflow-hidden border-4 border-primary shadow-[0_8px_40px_rgba(32,123,255,0.25)]">
                   <Image
                     src="/teacher.png"
                     alt="الأستاذ عبد الهادي موسى"
@@ -231,10 +231,10 @@ export default function Home() {
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />
                 </div>
                 {/* Content */}
-                <div className="p-5 flex flex-col gap-1 text-right flex-grow">
+                <div className="p-5 flex flex-col gap-1 text-right grow">
                   <h3 className="text-[18px] font-bold text-on-surface group-hover:text-primary transition-colors duration-200">
                     {grade.title}
                   </h3>
@@ -282,7 +282,7 @@ export default function Home() {
                 ].map((text, i) => (
            
                   <div key={i} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
                       <div className="w-2 h-2 rounded-full bg-primary" />
                     </div>
                     <p className="text-[16px] text-on-surface-variant leading-relaxed">{text}</p>
@@ -294,7 +294,7 @@ export default function Home() {
                 {isLoggedIn ? (
                   <Link
                     href="/me/user/courses"
-                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-on-primary px-7 py-3.5 rounded-xl font-semibold text-[16px] shadow-[0_4px_20px_rgba(32,123,255,0.3)] transition-all duration-200 hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-on-primary px-7 py-3.5 rounded-xl font-semibold text-[16px] shadow-primary-glow transition-all duration-200 hover:-translate-y-0.5"
                   >
                     كورساتي
                     <ArrowLeft className="w-4 h-4" />
@@ -302,7 +302,7 @@ export default function Home() {
                 ) : (
                   <Link
                     href="/register"
-                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-on-primary px-7 py-3.5 rounded-xl font-semibold text-[16px] shadow-[0_4px_20px_rgba(32,123,255,0.3)] transition-all duration-200 hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-on-primary px-7 py-3.5 rounded-xl font-semibold text-[16px] shadow-primary-glow transition-all duration-200 hover:-translate-y-0.5"
                   >
                     انضم لعيلتنا دلوقتي
                     <ArrowLeft className="w-4 h-4" />

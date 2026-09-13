@@ -36,7 +36,7 @@ export default function QuestionImagePicker({
           />
         )}
         <div className="flex flex-wrap items-center gap-2">
-          <label className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors duration-150 ${imageUploading ? "bg-outline cursor-wait" : "bg-[#207bff] hover:bg-[#0057c0]"}`}>
+          <label className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors duration-150 ${imageUploading ? "bg-outline cursor-wait" : "bg-primary-color hover:bg-[#0057c0]"}`}>
             {imageUrl ? "استبدال الصورة" : "اختيار صورة من الجهاز"}
             <input
               type="file"
@@ -54,7 +54,7 @@ export default function QuestionImagePicker({
               type="button"
               onClick={onClear}
               disabled={imageUploading}
-              className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-[#0057c0] disabled:opacity-40"
+              className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-[#0057c0] disabled:opacity-40"
             >
               إزالة
             </button>

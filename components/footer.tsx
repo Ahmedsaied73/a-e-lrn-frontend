@@ -70,7 +70,7 @@ export function Footer() {
               key={s.label}
               href={s.href}
               aria-label={s.label}
-              className="w-10 h-10 bg-primary hover:bg-primary-light text-on-primary rounded-lg flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 shadow-sm"
+              className="w-10 h-10 bg-primary hover:bg-primary-light text-on-primary rounded-lg flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 shadow-xs"
             >
               {s.icon}
             </Link>
@@ -97,7 +97,7 @@ export function Footer() {
 
         {/* Mission Statement */}
         <div className="flex items-center gap-3 text-center">
-          <div className="flex flex-col gap-1 flex-shrink-0">
+          <div className="flex flex-col gap-1 shrink-0">
             <div className="h-1.5 w-4 bg-primary-light rounded-full" />
             <div className="h-1.5 w-4 bg-primary rounded-full" />
             <div className="h-1.5 w-4 bg-primary-light rounded-full" />
@@ -105,7 +105,7 @@ export function Footer() {
           <p className="text-[15px] text-on-surface leading-relaxed max-w-lg">
             تم صنع هذه المنصة بهدف تهيئة الطالب لـ كامل جوانب الثانوية العامة و ما بعدها
           </p>
-          <div className="flex flex-col gap-1 flex-shrink-0">
+          <div className="flex flex-col gap-1 shrink-0">
             <div className="h-1.5 w-4 bg-primary-light rounded-full" />
             <div className="h-1.5 w-4 bg-primary rounded-full" />
             <div className="h-1.5 w-4 bg-primary-light rounded-full" />

@@ -76,7 +76,7 @@ export function AdminMobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex min-h-[44px] min-w-[64px] flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
+                'flex min-h-[44px] min-w-xl flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
                 active ? 'text-[#0057c0]' : 'text-on-surface-variant hover:text-on-surface',
               )}
             >

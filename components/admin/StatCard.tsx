@@ -12,7 +12,7 @@ interface StatCardProps {
 }
 
 const iconChipByTone: Record<NonNullable<StatCardProps['tone']>, string> = {
-  default: 'bg-[#e8f2ff] text-[#207bff]',
+  default: 'bg-[#e8f2ff] text-primary-color',
   success: 'bg-emerald-50 text-emerald-600',
   warning: 'bg-amber-50 text-amber-600',
   danger: 'bg-red-50 text-red-600',
@@ -27,7 +27,7 @@ const valueByTone: Record<NonNullable<StatCardProps['tone']>, string> = {
 
 export function StatCard({ label, value, icon: Icon, hint, tone = 'default', loading }: StatCardProps) {
   return (
-    <div className="group rounded-xl border border-outline-variant/70 bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#207bff]/40 hover:shadow-level-2">
+    <div className="group rounded-xl border border-outline-variant/70 bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-color/40 hover:shadow-level-2">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-[13px] font-medium text-on-surface-variant">{label}</p>

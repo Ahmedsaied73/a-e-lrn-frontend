@@ -72,7 +72,7 @@ export default function QuizResultPage({ params }: PageProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-[#207bff] mb-4" />
+        <Loader2 className="w-10 h-10 animate-spin text-primary-color mb-4" />
         <p className="text-slate-500 font-medium">جاري تحميل النتيجة...</p>
       </div>
     );
@@ -85,7 +85,7 @@ export default function QuizResultPage({ params }: PageProps) {
           <p className="font-bold mb-4">{error}</p>
           <button
             onClick={() => router.push(`/course/${params.id}/video/${params.video}/quiz`)}
-            className="bg-[#207bff] text-white px-4 py-2 rounded-lg text-sm font-bold"
+            className="bg-primary-color text-white px-4 py-2 rounded-lg text-sm font-bold"
           >
             العودة للاختبار
           </button>

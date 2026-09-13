@@ -39,7 +39,7 @@ function statusLabel(status: AttemptSummary["status"]): { text: string; cls: str
   switch (status) {
     case "GRADED": return { text: "مصحح", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" };
     case "GRADING": return { text: "بانتظار التصحيح", cls: "bg-amber-50 text-amber-700 border-amber-200" };
-    case "SUBMITTED": return { text: "مسلّم", cls: "bg-blue-50 text-[#207bff] border-blue-100" };
+    case "SUBMITTED": return { text: "مسلّم", cls: "bg-blue-50 text-primary-color border-blue-100" };
     case "EXPIRED": return { text: "منتهية الصلاحية", cls: "bg-slate-100 text-slate-600 border-slate-200" };
     case "IN_PROGRESS": return { text: "قيد التنفيذ", cls: "bg-indigo-50 text-indigo-700 border-indigo-200" };
     default: return { text: status, cls: "bg-slate-100 text-slate-600 border-slate-200" };
@@ -51,7 +51,7 @@ function McqCard({ q, index }: { q: McqResultQuestion; index: number }) {
   const correct = q.isCorrect;
 
   return (
-    <article className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${
+    <article className={`bg-white rounded-2xl border shadow-xs overflow-hidden ${
       correct ? "border-slate-200/90" : "border-rose-200/80"
     }`}>
       {/* Card top bar */}
@@ -83,7 +83,7 @@ function McqCard({ q, index }: { q: McqResultQuestion; index: number }) {
           <>
           <div className="flex items-center justify-between p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/70">
             <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-sm flex items-center justify-center shadow-sm">
+              <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
                 ✓
               </span>
               <span className="text-slate-900 font-bold text-sm sm:text-base">{q.correctAnswer}</span>
@@ -97,7 +97,7 @@ function McqCard({ q, index }: { q: McqResultQuestion; index: number }) {
           {q.studentAnswer && q.studentAnswer !== q.correctAnswer && (
             <div className="flex items-center justify-between p-4 rounded-xl border-2 border-rose-400 bg-rose-50/70">
               <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-lg bg-rose-500 text-white font-bold text-sm flex items-center justify-center shadow-sm">
+                <span className="w-7 h-7 rounded-lg bg-rose-500 text-white font-bold text-sm flex items-center justify-center shadow-xs">
                   ✗
                 </span>
                 <span className="text-slate-900 font-medium text-sm sm:text-base">{q.studentAnswer}</span>
@@ -132,7 +132,7 @@ function EssayCard({ q, index }: { q: EssayResultQuestion; index: number }) {
   const isGraded = q.status === "GRADED";
 
   return (
-    <article className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${
+    <article className={`bg-white rounded-2xl border shadow-xs overflow-hidden ${
       isPending ? "border-amber-200/80" : isGraded ? "border-slate-200/90" : "border-slate-200"
     }`}>
       {/* Card top bar */}
@@ -177,8 +177,8 @@ function EssayCard({ q, index }: { q: EssayResultQuestion; index: number }) {
         {/* Model answer — ONLY shown when GRADED (backend withholds it pre-pass) */}
         {isGraded && q.modelAnswer && (
           <div>
-            <h3 className="text-xs font-bold text-[#207bff] uppercase tracking-wide mb-2">الإجابة النموذجية</h3>
-            <div className="bg-[#eef6ff]/60 border border-blue-100 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+            <h3 className="text-xs font-bold text-primary-color uppercase tracking-wide mb-2">الإجابة النموذجية</h3>
+            <div className="bg-primary-pale/60 border border-blue-100 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
               {q.modelAnswer}
             </div>
           </div>
@@ -186,9 +186,9 @@ function EssayCard({ q, index }: { q: EssayResultQuestion; index: number }) {
 
         {/* Feedback — ONLY when GRADED */}
         {isGraded && q.feedback && (
-          <div className="bg-gradient-to-br from-[#eef6ff]/40 via-white to-slate-50 border border-blue-100 rounded-xl p-5">
-            <div className="flex items-center gap-2 text-[#207bff] font-bold text-sm mb-2">
-              <svg className="w-5 h-5 text-[#207bff] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-linear-to-br from-primary-pale/40 via-white to-slate-50 border border-blue-100 rounded-xl p-5">
+            <div className="flex items-center gap-2 text-primary-color font-bold text-sm mb-2">
+              <svg className="w-5 h-5 text-primary-color shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
               </svg>
               <h3>تغذية راجعة من المصحح</h3>
@@ -205,9 +205,9 @@ function EssayCard({ q, index }: { q: EssayResultQuestion; index: number }) {
 function AttemptsHistory({ attempts }: { attempts: AttemptSummary[] }) {
   if (!attempts.length) return null;
   return (
-    <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
-        <Clock className="w-5 h-5 text-[#207bff]" />
+        <Clock className="w-5 h-5 text-primary-color" />
         <h2 className="font-bold text-slate-900">سجل المحاولات السابقة</h2>
       </div>
       <div className="overflow-x-auto">
@@ -285,10 +285,10 @@ export default function QuizReviewList({ questions, attempts }: QuizReviewListPr
   return (
     <div dir="rtl" className="space-y-6">
       {/* The server remains the source of truth for all scores and grading. */}
-      <section className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm">
+      <section className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-[#eef6ff] flex items-center justify-center text-[#207bff]">
+            <div className="w-11 h-11 rounded-xl bg-primary-pale flex items-center justify-center text-primary-color">
               <CheckCircle className="w-6 h-6" />
             </div>
             <div>
@@ -306,10 +306,10 @@ export default function QuizReviewList({ questions, attempts }: QuizReviewListPr
                 className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
                   filter === f
                     ? f === "wrong"
-                      ? "bg-white text-rose-600 shadow-sm flex items-center gap-1.5"
+                      ? "bg-white text-rose-600 shadow-xs flex items-center gap-1.5"
                       : f === "correct"
-                        ? "bg-white text-emerald-600 shadow-sm"
-                        : "bg-white text-slate-800 shadow-sm"
+                        ? "bg-white text-emerald-600 shadow-xs"
+                        : "bg-white text-slate-800 shadow-xs"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >

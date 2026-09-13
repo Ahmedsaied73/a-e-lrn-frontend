@@ -67,16 +67,16 @@ export default function ExemptionResetPanel({ videoId }: ExemptionResetPanelProp
       <p className="mt-1 text-sm text-on-surface-variant">الفيديو الحالي: {videoId}. يتطلب الإلغاء رقم الاستثناء من النظام.</p>
       <form onSubmit={grant} className="mt-5 grid gap-3 sm:grid-cols-3">
         <label className="text-sm font-semibold text-on-surface/80">رقم الطالب
-          <input value={userId} onChange={(event) => setUserId(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+          <input value={userId} onChange={(event) => setUserId(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
         </label>
         <label className="text-sm font-semibold text-on-surface/80 sm:col-span-2">سبب الاستثناء
-          <input value={reason} onChange={(event) => setReason(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+          <input value={reason} onChange={(event) => setReason(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
         </label>
-        <button type="submit" disabled={working} className="rounded-lg bg-[#207bff] px-4 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed">منح الاستثناء</button>
+        <button type="submit" disabled={working} className="rounded-lg bg-primary-color px-4 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:opacity-50 disabled:cursor-not-allowed">منح الاستثناء</button>
       </form>
       <div className="mt-6 flex flex-wrap items-end gap-3 border-t border-outline-variant/50 pt-5">
         <label className="text-sm font-semibold text-on-surface/80">رقم الاستثناء
-          <input value={exemptionId} onChange={(event) => setExemptionId(event.target.value)} className="mt-1 w-48 rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20" />
+          <input value={exemptionId} onChange={(event) => setExemptionId(event.target.value)} className="mt-1 w-48 rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
         </label>
         <button type="button" onClick={() => void revoke()} disabled={working} className="rounded-lg border border-red-200 px-4 py-2.5 font-semibold text-red-600 transition-colors duration-150 hover:border-red-400 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">إلغاء الاستثناء</button>
       </div>

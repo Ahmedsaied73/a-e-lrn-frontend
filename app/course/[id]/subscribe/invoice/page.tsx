@@ -234,7 +234,7 @@ export default function Page({ params }: { params: { id: string } }) {
         {/* Main Content - Left Side */}
         <div className="flex-1">
           {/* Course Header */}
-          <div className="bg-gradient-to-l from-primary-color to-primary-light rounded-lg p-6 mb-8">
+          <div className="bg-linear-to-l from-primary-color to-primary-light rounded-lg p-6 mb-8">
             <div className="flex justify-between items-start">
               <div>
                 <h1 className="text-3xl font-bold text-white mb-4">

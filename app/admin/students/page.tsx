@@ -172,7 +172,7 @@ export default function StudentsPage() {
             <button type="button" title="المقررات" onClick={() => { setCourseUser(row.original); setNewCourseId(''); void loadCourseRows(row.original.id); }} className="rounded-lg border border-sky-500/40 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:text-sky-200">
               <BookOpen className="h-3.5 w-3.5" />
             </button>
-            <button type="button" title="تعديل" onClick={() => { setEditing(row.original); setEditName(row.original.name || ''); setEditEmail(row.original.email); setEditGrade((row.original.grade as GradeEnum | null) ?? ''); setEditPhone(row.original.phoneNumber || ''); }} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-[#207bff] hover:text-on-surface">
+            <button type="button" title="تعديل" onClick={() => { setEditing(row.original); setEditName(row.original.name || ''); setEditEmail(row.original.email); setEditGrade((row.original.grade as GradeEnum | null) ?? ''); setEditPhone(row.original.phoneNumber || ''); }} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-on-surface">
               <Pencil className="h-3.5 w-3.5" />
             </button>
             <button type="button" title="حذف" onClick={() => setDeleting(row.original)} className="rounded-lg border border-red-200 p-2 text-red-600 transition-colors duration-150 hover:border-red-400 hover:bg-red-50">
@@ -303,11 +303,11 @@ export default function StudentsPage() {
           <p className="mt-1 text-sm text-on-surface-variant">إدارة حسابات الطلاب والمشرفين — {total} مستخدم.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => void load()}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => void load()}>
             <RefreshCw className="mr-0 h-4 w-4" />
             تحديث
           </Button>
-          <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => setAddOpen(true)}>
+          <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={() => setAddOpen(true)}>
             <UserPlus className="mr-0 h-4 w-4" />
             إضافة طالب
           </Button>
@@ -328,7 +328,7 @@ export default function StudentsPage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-                className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20"
+                className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20"
               />
             </div>
             <Select value={role} onValueChange={(v) => { setRole(v as typeof role); setPage(1); }}>
@@ -352,7 +352,7 @@ export default function StudentsPage() {
                 <SelectItem value="THIRD_SECONDARY">الثالث الثانوي</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={applySearch}>
+            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={applySearch}>
               بحث
             </Button>
           </div>
@@ -376,13 +376,13 @@ export default function StudentsPage() {
               {[10, 15, 25, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} / صفحة</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
             السابق
           </Button>
           <span className="rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-sm text-on-surface-variant">
             صفحة {page} / {Math.max(1, totalPages)}
           </span>
-          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+          <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
             التالي
           </Button>
         </div>
@@ -409,7 +409,7 @@ export default function StudentsPage() {
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-[#207bff] px-4 text-xs font-bold text-white transition-transform active:scale-95"
+                className="flex h-10 items-center gap-1.5 rounded-full bg-primary-color px-4 text-xs font-bold text-white transition-transform active:scale-95"
               >
                 <UserPlus className="h-4 w-4" />
                 إضافة
@@ -425,7 +425,7 @@ export default function StudentsPage() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-              className="w-full rounded-2xl border border-outline-variant/70 bg-surface-container-lowest py-2.5 pl-3 pr-9 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:outline-none focus:ring-2 focus:ring-[#207bff]/20"
+              className="w-full rounded-2xl border border-outline-variant/70 bg-surface-container-lowest py-2.5 pl-3 pr-9 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20"
             />
           </div>
 
@@ -437,7 +437,7 @@ export default function StudentsPage() {
                 onClick={() => { setRole(r); setPage(1); }}
                 className={cn(
                   'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
-                  role === r ? 'bg-[#207bff] text-white' : 'border border-outline-variant/70 bg-surface-container-lowest text-on-surface-variant',
+                  role === r ? 'bg-primary-color text-white' : 'border border-outline-variant/70 bg-surface-container-lowest text-on-surface-variant',
                 )}
               >
                 {r === 'ALL' ? 'الكل' : ROLE_LABEL[r]}
@@ -451,7 +451,7 @@ export default function StudentsPage() {
                 onClick={() => { setGrade(g as GradeEnum); setPage(1); }}
                 className={cn(
                   'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
-                  grade === g ? 'bg-secondary-fixed text-[#00487f]' : 'border border-outline-variant/70 bg-surface-container-lowest text-on-surface-variant',
+                  grade === g ? 'bg-secondary-fixed text-on-secondary-fixed-variant' : 'border border-outline-variant/70 bg-surface-container-lowest text-on-surface-variant',
                 )}
               >
                 {g ? GRADE_LABEL[g] : 'كل الصفوف'}
@@ -479,7 +479,7 @@ export default function StudentsPage() {
                     className="flex w-full items-center justify-between gap-2 px-4 py-3 text-right"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-sm font-bold text-[#004397]">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-sm font-bold text-on-primary-fixed-variant">
                         {u.name.trim().charAt(0)}
                       </span>
                       <div className="min-w-0">
@@ -561,20 +561,20 @@ export default function StudentsPage() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="add-name" className="text-on-surface/80">الاسم *</Label>
-              <Input id="add-name" dir="rtl" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+              <Input id="add-name" dir="rtl" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="add-email" className="text-on-surface/80">البريد الإلكتروني *</Label>
-              <Input id="add-email" dir="ltr" type="email" value={addForm.email} onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+              <Input id="add-email" dir="ltr" type="email" value={addForm.email} onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="add-password" className="text-on-surface/80">كلمة المرور *</Label>
-              <Input id="add-password" dir="ltr" type="password" value={addForm.password} onChange={(e) => setAddForm({ ...addForm, password: e.target.value })} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+              <Input id="add-password" dir="ltr" type="password" value={addForm.password} onChange={(e) => setAddForm({ ...addForm, password: e.target.value })} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="add-phone" className="text-on-surface/80">رقم الهاتف</Label>
-                <Input id="add-phone" dir="ltr" value={addForm.phoneNumber} onChange={(e) => setAddForm({ ...addForm, phoneNumber: e.target.value })} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+                <Input id="add-phone" dir="ltr" value={addForm.phoneNumber} onChange={(e) => setAddForm({ ...addForm, phoneNumber: e.target.value })} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-on-surface/80">الصف *</Label>
@@ -592,8 +592,8 @@ export default function StudentsPage() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => setAddOpen(false)} disabled={addBusy}>إلغاء</Button>
-            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void doAddStudent()} disabled={addBusy || !addForm.name.trim() || !addForm.email.trim() || addForm.password.length < 6}>
+            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => setAddOpen(false)} disabled={addBusy}>إلغاء</Button>
+            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={() => void doAddStudent()} disabled={addBusy || !addForm.name.trim() || !addForm.email.trim() || addForm.password.length < 6}>
               {addBusy ? 'جارٍ الإنشاء...' : 'إنشاء الحساب'}
             </Button>
           </DialogFooter>
@@ -608,11 +608,11 @@ export default function StudentsPage() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="edit-name" className="text-on-surface/80">الاسم</Label>
-              <Input id="edit-name" dir="rtl" value={editName} onChange={(e) => setEditName(e.target.value)} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+              <Input id="edit-name" dir="rtl" value={editName} onChange={(e) => setEditName(e.target.value)} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="edit-email" className="text-on-surface/80">البريد الإلكتروني</Label>
-              <Input id="edit-email" dir="ltr" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+              <Input id="edit-email" dir="ltr" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -631,13 +631,13 @@ export default function StudentsPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="edit-phone" className="text-on-surface/80">رقم الهاتف</Label>
-                <Input id="edit-phone" dir="ltr" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-[#207bff] focus:ring-2 focus:ring-[#207bff]/20" />
+                <Input id="edit-phone" dir="ltr" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary-color focus:ring-2 focus:ring-primary-color/20" />
               </div>
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => setEditing(null)} disabled={editBusy}>إلغاء</Button>
-            <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void saveEdit()} disabled={editBusy || !editName.trim() || !editEmail.trim()}>
+            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => setEditing(null)} disabled={editBusy}>إلغاء</Button>
+            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={() => void saveEdit()} disabled={editBusy || !editName.trim() || !editEmail.trim()}>
               {editBusy ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
             </Button>
           </DialogFooter>
@@ -688,7 +688,7 @@ export default function StudentsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button className="bg-[#207bff] text-white hover:bg-[#0057c0]" onClick={() => void doEnroll()} disabled={courseBusy || !newCourseId}>
+                <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={() => void doEnroll()} disabled={courseBusy || !newCourseId}>
                   <Plus className="mr-0 h-4 w-4" />
                   تسجيل
                 </Button>
@@ -696,7 +696,7 @@ export default function StudentsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-[#207bff] hover:text-on-surface" onClick={() => { setCourseUser(null); setCourseRows([]); }} disabled={courseBusy}>إغلاق</Button>
+            <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => { setCourseUser(null); setCourseRows([]); }} disabled={courseBusy}>إغلاق</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

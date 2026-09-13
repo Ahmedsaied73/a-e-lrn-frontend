@@ -56,7 +56,7 @@ export default function QuizRunPage({ params }: PageProps) {
   if (!startData && !errorMsg) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3">
-        <Loader2 className="h-10 w-10 animate-spin text-[#207bff]" />
+        <Loader2 className="h-10 w-10 animate-spin text-primary-color" />
         <p className="font-medium text-slate-500">جاري تجهيز الاختبار...</p>
       </div>
     );

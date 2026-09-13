@@ -57,7 +57,7 @@ function ScoreRing({ percent, earnedPoints, totalPoints }: {
       <div className="absolute flex flex-col items-center justify-center leading-none">
         <span className="text-xs font-semibold text-slate-400 mb-1">الدرجة المستحقة</span>
         <div className="flex items-baseline font-black text-slate-900">
-          <span className="text-4xl sm:text-5xl text-[#207bff]">{earnedPoints ?? "--"}</span>
+          <span className="text-4xl sm:text-5xl text-primary-color">{earnedPoints ?? "--"}</span>
           <span className="text-2xl text-slate-400 mx-1">/</span>
           <span className="text-2xl text-slate-600">{totalPoints ?? "--"}</span>
         </div>
@@ -157,7 +157,7 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
       {/* Success/fail notification banner */}
       {passed ? (
         <div className="mt-6 bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3 text-right">
-          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+          <div className="shrink-0 w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
             </svg>
@@ -169,7 +169,7 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
         </div>
       ) : (
         <div className="mt-6 bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center gap-3 text-right">
-          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
+          <div className="shrink-0 w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
             <XCircle className="w-6 h-6" />
           </div>
           <div>
@@ -190,7 +190,7 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
       {/* Metrics grid */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl flex flex-col items-center text-center">
-          <div className="w-8 h-8 rounded-lg bg-blue-100 text-[#207bff] flex items-center justify-center mb-1.5">
+          <div className="w-8 h-8 rounded-lg bg-blue-100 text-primary-color flex items-center justify-center mb-1.5">
             <Clock className="w-4 h-4" />
           </div>
           <span className="text-xs font-medium text-slate-500">الوقت المستغرق</span>
@@ -216,7 +216,7 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
       <div className="mt-8 flex flex-col sm:flex-row gap-3 items-center justify-center">
         <button
           onClick={() => router.push(`/course/${courseId}/video/${videoId}/quiz/result/${result.attemptId}`)}
-          className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 bg-[#207bff] hover:bg-[#1a66d9] text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-blue-500/25 transition duration-150 active:scale-[0.99]"
+          className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 bg-primary-color hover:bg-[#1a66d9] text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-blue-500/25 transition duration-150 active:scale-[0.99]"
         >
           <FileText className="w-5 h-5" />
           <span>مراجعة الإجابات النموذجية</span>
@@ -224,7 +224,7 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
         {!passed && (
           <button
             onClick={handleRetake}
-            className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-6 rounded-xl border border-slate-300 shadow-sm transition duration-150 active:scale-[0.99]"
+            className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-6 rounded-xl border border-slate-300 shadow-xs transition duration-150 active:scale-[0.99]"
           >
             <RotateCcw className="w-5 h-5 text-slate-500" />
             <span>إعادة الاختبار</span>
@@ -235,7 +235,7 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
       <div className="mt-5">
         <a
           href={`/course/${courseId}`}
-          className="inline-flex items-center gap-1 text-sm font-semibold text-[#207bff] hover:text-blue-800 transition"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-primary-color hover:text-blue-800 transition"
         >
           <svg className="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
@@ -287,7 +287,7 @@ function PendingResult({ submitResult, attemptId, courseId, videoId }: PendingMo
       <div className="mt-8">
         <a
           href={`/course/${courseId}`}
-          className="inline-flex items-center gap-1 text-sm font-semibold text-[#207bff] hover:text-blue-800 transition"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-primary-color hover:text-blue-800 transition"
         >
           <svg className="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
@@ -303,7 +303,7 @@ export default function QuizResultSummary(props: QuizResultSummaryProps) {
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50 flex flex-col justify-center py-10 px-4 sm:px-6 relative overflow-hidden">
       {/* Background glows matching Stitch screen 4 */}
-      <div className="absolute w-96 h-96 bg-[#207bff]/10 rounded-full blur-3xl pointer-events-none -top-10 right-1/4" />
+      <div className="absolute w-96 h-96 bg-primary-color/10 rounded-full blur-3xl pointer-events-none -top-10 right-1/4" />
       <div className="absolute w-80 h-80 bg-emerald-200/20 rounded-full blur-3xl pointer-events-none bottom-10 left-1/4" />
 
       {props.mode === "final" ? (
