@@ -6,7 +6,7 @@
 import { apiClient } from '@/lib/api-client';
 import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 import { clearUserCache } from '@/lib/user-cache';
-import { clearUserEntries } from '@/lib/data-cache';
+import { clearUserEntries, clearShared } from '@/lib/data-cache';
 import { User } from '@/types/api';
 
 interface LoginCredentials {
@@ -34,7 +34,8 @@ export const loginUser = async (credentials: LoginCredentials): Promise<{ user: 
   await apiClient.post('/auth/login', credentials);
   // New session (possibly a different user on a shared device) — drop any
   // per-user entries cached under the previous identity before refetching.
-  clearUserEntries();  if (typeof document !== 'undefined') {
+  clearUserEntries();
+  clearShared();  if (typeof document !== 'undefined') {
     document.cookie = "isLoggedIn=true; path=/; max-age=604800; SameSite=Strict";
   }
 
@@ -50,6 +51,7 @@ export const registerUser = async (userData: RegisterData): Promise<{ user: User
   purgeLegacyAuthStorage();
   await apiClient.post('/auth/register', userData);
   clearUserEntries();
+  clearShared();
 
   if (typeof document !== 'undefined') {
     document.cookie = "isLoggedIn=true; path=/; max-age=604800; SameSite=Strict";
@@ -71,6 +73,7 @@ export const logoutUser = async (): Promise<void> => {
     purgeLegacyAuthStorage();
     clearUserCache();
     clearUserEntries();
+    clearShared();
     if (typeof document !== 'undefined') {
       document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }

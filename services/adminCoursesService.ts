@@ -8,6 +8,7 @@
  */
 
 import { apiClient } from '@/lib/api-client';
+import { clearShared } from '@/lib/data-cache';
 import type {
   AdminCourse,
   AdminCourseFilters,
@@ -29,13 +30,19 @@ export async function getAdminCourses(filters: AdminCourseFilters = {}): Promise
 }
 
 export async function createAdminCourse(body: AdminCourseInput): Promise<AdminCourse> {
-  return apiClient.post<AdminCourse>(`/courses`, body);
+  const created = await apiClient.post<AdminCourse>(`/courses`, body);
+  clearShared(); // catalog lists (home + console) refetch with the new course
+  return created;
 }
 
 export async function updateAdminCourse(id: number, body: Partial<AdminCourseInput>): Promise<AdminCourse> {
-  return apiClient.put<AdminCourse>(`/courses/${id}`, body);
+  const updated = await apiClient.put<AdminCourse>(`/courses/${id}`, body);
+  clearShared();
+  return updated;
 }
 
 export async function deleteAdminCourse(id: number): Promise<{ success: boolean; message: string }> {
-  return apiClient.delete<{ success: boolean; message: string }>(`/courses/${id}`);
+  const result = await apiClient.delete<{ success: boolean; message: string }>(`/courses/${id}`);
+  clearShared();
+  return result;
 }

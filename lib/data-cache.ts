@@ -19,7 +19,9 @@
  *     module — auth is HttpOnly cookies, invisible to JS.
  *
  * Key discipline (the security model):
- *  - `shared:` keys hold public catalog data any visitor may see.
+ *  - `shared:` keys hold catalog data, segmented by role (`shared:ADMIN:...`
+ *    vs `shared:STUDENT:...`) because the same path returns different shapes
+ *    per role. Cleared on every auth transition like user entries.
  *  - `user:` keys hold per-user responses (enrollment, progress) and are
  *    namespaced by profile id (`user:7:/courses/1`), `anon` when signed out.
  *  - EVERY auth transition (login, logout, 401, cross-tab logout) calls
@@ -58,9 +60,31 @@ export function peekUserId(): number | string | null {
   }
 }
 
-/** Key builder for public catalog data (courses list, categories). */
+/**
+ * Profile role for `shared:` segmentation. The same `/courses?...` path
+ * returns a richer shape for ADMINs (counts, unpublished) than for students —
+ * without role segmentation an admin browsing the student catalog in one tab
+ * would poison (or be poisoned by) the console list under the same key.
+ */
+export function peekUserRole(): string | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(ELRN_USER_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      value?: { role?: unknown };
+      user?: { role?: unknown };
+    };
+    const role = parsed?.value?.role ?? parsed?.user?.role;
+    return typeof role === 'string' && role ? role : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Key builder for catalog data, segmented by role (see peekUserRole). */
 export function sharedKey(path: string): string {
-  return `shared:${path}`;
+  return `shared:${peekUserRole() ?? 'anon'}:${path}`;
 }
 
 /** Key builder for per-user responses (detail+progress, enrolled, videos). */

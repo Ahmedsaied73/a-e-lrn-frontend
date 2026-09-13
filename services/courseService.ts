@@ -6,7 +6,7 @@
  */
 
 import { apiClient } from '@/lib/api-client';
-import { cached, userKey } from '@/lib/data-cache';
+import { cached, sharedKey, userKey } from '@/lib/data-cache';
 import { PaginationMeta } from '@/types/api';
 
 // ---------------------------------------------------------------------------
@@ -113,23 +113,26 @@ function extractData<T>(raw: unknown): T {
  * Response: `{ success, data: CourseListItem[], meta }` (new envelope)
  */
 export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage> {
-  // apiClient.get already unwraps { success, data } if present,
-  // but for paginated list we need the meta too — raw fetch here.
-  const raw = await apiClient.get<{ success: boolean; data: CourseListItem[]; meta: PaginationMeta } | CourseListItem[]>(
-    `/courses?page=${page}&limit=${limit}`,
-  );
+  // Shared 90s cache: the catalog is identical for every visitor. Matches the
+  // backend courses-list TTL; admin course mutations clear it (see
+  // adminCoursesService) so the console never serves a stale catalog.
+  return cached(sharedKey(`/courses?page=${page}&limit=${limit}`), 90_000, async () => {
+    const raw = await apiClient.get<{ success: boolean; data: CourseListItem[]; meta: PaginationMeta } | CourseListItem[]>(
+      `/courses?page=${page}&limit=${limit}`,
+    );
 
-  if (raw !== null && typeof raw === 'object' && !Array.isArray(raw) && 'data' in (raw as object)) {
-    const envelope = raw as { data: CourseListItem[]; meta: PaginationMeta };
-    return { data: envelope.data, meta: envelope.meta };
-  }
+    if (raw !== null && typeof raw === 'object' && !Array.isArray(raw) && 'data' in (raw as object)) {
+      const envelope = raw as { data: CourseListItem[]; meta: PaginationMeta };
+      return { data: envelope.data, meta: envelope.meta };
+    }
 
-  // Flat array fallback
-  const arr = Array.isArray(raw) ? (raw as CourseListItem[]) : [];
-  return {
-    data: arr,
-    meta: { total: arr.length, page, limit, totalPages: 1 },
-  };
+    // Flat array fallback
+    const arr = Array.isArray(raw) ? (raw as CourseListItem[]) : [];
+    return {
+      data: arr,
+      meta: { total: arr.length, page, limit, totalPages: 1 },
+    };
+  });
 }
 
 /**
@@ -201,11 +204,16 @@ export async function enrollInCourse(courseId: string | number): Promise<Enrollm
  * — this unwraps the nested course objects into a flat CourseListItem[].
  */
 export async function getEnrolledCourses(): Promise<CourseListItem[]> {
-  const raw = await apiClient.get<unknown>('/courses/enrolled');
-  const data = extractData<EnrolledCourseEntry[]>(raw);
+  // User-scoped 30s cache: per-viewer list rendered on three profile pages.
+  // Short TTL because enroll/unenroll flips it; enrollInCourse also drops it
+  // explicitly, so the post-enroll profile refresh is exact, not TTL-bound.
+  return cached(userKey('/courses/enrolled'), 30_000, async () => {
+    const raw = await apiClient.get<unknown>('/courses/enrolled');
+    const data = extractData<EnrolledCourseEntry[]>(raw);
 
-  if (!Array.isArray(data)) return [];
-  return data
-    .map((entry) => entry.course)
-    .filter((course): course is (CourseListItem & Record<string, unknown>) => !!course);
+    if (!Array.isArray(data)) return [];
+    return data
+      .map((entry) => entry.course)
+      .filter((course): course is (CourseListItem & Record<string, unknown>) => !!course);
+  });
 }

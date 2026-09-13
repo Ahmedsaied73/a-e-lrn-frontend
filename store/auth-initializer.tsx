@@ -6,7 +6,7 @@ import { loginStart, loginSuccess, loginFailure, guestSessionChecked } from './s
 import { getCurrentUser } from '@/services/authService';
 import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 import { getCachedUser, setCachedUser, clearUserCache, USER_CACHE_KEY } from '@/lib/user-cache';
-import { clearUserEntries } from '@/lib/data-cache';
+import { clearUserEntries, clearShared } from '@/lib/data-cache';
 
 /**
  * Single source of truth for "am I logged in" on app load.
@@ -49,6 +49,7 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
         if (e.key === USER_CACHE_KEY && e.newValue === null) {
           clearUserCache();
           clearUserEntries();
+          clearShared();
         }
       };
       window.addEventListener('storage', onStorage);

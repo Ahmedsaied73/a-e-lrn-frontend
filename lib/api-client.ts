@@ -23,7 +23,7 @@ import {
 } from './errors';
 import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 import { clearUserCache } from '@/lib/user-cache';
-import { clearUserEntries } from '@/lib/data-cache';
+import { clearUserEntries, clearShared } from '@/lib/data-cache';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -32,6 +32,10 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3005';
 
 export { API_BASE_URL };
+
+// POST paths whose success flips per-user derived state (enrollment rows,
+// video progress). See the invalidation hook after the !response.ok block.
+const USER_INVALIDATING_POSTS = new Set(['/progress/complete', '/enroll/']);
 
 // ---------------------------------------------------------------------------
 // Request builder with Credentials & Silent Refresh Interceptor
@@ -191,6 +195,7 @@ async function request<T>(
     purgeLegacyAuthStorage();
     clearUserCache();
     clearUserEntries();
+    clearShared();
     if (typeof window !== 'undefined') {
       document.cookie = 'isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       // Redirect to login if unauthenticated on protected action
@@ -241,6 +246,15 @@ async function request<T>(
     const errMsg =
       errObj?.error || errObj?.message || `خطأ من الخادم (status ${response.status})`;
     throw new ApiError(errMsg, response.status, resBody);
+  }
+
+  // Mutations that flip per-user derived state drop the user-scoped cache, so
+  // the next read refetches exactly once instead of serving pre-mutation
+  // state (e.g. course detail cached with enrollment:null before enroll, or
+  // with stale progress before a completion). Exact-path match only:
+  // POST /enroll/status is a *read* and must never invalidate.
+  if (method === 'POST' && USER_INVALIDATING_POSTS.has(path)) {
+    clearUserEntries();
   }
 
   // Full response mode: return the parsed body as-is (keeps `meta` for pagination)
