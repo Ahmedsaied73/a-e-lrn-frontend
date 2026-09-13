@@ -46,8 +46,9 @@ export function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  // Hidden inside the admin console (it has its own shell).
-  if (pathname.startsWith("/admin")) {
+  // Hidden inside the admin console (it has its own shell)
+  // and on the auth pages (they are chromeless full-screen splits).
+  if (pathname.startsWith("/admin") || pathname === "/login" || pathname === "/register") {
     return null;
   }
 

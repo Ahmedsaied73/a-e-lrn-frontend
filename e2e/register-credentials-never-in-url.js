@@ -117,8 +117,7 @@ function assertClean(urls, secrets, label) {
     await page.fill('input[name="lastName"]', 'Proof');
     await page.fill('input[name="phone"]', phone);
     await page.fill('input[name="email"]', email);
-    await page.click('button[role="combobox"]');
-    await page.click('[role="option"]:has-text("الأول الثانوي")');
+    await page.selectOption('select[name="grade"]', 'FIRST_SECONDARY');
     await page.fill('input[name="password"]', pass);
     await page.fill('input[name="confirmPassword"]', pass);
     await page.click('button[type="submit"]:not([disabled])');

@@ -4,23 +4,6 @@ import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -28,7 +11,6 @@ import { loginSuccess, selectAuth } from '@/store/slices/authSlice';
 import { registerUser } from '@/services/authService';
 import { setCachedUser } from '@/lib/user-cache';
 import { addNotification, setGlobalLoading } from '@/store/slices/uiSlice';
-import Image from 'next/image';
 
 const formSchema = z.object({
   firstName: z.string().min(2, {
@@ -55,13 +37,36 @@ const formSchema = z.object({
   path: ['confirmPassword'],
 });
 
+const GRADES = [
+  { value: 'FIRST_SECONDARY', label: 'الصف الأول الثانوي' },
+  { value: 'SECOND_SECONDARY', label: 'الصف الثاني الثانوي' },
+  { value: 'THIRD_SECONDARY', label: 'الصف الثالث الثانوي' },
+] as const;
+
+const inputClass =
+  'w-full rounded-lg border border-brand-border bg-brand-surface px-4 py-2.5 text-sm text-brand-text outline-none transition placeholder:text-brand-muted focus:border-brand-primary';
+
+function OrbitArt() {
+  return (
+    <svg viewBox="0 0 320 320" fill="none" className="h-full w-full max-w-sm text-white" aria-hidden="true">
+      <circle cx="160" cy="160" r="14" fill="currentColor" opacity="0.9" />
+      <ellipse cx="160" cy="160" rx="100" ry="44" stroke="currentColor" strokeWidth="1.6" opacity="0.5" />
+      <ellipse cx="160" cy="160" rx="100" ry="44" stroke="currentColor" strokeWidth="1.6" opacity="0.5" transform="rotate(60 160 160)" />
+      <ellipse cx="160" cy="160" rx="100" ry="44" stroke="currentColor" strokeWidth="1.6" opacity="0.5" transform="rotate(120 160 160)" />
+      <circle cx="260" cy="160" r="6" fill="currentColor" />
+      <circle cx="105" cy="72" r="6" fill="currentColor" />
+      <circle cx="105" cy="248" r="6" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(state => state.ui.globalLoading);
   const notifications = useAppSelector(state => state.ui.notifications);
   const { initialized, isAuthenticated } = useAppSelector(selectAuth);
-  
+
   // Check for error notifications
   const errorNotification = notifications.find(n => n.type === 'error');
   const [registered, setRegistered] = useState(false);
@@ -85,7 +90,7 @@ export default function RegisterPage() {
       router.replace('/');
     }
   }, [initialized, isAuthenticated, router]);
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -102,7 +107,7 @@ export default function RegisterPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       dispatch(setGlobalLoading(true));
-      
+
       // Prepare data for submission
       const name = `${values.firstName} ${values.lastName}`;
       const requestData = {
@@ -112,7 +117,7 @@ export default function RegisterPage() {
         grade: values.grade,
         password: values.password
       };
-      
+
       // Register user using centralized auth service. Registration opens a
       // session on the backend (cookie-only), so hydrate Redux and cache now —
       // the guard effect then routes the learner home as a logged-in user.
@@ -120,21 +125,21 @@ export default function RegisterPage() {
       dispatch(loginSuccess(user));
       setCachedUser(user);
       setRegistered(true);
-      
+
       // Show success notification
       dispatch(addNotification({
         type: 'success',
         message: 'تم إنشاء الحساب بنجاح!',
         duration: 3000
       }));
-      
-    } catch (err: any) {
+
+    } catch (err: unknown) {
       console.error('Registration error:', err);
-      
+
       // Show error notification
       dispatch(addNotification({
         type: 'error',
-        message: err.message || 'حدث خطأ أثناء إنشاء الحساب. يرجى المحاولة مرة أخرى.',
+        message: err instanceof Error ? err.message : 'حدث خطأ أثناء إنشاء الحساب. يرجى المحاولة مرة أخرى.',
         duration: 5000
       }));
     } finally {
@@ -142,242 +147,98 @@ export default function RegisterPage() {
     }
   }
 
+  const errors = form.formState.errors;
+
   return (
-    <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-8">
-      <div className="w-full md:w-1/2 max-w-md mx-auto md:mx-0">
-        <div className="text-center md:text-right mb-8">
-          <h1 className="text-3xl font-bold primary-text-gradient mb-2">أنشئ حسابك الآن!</h1>
-          <p className="text-on-surface-variant">
-            ادخل بياناتك بشكل صحيح للحصول على أفضل تجربة داخل الموقع
-          </p>
-        </div>
+    <div className="-mt-16 grid min-h-dvh bg-brand-bg lg:grid-cols-2">
+      <div className="flex items-center justify-center px-6 py-16 lg:order-2">
+        <div className="w-full max-w-sm">
+          <Link href="/" className="text-lg font-extrabold text-brand-primary">أكاديميا</Link>
+          <h1 className="mt-6 text-2xl font-extrabold text-brand-text">ابدأ مدارك الجديد</h1>
+          <p className="mt-1.5 text-sm text-brand-muted">أنشئ حسابًا لتتابع دوراتك ونتائجك من أي جهاز.</p>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} method="post" className="space-y-6">
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-end gap-2">
-                    <span className='text-on-surface'>الاسم الأول</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgb(var(--primary))]">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="الاسم الأول"
-                      {...field}
-                      className="text-right"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-end gap-2">
-                    <span className='text-on-surface'>الاسم الأخير</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgb(var(--primary))]">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="الاسم الأخير"
-                      {...field}
-                      className="text-right"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-end gap-2">
-                    <span className='text-on-surface'>رقم الهاتف</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgb(var(--primary))]">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                    </svg>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      dir="ltr"
-                      placeholder="01XXXXXXXXX"
-                      {...field}
-                      className="text-right"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-end gap-2">
-                    <span className='text-on-surface'>البريد الإلكتروني (اختياري)</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgb(var(--primary))]">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                      <polyline points="22,6 12,13 2,6"></polyline>
-                    </svg>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      dir="ltr"
-                      placeholder="example@example.com"
-                      {...field}
-                      className="text-right"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="grade"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-end gap-2">
-                    <span className='text-on-surface'>الصف الدراسي</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgb(var(--primary))]">
-                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                    </svg>
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="text-right bg-background border-input hover:bg-accent hover:text-accent-foreground">
-                        <SelectValue placeholder="اختر الصف الدراسي" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="bg-background border-input">
-                      <SelectItem value="FIRST_SECONDARY" className="text-right">الصف الأول الثانوي</SelectItem>
-                      <SelectItem value="SECOND_SECONDARY" className="text-right">الصف الثاني الثانوي</SelectItem>
-                      <SelectItem value="THIRD_SECONDARY" className="text-right">الصف الثالث الثانوي</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-end gap-2">
-                    <span className='text-on-surface'>كلمة السر</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgb(var(--primary))]">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="******"
-                      {...field}
-                      className="text-right"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-end gap-2">
-                    <span className='text-on-surface'>تأكيد كلمة السر</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgb(var(--primary))]">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="******"
-                      {...field}
-                      className="text-right"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(onSubmit)} method="post" className="mt-8 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="reg-first" className="mb-1.5 block text-sm font-semibold text-brand-text">الاسم الأول</label>
+                <input id="reg-first" type="text" required placeholder="أحمد" {...form.register('firstName')} className={inputClass} />
+                {errors.firstName && <p className="mt-1 text-xs text-brand-accent">{errors.firstName.message}</p>}
+              </div>
+              <div>
+                <label htmlFor="reg-last" className="mb-1.5 block text-sm font-semibold text-brand-text">الاسم الأخير</label>
+                <input id="reg-last" type="text" required placeholder="أسامة" {...form.register('lastName')} className={inputClass} />
+                {errors.lastName && <p className="mt-1 text-xs text-brand-accent">{errors.lastName.message}</p>}
+              </div>
+            </div>
+            <div>
+              <label htmlFor="reg-phone" className="mb-1.5 block text-sm font-semibold text-brand-text">رقم الهاتف</label>
+              <input id="reg-phone" type="tel" required dir="ltr" placeholder="01XXXXXXXXX" {...form.register('phone')} className={inputClass} />
+              {errors.phone && <p className="mt-1 text-xs text-brand-accent">{errors.phone.message}</p>}
+            </div>
+            <div>
+              <label htmlFor="reg-email" className="mb-1.5 block text-sm font-semibold text-brand-text">البريد الإلكتروني</label>
+              <input id="reg-email" type="email" required placeholder="you@example.com" {...form.register('email')} className={inputClass} />
+              {errors.email && <p className="mt-1 text-xs text-brand-accent">{errors.email.message}</p>}
+            </div>
+            <div>
+              <label htmlFor="reg-grade" className="mb-1.5 block text-sm font-semibold text-brand-text">الصف الدراسي</label>
+              <div className="relative">
+                <select id="reg-grade" required {...form.register('grade')} defaultValue="" className={inputClass + ' appearance-none pl-10'}>
+                  <option value="" disabled>اختر الصف الدراسي</option>
+                  {GRADES.map((g) => (
+                    <option key={g.value} value={g.value}>{g.label}</option>
+                  ))}
+                </select>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-muted"><path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </div>
+              {errors.grade && <p className="mt-1 text-xs text-brand-accent">{errors.grade.message}</p>}
+            </div>
+            <div>
+              <label htmlFor="reg-pass" className="mb-1.5 block text-sm font-semibold text-brand-text">كلمة المرور</label>
+              <input id="reg-pass" type="password" required placeholder="٨ أحرف على الأقل" {...form.register('password')} className={inputClass} />
+              {errors.password && <p className="mt-1 text-xs text-brand-accent">{errors.password.message}</p>}
+            </div>
+            <div>
+              <label htmlFor="reg-confirm" className="mb-1.5 block text-sm font-semibold text-brand-text">تأكيد كلمة المرور</label>
+              <input id="reg-confirm" type="password" required placeholder="أعد كتابة كلمة المرور" {...form.register('confirmPassword')} className={inputClass} />
+              {errors.confirmPassword && <p className="mt-1 text-xs text-brand-accent">{errors.confirmPassword.message}</p>}
+            </div>
 
             {errorNotification && (
-              <div className="p-3 rounded-md bg-red-500/10 border border-red-500/50 text-red-500 text-right">
+              <div className="rounded-lg border border-brand-accent/40 bg-brand-accent/10 p-3 text-right text-sm text-brand-accent">
                 {errorNotification.message}
               </div>
             )}
-            
+
             {registered && (
-              <div className="p-3 rounded-md bg-green-500/10 border border-green-500/50 text-green-500 text-right">
-                {''}تم إنشاء الحساب بنجاح! جارٍ توجيهك إلى الرئيسية...
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-right text-sm text-emerald-700">
+                تم إنشاء الحساب بنجاح! جارٍ توجيهك إلى الرئيسية...
               </div>
             )}
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-[rgb(var(--primary))] hover:bg-[rgb(var(--secondary))]"
-              disabled={isLoading || !hydrated}
-            >
-              {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء الحساب!'}
-            </Button>
 
-            <div className="text-center mt-4">
-              <p className="text-sm text-on-surface-variant">
-                لديك حساب بالفعل؟{' '}
-                <Link href="/login" className="text-[rgb(var(--primary))] hover:text-[rgb(var(--secondary))] hover:underline">
-                  تسجيل الدخول
-                </Link>
-              </p>
-            </div>
+            <button
+              type="submit"
+              disabled={isLoading || !hydrated}
+              className="w-full rounded-full bg-brand-primary py-3 text-sm font-bold text-white transition hover:bg-brand-primary/90 disabled:opacity-60"
+            >
+              {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء الحساب'}
+            </button>
           </form>
-        </Form>
+
+          <p className="mt-6 text-center text-sm text-brand-muted">
+            لديك حساب بالفعل؟{" "}
+            <Link href="/login" className="font-semibold text-brand-primary hover:underline">سجّل الدخول</Link>
+          </p>
+        </div>
       </div>
 
-      <div className="w-full md:w-1/2 hidden md:block">
-        <div className="relative h-[500px] w-full">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Image
-              src="/student.svg"
-              alt="Student"
-              width={400}
-              height={400}
-              className="max-h-full max-w-full object-contain"
-              onError={(e) => {
-                // TypeScript doesn't allow direct assignment to src, using dataset as a workaround
-                const imgElement = e.currentTarget as HTMLImageElement;
-                imgElement.src = 'https://img.freepik.com/free-vector/hand-drawn-flat-design-stack-books-illustration_23-2149341898.jpg?w=740';
-              }}
-            />
-          </div>
+      <div className="relative hidden items-center justify-center overflow-hidden bg-brand-ink p-10 lg:order-1 lg:flex">
+        <div className="hero-glow absolute -inset-24 rounded-full bg-brand-accent/20 blur-3xl" aria-hidden="true" />
+        <div className="relative flex flex-col items-center text-center">
+          <OrbitArt />
+          <p className="mt-6 max-w-xs text-sm leading-relaxed text-white/70">
+            كل مادة تدرسها تدور حول فكرة واحدة مركزية — نساعدك تكتشفها بوضوح.
+          </p>
         </div>
       </div>
     </div>

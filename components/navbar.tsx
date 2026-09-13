@@ -60,8 +60,9 @@ export function Navbar() {
 
   const initials = user?.name?.substring(0, 2)?.toUpperCase() || "م";
 
-  // Hide the site chrome inside the admin console (it has its own shell).
-  if (pathname.startsWith("/admin")) {
+  // Hide the site chrome inside the admin console (it has its own shell)
+  // and on the auth pages (they are chromeless full-screen splits).
+  if (pathname.startsWith("/admin") || pathname === "/login" || pathname === "/register") {
     return null;
   }
 

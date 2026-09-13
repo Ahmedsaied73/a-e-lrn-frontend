@@ -4,18 +4,7 @@ import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loginSuccess } from '@/store/slices/authSlice';
@@ -32,6 +21,20 @@ const formSchema = z.object({
     message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
   }),
 });
+
+function MoleculeArt() {
+  return (
+    <svg viewBox="0 0 320 320" fill="none" className="h-full w-full max-w-sm text-white" aria-hidden="true">
+      <g opacity="0.9">
+        <circle cx="120" cy="120" r="26" stroke="currentColor" strokeWidth="2" />
+        <circle cx="220" cy="90" r="18" stroke="currentColor" strokeWidth="2" />
+        <circle cx="230" cy="200" r="30" stroke="currentColor" strokeWidth="2" />
+        <circle cx="110" cy="230" r="16" stroke="currentColor" strokeWidth="2" />
+        <path d="M142 108 202 96M138 142 208 188M150 224 200 214M100 214 92 130" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      </g>
+    </svg>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -51,7 +54,7 @@ export default function LoginPage() {
   useEffect(() => {
     setHydrated(true);
   }, []);
-  
+
   // Check for error notifications
   const errorNotification = notifications.find(n => n.type === 'error');
 
@@ -62,15 +65,15 @@ export default function LoginPage() {
       router.replace('/');
     }
   }, [initialized, isAuthenticated, router]);
-  
-  const form = useForm<z.infer<typeof formSchema>>({    
+
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: '',
       password: '',
     },
   });
-  
+
   // Check for error message stored in localStorage
   useEffect(() => {
     const authError = localStorage.getItem('authError');
@@ -89,131 +92,119 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       dispatch(setGlobalLoading(true));
-      
+
       // Use the auth service for login
       const userData = await loginUser(values);
-      
+
       // Update Redux state
       dispatch(loginSuccess(userData.user));
       setCachedUser(userData.user);
-      
+
       // Show success notification
       dispatch(addNotification({
         type: 'success',
         message: 'تم تسجيل الدخول بنجاح!',
         duration: 3000
       }));
-      
+
       // Redirect to home page
       router.push('/');
-      
-    } catch (err: any) {
+
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      
+
       // Show error notification
       dispatch(addNotification({
         type: 'error',
-        message: err.message || 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.',
+        message: err instanceof Error ? err.message : 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.',
         duration: 5000
       }));
-      
+
       dispatch(setGlobalLoading(false));
     }
   }
 
+  function handleForgotPassword() {
+    dispatch(addNotification({
+      type: 'info',
+      message: 'خدمة استعادة كلمة المرور ستتاح قريباً.',
+      duration: 4000
+    }));
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-8">
-      <div className="w-full md:w-1/2 max-w-md mx-auto md:mx-0">
-        <div className="text-center md:text-right mb-8">
-          <h1 className="text-3xl font-bold primary-text-gradient mb-2">تسجيل الدخول</h1>
-          <p className="text-on-surface-variant">
-            قم بتسجيل الدخول باستخدام بريدك الإلكتروني وكلمة المرور
+    <div className="-mt-16 grid min-h-dvh bg-brand-bg lg:grid-cols-2">
+      <div className="relative hidden items-center justify-center overflow-hidden bg-brand-ink p-10 lg:flex">
+        <div className="hero-glow absolute -inset-24 rounded-full bg-brand-primary/20 blur-3xl" aria-hidden="true" />
+        <div className="relative flex flex-col items-center text-center">
+          <MoleculeArt />
+          <p className="mt-6 max-w-xs text-sm leading-relaxed text-white/70">
+            كل جلسة تسجيل دخول هي رابطة جديدة بينك وبين ما تعلمته — أكمل من حيث توقفت.
           </p>
         </div>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} method="post" className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-end gap-2">
-                    <span className='text-on-surface'>البريد الإلكتروني</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgb(var(--primary))]">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                      <polyline points="22,6 12,13 2,6"></polyline>
-                    </svg>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="example@example.com"
-                      {...field}
-                      className="text-right"
-                      dir="ltr"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center justify-end gap-2">
-                    <span className='text-on-surface'>كلمة المرور</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgb(var(--primary))]">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="******"
-                      {...field}
-                      className="text-right"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading || !hydrated}
-            >
-              {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
-            </Button>
-
-            {errorNotification && (
-              <p className="text-red-500 text-sm text-center">{errorNotification.message}</p>
-            )}
-
-            <p className="text-center text-sm text-on-surface-variant mt-4">
-              ليس لديك حساب؟{' '}
-              <Link href="/register" className="text-[rgb(var(--primary))] hover:underline">
-                انشئ حساب الآن!
-              </Link>
-            </p>
-          </form>
-        </Form>
       </div>
 
-      <div className="hidden lg:block w-1/2">
-        <div className="relative h-[600px] w-full">
-          <Image
-            src="/student-illustration.svg"
-            alt="Student illustration"
-            layout="fill"
-            objectFit="contain"
-            priority
-          />
+      <div className="flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-sm">
+          <Link href="/" className="text-lg font-extrabold text-brand-primary">أكاديميا</Link>
+          <h1 className="mt-6 text-2xl font-extrabold text-brand-text">مرحبًا بعودتك</h1>
+          <p className="mt-1.5 text-sm text-brand-muted">سجّل الدخول لمتابعة دوراتك وتقدمك.</p>
+
+          <form onSubmit={form.handleSubmit(onSubmit)} method="post" className="mt-8 space-y-4">
+            <div>
+              <label htmlFor="login-email" className="mb-1.5 block text-sm font-semibold text-brand-text">البريد الإلكتروني</label>
+              <input
+                id="login-email"
+                type="email"
+                required
+                placeholder="you@example.com"
+                {...form.register('email')}
+                className="w-full rounded-lg border border-brand-border bg-brand-surface px-4 py-2.5 text-sm text-brand-text outline-none transition placeholder:text-brand-muted focus:border-brand-primary"
+              />
+              {form.formState.errors.email && (
+                <p className="mt-1 text-xs text-brand-accent">{form.formState.errors.email.message}</p>
+              )}
+            </div>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="login-password" className="block text-sm font-semibold text-brand-text">كلمة المرور</label>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-xs font-semibold text-brand-primary hover:underline"
+                >
+                  نسيت كلمة المرور؟
+                </button>
+              </div>
+              <input
+                id="login-password"
+                type="password"
+                required
+                placeholder="••••••••"
+                {...form.register('password')}
+                className="w-full rounded-lg border border-brand-border bg-brand-surface px-4 py-2.5 text-sm text-brand-text outline-none transition placeholder:text-brand-muted focus:border-brand-primary"
+              />
+              {form.formState.errors.password && (
+                <p className="mt-1 text-xs text-brand-accent">{form.formState.errors.password.message}</p>
+              )}
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading || !hydrated}
+              className="w-full rounded-full bg-brand-primary py-3 text-sm font-bold text-white transition hover:bg-brand-primary/90 disabled:opacity-60"
+            >
+              {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
+            </button>
+          </form>
+
+          {errorNotification && (
+            <p className="mt-4 text-center text-sm text-brand-accent">{errorNotification.message}</p>
+          )}
+
+          <p className="mt-6 text-center text-sm text-brand-muted">
+            ليس لديك حساب؟{" "}
+            <Link href="/register" className="font-semibold text-brand-primary hover:underline">أنشئ حسابًا</Link>
+          </p>
         </div>
       </div>
     </div>
