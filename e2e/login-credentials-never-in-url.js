@@ -14,13 +14,15 @@
  * Part 2 (hydrated): real UI login succeeds (no behavior change) and the
  * real password never appears in any navigated/requested URL.
  *
- * Run (FE dev server :3000 + BE :3005 must be up):
+ * Run (FE server + BE :3005 must be up):
  *   node "C:/Users/Ahmed Saied/.agents/skills/playwright-skill/run.js" e2e/login-credentials-never-in-url.js
+ * To target a non-default frontend (e.g. prod server on :3002):
+ *   $env:FE_URL='http://localhost:3002'; node ".../run.js" e2e/login-credentials-never-in-url.js
  * (run from the frontend repo root; `playwright` resolves via the skill harness)
  */
 const { chromium } = require('playwright');
 
-const FE = 'http://localhost:3000';
+const FE = process.env.FE_URL || process.argv[2] || 'http://localhost:3000';
 const SENTINEL_EMAIL = 'leakprobe@localhost.test';
 const SENTINEL_PASS = 'LeakProbe#9999';
 const REAL_EMAIL = 'grader-demo@localhost.test';
