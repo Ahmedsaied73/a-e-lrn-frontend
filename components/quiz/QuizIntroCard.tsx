@@ -98,6 +98,10 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
   const hasInProgress = !!meta.inProgressAttempt;
   const hasPassed = meta.passed;
   const outOfAttempts = meta.atMaxAttempts;
+  // Submitted but no graded score yet (e.g. essay awaiting a grader) —
+  // EXPIRED attempts don't count as used, so any used-but-scoreless
+  // attempt is sitting in the grading pipeline.
+  const isPendingReview = meta.attempted && meta.bestScore == null && !hasPassed && !hasInProgress;
 
   // Passed outranks exhausted (the user passed with their last attempt;
   // that's a success, not a dead end).
@@ -150,6 +154,13 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
       <Reveal delayMs={140} className="mt-10 flex flex-col items-center gap-3">
         {!isLocked && quizError && (
           <p role="alert" className="text-sm font-semibold text-brand-accent">{quizError}</p>
+        )}
+
+        {isPendingReview && (
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">بانتظار التصحيح</span>
+            <p className="text-xs text-brand-muted">أُرسلت إجاباتك للتصحيح — ستظهر النتيجة النهائية هنا قريباً</p>
+          </div>
         )}
 
         {isLocked ? (

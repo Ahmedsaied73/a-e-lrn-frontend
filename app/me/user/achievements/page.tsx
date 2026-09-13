@@ -126,6 +126,11 @@ export default function UserAchievementsPage() {
                       <p className={"text-sm font-extrabold " + gradeColor(exam.bestScore)}>{Math.round(exam.bestScore)}٪</p>
                       <p className="text-xs text-brand-muted">{exam.passed ? "ناجح" : "لم يُجتز بعد"}</p>
                     </>
+                  ) : exam.attemptsUsed > 0 ? (
+                    <>
+                      <span className="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">بانتظار التصحيح</span>
+                      <p className="mt-0.5 text-xs text-brand-muted">تم التسليم — النتيجة قريباً</p>
+                    </>
                   ) : (
                     <p className="text-xs font-semibold text-brand-muted">لم يُحل بعد</p>
                   )}
