@@ -66,21 +66,24 @@ export function Navbar() {
   }
 
   return (
-    <header className="fixed top-3 inset-x-3 md:inset-x-6 lg:inset-x-12 z-50 rounded-2xl bg-white/60 backdrop-blur-xl ring-1 ring-black/5 shadow-lg shadow-primary/5">
-      {/* Liquid-glass grain overlay */}
-      <div aria-hidden="true" className="glass-noise pointer-events-none absolute inset-0 rounded-2xl opacity-40 mix-blend-overlay" />
-      <div className="relative flex items-center justify-between px-4 lg:px-6 h-16 w-full max-w-7xl mx-auto">
+    <header className="fixed top-3 inset-x-3 md:inset-x-6 lg:inset-x-12 z-50">
+      <div className="relative mx-auto max-w-5xl">
+        <div className="glass-nav pointer-events-none absolute inset-0 rounded-full border border-white/30 bg-brand-surface/60 shadow-lg shadow-brand-text/10 backdrop-blur-xl" aria-hidden="true" />
+        <div className="relative z-10 flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
 
         {/* ── Logo ── */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-          <div className="primary-gradient w-9 h-9 rounded-xl flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform duration-200">
-            <BookOpen className="w-5 h-5 text-on-primary" />
-          </div>
+        <Link href="/" className="flex items-center gap-2 text-brand-primary shrink-0">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-primary text-white">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 5.5C6.5 4.2 9 4 12 5v14c-3-1-5.5-.8-8 .5V5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+              <path d="M20 5.5C17.5 4.2 15 4 12 5v14c3-1 5.5-.8 8 .5V5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+            </svg>
+          </span>
           <span className="flex flex-col leading-tight">
-            <span className="font-extrabold text-[18px] text-primary tracking-tight">
+            <span className="text-lg font-extrabold">
               أكاديميا
             </span>
-            <span className="text-[10px] font-medium text-on-surface-variant hidden sm:block">
+            <span className="text-[10px] font-medium text-brand-muted hidden sm:block">
               عبدالهادي موسى للكيمياء
             </span>
           </span>
@@ -88,17 +91,15 @@ export function Navbar() {
 
         {/* ── Desktop Nav (authenticated only) ── */}
         {isAuthenticated && (
-          <nav className="hidden md:flex items-center gap-1 p-1 rounded-full bg-surface-container-low/70" dir="rtl">
+          <nav className="hidden items-center gap-1 md:flex" dir="rtl">
             {NAV_LINKS.map((link) => {
               const active = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`px-4 py-2 text-[14px] font-semibold rounded-full transition-all duration-200 ${
-                    active
-                      ? "bg-primary text-on-primary shadow-xs"
-                      : "text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest"
+                  className={`rounded-md px-3 py-2 text-sm font-medium text-brand-muted-strong transition hover:bg-brand-chip hover:text-brand-primary ${
+                    active ? "text-brand-primary" : ""
                   }`}
                 >
                   {link.label}
@@ -119,58 +120,44 @@ export function Navbar() {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen((v) => !v)}
-                  className="flex items-center gap-2 group"
+                  className="grid h-9 w-9 place-items-center rounded-full bg-brand-secondary text-sm font-bold text-white"
                   aria-label="قائمة المستخدم"
                 >
-                  <div className="primary-gradient h-9 w-9 rounded-full flex items-center justify-center font-bold text-sm text-on-primary shadow-xs group-hover:ring-2 group-hover:ring-primary-light transition-all duration-200">
-                    {initials}
-                  </div>
-                  <div className="text-right hidden sm:block">
-                    <p className="text-[13px] font-bold text-on-surface leading-tight">
-                      {user?.name || "المستخدم"}
-                    </p>
-                  </div>
+                  {initials}
                 </button>
 
                 {/* Dropdown */}
                 {dropdownOpen && (
                   <div
-                    className="absolute left-0 top-full mt-2 w-64 bg-surface-container-lowest text-on-surface rounded-xl shadow-level-3 py-2 z-50 border border-outline-variant/60 animate-in fade-in-0 zoom-in-95 duration-150"
+                    className="absolute end-0 top-full mt-2 w-56 rounded-xl border border-brand-border bg-brand-surface p-2 shadow-lg z-50"
                     dir="rtl"
                   >
-                    <div className="px-4 py-3 border-b border-outline-variant/60">
-                      <p className="text-sm font-bold truncate">{user?.name}</p>
-                      <p className="text-xs text-on-surface-variant mt-0.5 truncate" dir="ltr">
+                    <div className="px-3 py-2">
+                      <p className="text-sm font-semibold text-brand-text truncate">{user?.name}</p>
+                      <p className="text-xs text-brand-muted mt-0.5 truncate" dir="ltr">
                         {user?.email}
                       </p>
                     </div>
+                    <div className="my-1 h-px bg-brand-chip" />
                     <div className="py-1">
                       {PROFILE_LINKS.map((item) => {
-                        const Icon = item.icon;
-                        const active = pathname === item.href;
                         return (
                           <Link
                             key={item.href}
                             href={item.href}
                             onClick={() => setDropdownOpen(false)}
-                            className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
-                              active
-                                ? "bg-primary/10 text-primary"
-                                : "hover:bg-surface-container-low text-on-surface"
-                            }`}
+                            className="block rounded-lg px-3 py-2 text-sm text-brand-muted-strong hover:bg-brand-hover"
                           >
-                            <Icon className="w-4 h-4 text-primary" />
                             {item.label}
                           </Link>
                         );
                       })}
                     </div>
-                    <div className="border-t border-outline-variant/60 mt-1 pt-1">
+                    <div className="border-t border-brand-border mt-1 pt-1">
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error/5 transition-colors text-right font-medium"
+                        className="mt-1 block w-full rounded-lg px-3 py-2 text-start text-sm font-medium text-brand-accent hover:bg-red-50"
                       >
-                        <LogOut className="w-4 h-4" />
                         تسجيل الخروج
                       </button>
                     </div>
@@ -181,7 +168,7 @@ export function Navbar() {
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMobileMenuOpen((v) => !v)}
-                className="md:hidden p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                className="grid h-9 w-9 place-items-center rounded-md border border-brand-border text-brand-muted-strong md:hidden"
                 aria-label="القائمة"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -191,13 +178,13 @@ export function Navbar() {
             <>
               <Link
                 href="/login"
-                className="text-[14px] font-semibold text-on-surface-variant hover:text-primary transition-colors px-3 py-1.5"
+                className="rounded-md px-3 py-2 text-sm font-medium text-brand-muted-strong transition hover:bg-brand-chip hover:text-brand-primary"
               >
                 سجل دخولك
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center px-4 py-2 bg-primary hover:bg-primary-hover text-on-primary text-[14px] font-semibold rounded-lg shadow-primary-glow transition-all duration-200 hover:-translate-y-0.5"
+                className="rounded-full bg-brand-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-primary/90"
               >
                 إنشاء حساب
               </Link>
@@ -205,54 +192,51 @@ export function Navbar() {
           )}
         </div>
       </div>
+      </div>
 
       {/* ── Mobile Menu ── */}
       {mobileMenuOpen && isAuthenticated && (
-        <div
-          className="md:hidden mb-1 mx-2 mt-3 rounded-2xl bg-surface-container-lowest/90 backdrop-blur-xl ring-1 ring-black/5 shadow-level-3 px-4 py-4"
+        <nav
+          className="glass-nav mx-auto mt-2 flex max-w-5xl flex-col gap-1 rounded-2xl border border-white/30 bg-brand-surface/60 p-2 shadow-lg backdrop-blur-xl md:hidden"
           dir="rtl"
         >
           {/* User block */}
-          <div className="flex items-center gap-3 px-2 py-3 border-b border-outline-variant/60 mb-2">
-            <div className="primary-gradient h-11 w-11 rounded-full flex items-center justify-center font-bold text-sm text-on-primary shadow-xs">
+          <div className="flex items-center gap-3 px-2 py-3 border-b border-brand-border mb-2">
+            <div className="grid h-11 w-11 place-items-center rounded-full bg-brand-secondary text-sm font-bold text-white shrink-0">
               {initials}
             </div>
             <div className="min-w-0">
-              <p className="text-[15px] font-bold text-on-surface truncate">{user?.name || "المستخدم"}</p>
-              <p className="text-[12px] text-on-surface-variant truncate" dir="ltr">{user?.email}</p>
+              <p className="text-[15px] font-bold text-brand-text truncate">{user?.name || "المستخدم"}</p>
+              <p className="text-[12px] text-brand-muted truncate" dir="ltr">{user?.email}</p>
             </div>
           </div>
 
-          <nav className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`px-3 py-2.5 text-[15px] font-semibold rounded-xl transition-colors ${
-                  pathname === link.href
-                    ? "text-primary bg-primary/10"
-                    : "text-on-surface hover:bg-surface-container-low"
-                }`}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-brand-muted-strong hover:bg-brand-surface"
               >
                 {link.label}
               </Link>
             ))}
-            <div className="border-t border-outline-variant/60 mt-2 pt-2">
+            <div className="border-t border-brand-border mt-2 pt-2">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-[15px] font-semibold text-error rounded-xl hover:bg-error/5 transition-colors text-right"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-brand-accent rounded-lg hover:bg-red-50 transition-colors text-start"
               >
                 <LogOut className="w-4 h-4" />
                 تسجيل الخروج
-                <span className="mr-auto flex items-center gap-1 text-[12px] font-normal text-on-surface-variant">
+                <span className="ms-auto flex items-center gap-1 text-[12px] font-normal text-brand-muted">
                   <HelpCircle className="w-3.5 h-3.5" />
                   المساعدة
                 </span>
               </button>
             </div>
-          </nav>
-        </div>
+          </div>
+        </nav>
       )}
     </header>
   );

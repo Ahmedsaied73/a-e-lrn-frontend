@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Moon, Sun } from 'lucide-react';
 
 const STORAGE_KEY = 'akademya-theme';
 
@@ -11,36 +10,45 @@ const STORAGE_KEY = 'akademya-theme';
  * choice to localStorage. It reads no app state, dispatches nothing, and
  * wraps nothing. Initial paint is set by the synchronous head script in
  * app/layout.tsx; this component only syncs its icon to that value on mount.
+ * Markup/classes/SVGs mirror the reference implementation verbatim.
  */
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+export function ThemeToggle({ className = '' }: { className?: string }) {
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    setTheme(
-      document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
-    );
+    setIsDark(document.documentElement.dataset.theme === 'dark');
   }, []);
 
-  const flip = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    document.documentElement.setAttribute('data-theme', next);
+  function toggle() {
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
     try {
-      localStorage.setItem(STORAGE_KEY, next);
+      window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
       // Private-mode storage denial — theme still applies for this session.
     }
-  };
+    setIsDark(!isDark);
+  }
 
   return (
     <button
-      type="button"
-      onClick={flip}
-      aria-label={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
-      title={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-chip text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-primary"
+      onClick={toggle}
+      aria-label={isDark ? 'التبديل إلى الوضع الفاتح' : 'التبديل إلى الوضع الداكن'}
+      className={
+        'grid h-9 w-9 place-items-center rounded-full border border-brand-border text-brand-muted-strong transition hover:bg-brand-hover ' +
+        className
+      }
     >
-      {theme === 'dark' ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+      {isDark ? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.6" />
+          <path d="M12 2.5v2M12 19.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2.5 12h2M19.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      )}
     </button>
   );
 }

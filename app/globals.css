@@ -353,15 +353,32 @@
     background-size: 32px 32px;
   }
 
-  /* -------------------------------------------------------
-   Liquid-glass film grain (SVG feTurbulence noise texture).
-   Layer over a backdrop-blur surface at low opacity for a
-   subtle "liquid glass with grain" finish.
------------------------------------------------------- */
-  .glass-noise {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 140px 140px;
-  }
+/* ---- Floating glass navbar (copied verbatim from the reference) ----
+   Translucent blur + faint grain so the glass doesn't look like a flat
+   semi-transparent rectangle. Split into a background layer + a separate
+   unclipped content layer: the grain layer needs overflow hidden, but that
+   would clip dropdown menus if it wrapped the interactive content. */
+.glass-nav {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.glass-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.glass-nav::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 45%);
+}
 
   /* Safe-area helpers for fixed mobile shell chrome. */
   .pt-safe {

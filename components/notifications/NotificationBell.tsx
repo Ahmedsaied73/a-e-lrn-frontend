@@ -111,11 +111,11 @@ export default function NotificationBell() {
       <button
         aria-label="الإشعارات"
         onClick={() => setOpen((v) => !v)}
-        className="relative p-2 rounded-full border-2 border-primary-light/60 text-primary-light hover:bg-primary-color/8 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-primary-color/30"
+        className="grid h-9 w-9 place-items-center rounded-full border border-brand-border text-brand-muted transition hover:bg-brand-chip"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-[18px] h-[18px]" />
         {unread > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
+          <span className="absolute -top-1 -end-1 min-w-5 h-5 px-1 rounded-full bg-brand-accent text-white text-[10px] font-bold flex items-center justify-center">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -124,35 +124,35 @@ export default function NotificationBell() {
       {open && (
         <div
           dir="rtl"
-          className="absolute left-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-level-3 py-2 z-50 border border-outline-variant animate-in fade-in-0 zoom-in-95 duration-150"
+          className="absolute end-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-brand-border bg-brand-surface p-2 shadow-lg z-50"
         >
-          <div className="flex items-center justify-between px-4 py-2 border-b border-outline-variant/60">
-            <p className="text-sm font-bold text-on-surface">الإشعارات</p>
+          <div className="flex items-center justify-between px-2 py-1.5">
+            <p className="text-xs font-semibold text-brand-muted">الإشعارات</p>
             <button
               onClick={() => void markAll()}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#0057c0] hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:underline"
             >
               <CheckCheck className="w-3.5 h-3.5" />
               تحديد الكل كمقروء
             </button>
           </div>
           {loading ? (
-            <p className="px-4 py-6 text-center text-sm text-on-surface-variant">جاري التحميل...</p>
+            <p className="px-4 py-6 text-center text-sm text-brand-muted-strong">جاري التحميل...</p>
           ) : error ? (
-            <p role="alert" className="px-4 py-6 text-center text-sm text-red-600">{error}</p>
+            <p role="alert" className="px-4 py-6 text-center text-sm text-brand-accent">{error}</p>
           ) : items.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-on-surface-variant">لا توجد إشعارات بعد.</p>
+            <p className="px-4 py-6 text-center text-sm text-brand-muted-strong">لا توجد إشعارات بعد.</p>
           ) : (
             <ul className="max-h-80 overflow-y-auto py-1">
               {items.map((item) => (
                 <li key={item.id}>
                   <button
                     onClick={() => void openItem(item)}
-                    className={`w-full text-right px-4 py-2.5 hover:bg-surface-container-low transition-colors ${item.read ? "" : "bg-[#e8f2ff]/50"}`}
+                    className={`w-full rounded-lg px-2 py-2 text-start hover:bg-brand-hover transition-colors ${item.read ? "" : "bg-brand-primary/10"}`}
                   >
-                    <p className="text-sm font-bold text-on-surface leading-5">{item.title}</p>
-                    {item.body && <p className="mt-0.5 text-xs text-on-surface-variant leading-5 line-clamp-2">{item.body}</p>}
-                    <p className="mt-1 text-[11px] text-on-surface-variant/70">{timeAgo(item.createdAt)}</p>
+                    <p className="text-sm font-semibold text-brand-text leading-5">{item.title}</p>
+                    {item.body && <p className="mt-0.5 text-xs text-brand-muted leading-5 line-clamp-2">{item.body}</p>}
+                    <p className="mt-0.5 text-xs text-brand-muted">{timeAgo(item.createdAt)}</p>
                   </button>
                 </li>
               ))}
