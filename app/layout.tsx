@@ -7,11 +7,9 @@ import { ReduxProvider } from '@/store/provider';
 import { AuthInitializer } from '@/store/auth-initializer';
 import { Toaster } from '@/components/ui/toaster';
 
-// Tajawal self-hosted (app/fonts/*.woff2, arabic+latin, 400/500/700/800).
-// next/font/google downloads from Google at BUILD time and fails the whole
-// build when that fetch flakes — self-hosting keeps builds reproducible and
-// removes the runtime CDN dependency entirely.
-const tajawal = localFont({
+// Brand typeface — THE single font declaration (see app/brand-theme.css).
+// To change the typeface: replace the woff2 files + weights below.
+const brandFont = localFont({
   src: [
     { path: './fonts/tajawal-arabic-400.woff2', weight: '400' },
     { path: './fonts/tajawal-latin-400.woff2', weight: '400' },
@@ -22,6 +20,7 @@ const tajawal = localFont({
     { path: './fonts/tajawal-arabic-800.woff2', weight: '800' },
     { path: './fonts/tajawal-latin-800.woff2', weight: '800' },
   ],
+  variable: '--font-brand',
 });
 
 // Synchronous pre-paint theme init: reads the persisted choice and sets
@@ -45,7 +44,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className={`${tajawal.className} min-h-screen bg-background flex flex-col`}>
+      <body className={`${brandFont.variable} min-h-screen bg-background flex flex-col font-sans`}>
         <ReduxProvider>
           <AuthInitializer>
             <Navbar />

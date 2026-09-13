@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import './brand-theme.css';
 
 @utility container {
   margin-inline: auto;
@@ -95,8 +96,8 @@
   --radius-xl: 1.5rem;
   --radius-full: 9999px;
 
-  --font-sans: 'Tajawal', ui-sans-serif, system-ui, sans-serif;
-  --font-cairo: 'Tajawal', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-brand), ui-sans-serif, system-ui, sans-serif;
+  --font-cairo: var(--font-brand), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-code: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
@@ -131,50 +132,6 @@
   --shadow-level-2: 0px 4px 20px rgba(0, 0, 0, 0.04);
   --shadow-level-3: 0px 12px 32px rgba(0, 0, 0, 0.08);
   --shadow-primary-glow: 0px 4px 20px rgba(32, 123, 255, 0.3);
-}
-
-/* ---- أكاديميا brand theme (copied verbatim from the reference
-   implementation — it is the source of truth for these values).
-   Light values live in @theme; dark overrides in [data-theme="dark"].
-   Nothing in the app uses brand-* yet (sweeps adopt them slice by slice),
-   so adding this block changes zero rendered pixels on its own. ---- */
-@theme {
-  --color-brand-text: #0B1119;
-  --color-brand-bg: #F4F6F8;
-  --color-brand-primary: #4685CE;
-  --color-brand-secondary: #90BAE9;
-  --color-brand-accent: #EA5D79;
-
-  --color-brand-ink: #0B1119;
-  --color-brand-surface: #FFFFFF;
-  --color-brand-border: #E2E8F0;
-  --color-brand-border-strong: #CBD5E1;
-  --color-brand-muted: #94A3B8;
-  --color-brand-muted-strong: #475569;
-  --color-brand-chip: #F1F5F9;
-  --color-brand-hover: #F8FAFC;
-}
-
-[data-theme="dark"] {
-  --color-brand-text: #EDF1F5;
-  --color-brand-bg: #0A0D12;
-  --color-brand-primary: #5C93D6;
-  --color-brand-secondary: #7FA7D6;
-  --color-brand-accent: #EF7089;
-
-  --color-brand-ink: #05080A;
-  --color-brand-surface: #12181C;
-  --color-brand-border: #232C31;
-  --color-brand-border-strong: #38444B;
-  --color-brand-muted: #7C8B92;
-  --color-brand-muted-strong: #C3D0D4;
-  --color-brand-chip: #182027;
-  --color-brand-hover: #171E22;
-
-  --color-emerald-50: #0E251B;
-  --color-emerald-100: #123322;
-
-  color-scheme: dark;
 }
 
 /*
@@ -303,7 +260,7 @@
   }
 
   body {
-    font-family: 'Tajawal', ui-sans-serif, system-ui, sans-serif;
+    /* Typeface comes from the font-sans utility (brand chain) — no name here. */
     background-color: var(--color-brand-bg);
     color: var(--color-brand-text);
     direction: rtl;
@@ -352,6 +309,32 @@
     );
     background-size: 32px 32px;
   }
+
+/* ---- Scroll reveal (verbatim from the reference) ---- */
+@keyframes site-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.site-reveal {
+  opacity: 0;
+}
+.site-reveal.is-visible {
+  animation: site-fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ---- Landing hero glow (verbatim from the reference) ---- */
+@keyframes hero-glow-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+.hero-glow {
+  animation: hero-glow-pulse 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-glow {
+    animation: none;
+  }
+}
 
 /* ---- Floating glass navbar (copied verbatim from the reference) ----
    Translucent blur + faint grain so the glass doesn't look like a flat

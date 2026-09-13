@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { Play, MonitorPlay, BrainCircuit, Headphones, ArrowLeft } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
 import { selectIsAuthenticated } from '@/store/slices/authSlice';
-import { primary } from '@/lib/colors';
-import { FadeIn, ScaleIn, StaggerGroup, StaggerItem } from '@/components/animations';
+import { Reveal } from '@/components/reveal';
+import { AnimatedNumber } from '@/components/animated-number';
 
-// ─── Grade Cards data ───────────────────────────────────────────
+// ─── Grade Cards data ────────────────────────────────────────────
 const GRADES = [
   {
     href: '/grades/1',
@@ -33,232 +33,201 @@ const GRADES = [
 // ─── Feature Cards data ──────────────────────────────────────────
 const FEATURES = [
   {
-    icon: <MonitorPlay className="w-8 h-8 text-primary" />,
+    icon: <MonitorPlay className="h-[18px] w-[18px]" />,
     title: 'فيديوهات عالية الجودة',
     desc: 'شاهد الشرح في أي وقت وأي مكان بجودة احترافية لا تتعطل',
   },
   {
-    icon: <BrainCircuit className="w-8 h-8 text-primary" />,
+    icon: <BrainCircuit className="h-[18px] w-[18px]" />,
     title: 'اختبارات ذكية',
     desc: 'نختبرك في كل فرع بامتحانات تفاعلية تضمن وصولك لأعلى درجة',
   },
   {
-    icon: <Headphones className="w-8 h-8 text-primary" />,
+    icon: <Headphones className="h-[18px] w-[18px]" />,
     title: 'دعم على مدار اليوم',
     desc: 'فريق دعم متكامل يرد على استفساراتك ويحل مشاكلك فوراً',
   },
+];
+
+// ─── Hero stats (reference order + one-shot count-up) ────────────
+const STATS = [
+  { value: 4.9, suffix: '', decimals: 1, label: 'تقييم عام' },
+  { value: 50, suffix: '+', decimals: 0, label: 'دورة تدريبية' },
+  { value: 15, suffix: 'K+', decimals: 0, label: 'طالب مسجل' },
 ];
 
 export default function Home() {
   const isLoggedIn = useAppSelector(selectIsAuthenticated);
 
   return (
-    <main className="w-full min-h-screen bg-surface" dir="rtl">
+    <main className="w-full min-h-screen bg-brand-bg" dir="rtl">
 
       {/* ══════════════════════════════════════════════════════════
            HERO SECTION
       ══════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden bg-white">
-        {/* Dot grid background */}
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.035]"
-          style={{
-            backgroundImage: `radial-gradient(circle at 2px 2px, ${primary.DEFAULT} 1px, transparent 0)`,
-            backgroundSize: '32px 32px',
-          }}
-        />
-        {/* Radial blue glow */}
-        <div className="absolute left-[-20%] top-[10%] w-[600px] h-[600px] rounded-full bg-linear-to-br from-primary/10 to-transparent blur-3xl pointer-events-none" />
-        {/* Ring decoration */}
-        <div className="absolute left-[-10%] top-[5%] w-[700px] h-[700px] rounded-full border-[3px] border-primary/10 pointer-events-none" />
+      <section className="mx-auto max-w-6xl px-4 pt-10 pb-16 sm:px-6 sm:pt-16">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <Reveal className="text-center lg:text-start">
+            <span className="rounded-full bg-brand-secondary/10 px-3 py-1 text-xs font-semibold text-brand-secondary">
+              منصة تعليمية متخصصة في الكيمياء
+            </span>
+            <h1 className="mx-auto mt-5 max-w-2xl text-3xl font-extrabold leading-tight text-brand-text sm:text-5xl lg:mx-0">
+              الأستاذ عبدالهادي موسى
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-base text-brand-muted sm:text-lg lg:mx-0">
+              في مادة الكيمياء ... مفيش صعوبة هتواجهك تاني. اكتشف متعة التعلم والفهم العميق
+              بأسلوب مبتكر.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+              {isLoggedIn ? (
+                <Link
+                  href="/me/user/courses"
+                  className="rounded-lg bg-brand-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-primary/90"
+                >
+                  كورساتي
+                </Link>
+              ) : (
+                <Link
+                  href="/register"
+                  className="rounded-lg bg-brand-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-primary/90"
+                >
+                  انضم الآن
+                </Link>
+              )}
+              <button className="inline-flex items-center gap-2 rounded-lg border border-brand-border-strong px-6 py-3 text-sm font-semibold text-brand-muted-strong transition hover:bg-brand-hover">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-primary text-white">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5Z" /></svg>
+                </span>
+                شاهد المقدمة
+              </button>
+            </div>
+          </Reveal>
 
-        <div className="max-w-7xl mx-auto w-full px-4 lg:px-12 py-16 relative z-10">
-          <div className="flex flex-col-reverse md:flex-row items-center gap-12 md:gap-16">
-
-            {/* ── Text Content ── */}
-            <FadeIn className="flex-1 flex flex-col items-end text-right gap-6">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[13px] font-semibold">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                منصة تعليمية متخصصة في الكيمياء
+          {/* ── Teacher photo (real content, reference frame) ── */}
+          <Reveal delayMs={90} className="flex justify-center lg:justify-end">
+            <div className="relative">
+              <div className="hero-glow absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-primary/15 to-brand-accent/15 blur-xl" aria-hidden="true" />
+              <div className="relative aspect-square w-56 overflow-hidden rounded-[2rem] border-2 border-brand-secondary/40 bg-brand-surface/60 sm:w-72">
+                <Image
+                  src="/teacher.png"
+                  alt="الأستاذ عبد الهادي موسى"
+                  fill
+                  className="object-cover"
+                  priority
+                />
               </div>
-
-              {/* Headline */}
-              <h1 className="text-[40px] md:text-[56px] font-bold leading-tight text-on-surface">
-                الأستاذ{' '}
-                <span className="text-primary"> عبدالهادي موسى</span>
-           
-              </h1>
-
-              {/* Sub-headline */}
-              <p className="text-[18px] text-on-surface-variant leading-relaxed max-w-lg">
-                في مادة الكيمياء ... مفيش صعوبة هتواجهك تاني. اكتشف متعة التعلم والفهم العميق
-                بأسلوب مبتكر.
-              </p>
-
-              {/* CTA Row */}
-              <div className="flex items-center gap-4 pt-2">
-                {isLoggedIn ? (
-                  <Link
-                    href="/me/user/courses"
-                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-on-primary px-7 py-3.5 rounded-xl font-semibold text-[16px] shadow-[0_4px_20px_rgba(32,123,255,0.35)] transition-all duration-200 hover:-translate-y-0.5"
-                  >
-                    كورساتي
-                    <ArrowLeft className="w-4 h-4" />
-                  </Link>
-                ) : (
-                  <Link
-                    href="/register"
-                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-on-primary px-7 py-3.5 rounded-xl font-semibold text-[16px] shadow-[0_4px_20px_rgba(32,123,255,0.35)] transition-all duration-200 hover:-translate-y-0.5"
-                  >
-                    انضم الآن
-                    <ArrowLeft className="w-4 h-4" />
-                  </Link>
-                )}
-
-                <button className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors duration-200 font-semibold text-[15px] group">
-                  <span className="w-10 h-10 rounded-full border-2 border-primary-light flex items-center justify-center group-hover:bg-primary-hover/8 transition-all duration-200">
-                    <Play className="w-4 h-4 text-primary fill-primary mr-[-2px]" />
-                  </span>
-                  شاهد المقدمة
-                </button>
-              </div>
-
-              {/* Stats Row */}
-              <div className="flex gap-8 pt-6 border-t border-outline-variant/40 w-full justify-end mt-2">
-                {[
-                  { value: '+15K', label: 'طالب مسجل' },
-                  { value: '+50', label: 'دورة تدريبية' },
-                  { value: '4.9', label: 'تقييم عام' },
-                ].map((stat) => (
-                  <div key={stat.label} className="flex flex-col items-end gap-0.5">
-                    <span className="text-[28px] font-bold text-primary leading-none">
-                      {stat.value}
-                    </span>
-                    <span className="text-[12px] text-on-surface-variant">{stat.label}</span>
-                  </div>
-                ))}
-              </div>
-            </FadeIn>
-
-            {/* ── Teacher Image ── */}
-            <ScaleIn className="shrink-0 flex justify-center md:justify-start">
-              <div className="relative">
-                {/* Glow ring behind image */}
-                <div className="absolute inset-0 rounded-full bg-primary/15 blur-2xl scale-110" />
-                {/* Image container */}
-                <div className="relative w-[260px] h-[260px] md:w-[420px] md:h-[420px] rounded-full overflow-hidden border-4 border-primary shadow-[0_8px_40px_rgba(32,123,255,0.25)]">
-                  <Image
-                    src="/teacher.png"
-                    alt="الأستاذ عبد الهادي موسى"
-               
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                </div>
-                {/* Floating accent bubble */}
-                <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-primary-light rounded-2xl rotate-12 -z-10 opacity-20 blur-xl" />
-              </div>
-            </ScaleIn>
-          </div>
+            </div>
+          </Reveal>
         </div>
+
+        <Reveal delayMs={160}>
+          <dl className="mx-auto mt-14 grid max-w-2xl grid-cols-3 gap-4 rounded-2xl border border-brand-border bg-brand-surface px-4 py-6 shadow-sm sm:px-8">
+            {STATS.map((s) => (
+              <div key={s.label} className="text-center">
+                <dt className="sr-only">{s.label}</dt>
+                <dd className="text-2xl font-extrabold text-brand-primary sm:text-3xl">
+                  <AnimatedNumber value={s.value} suffix={s.suffix} decimals={s.decimals} />
+                </dd>
+                <p className="mt-1 text-xs text-brand-muted sm:text-sm">{s.label}</p>
+              </div>
+            ))}
+          </dl>
+        </Reveal>
       </section>
 
       {/* ══════════════════════════════════════════════════════════
            FEATURES SECTION
       ══════════════════════════════════════════════════════════ */}
-      <section className="py-20 bg-surface">
-        <div className="max-w-7xl mx-auto px-4 lg:px-12">
-{/* Section header */}
-          <FadeIn className="text-center mb-12">
-            <h2 className="text-[32px] font-bold text-on-surface mb-3">
-              <span className="text-primary">حابب</span> تعرفنا؟..
+      <section className="border-y border-brand-border bg-brand-surface py-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal className="mx-auto max-w-xl text-center">
+            <h2 className="text-2xl font-extrabold text-brand-text sm:text-3xl">
+              حابب تعرفنا؟..
             </h2>
-            <p className="text-[16px] text-on-surface-variant max-w-lg mx-auto">
+            <p className="mt-3 text-brand-muted">
               منصة تعليمية متكاملة تجمع بين الشرح المبسط والتقنية الحديثة
             </p>
-          </FadeIn>
+          </Reveal>
 
-          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {FEATURES.map((f) => (
-              <StaggerItem key={f.title}>
-                <div className="bg-surface-white rounded-2xl p-7 border border-outline-border shadow-level-2 hover:shadow-level-3 hover:-translate-y-1 transition-all duration-300 text-right h-full">
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-5">
-                  {f.icon}
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.map((f, i) => (
+              <Reveal key={f.title} delayMs={i * 80}>
+                <div className="group h-full rounded-xl border border-brand-border bg-brand-bg p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+                  <div className="grid h-10 w-10 place-items-center rounded-lg bg-brand-primary/10 text-brand-primary transition-transform duration-300 group-hover:scale-110">
+                    {f.icon}
+                  </div>
+                  <h3 className="mt-4 text-sm font-bold text-brand-text">{f.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-brand-muted">{f.desc}</p>
                 </div>
-                <h3 className="text-[18px] font-bold text-on-surface mb-2">{f.title}</h3>
-                <p className="text-[15px] text-on-surface-variant leading-relaxed">{f.desc}</p>
-              </div>
-              </StaggerItem>
+              </Reveal>
             ))}
-          </StaggerGroup>
+          </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════
            GRADE CARDS / COURSES SECTION
       ══════════════════════════════════════════════════════════ */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 lg:px-12">
+      <section className="py-20 bg-brand-bg">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
           {/* Section header */}
-          <FadeIn className="flex items-center justify-between mb-10">
-            <h2 className="text-[32px] font-bold text-on-surface">
-              <span className="text-primary">السنوات</span> الدراسية
+          <Reveal className="flex items-center justify-between mb-10">
+            <h2 className="text-2xl font-extrabold text-brand-text sm:text-3xl">
+              السنوات الدراسية
             </h2>
             <Link
               href="/grades/1"
-              className="text-[14px] font-semibold text-primary hover:underline flex items-center gap-1"
+              className="text-sm font-semibold text-brand-primary hover:underline flex items-center gap-1"
             >
               عرض الكل
               <ArrowLeft className="w-4 h-4" />
             </Link>
-          </FadeIn>
+          </Reveal>
 
-          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {GRADES.map((grade) => (
-              <StaggerItem key={grade.href}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {GRADES.map((grade, i) => (
+              <Reveal key={grade.href} delayMs={i * 80}>
                 <Link
                   href={grade.href}
-                  className="group bg-surface-container-low rounded-2xl overflow-hidden border border-outline-border shadow-level-2 hover:shadow-[0_8px_32px_rgba(32,123,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
+                  className="group flex h-full flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-surface transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                {/* Image */}
-                <div className="relative h-52 overflow-hidden">
-                  <Image
-                    src={grade.img}
-                    alt={grade.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />
-                </div>
-                {/* Content */}
-                <div className="p-5 flex flex-col gap-1 text-right grow">
-                  <h3 className="text-[18px] font-bold text-on-surface group-hover:text-primary transition-colors duration-200">
-                    {grade.title}
-                  </h3>
-                  <p className="text-[14px] text-on-surface-variant">{grade.desc}</p>
-                  <div className="flex items-center gap-1 text-primary text-[13px] font-semibold mt-3">
-                    استعرض الكورسات
-                    <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform duration-200" />
+                  {/* Image */}
+                  <div className="relative h-52 overflow-hidden">
+                    <Image
+                      src={grade.img}
+                      alt={grade.title}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />
                   </div>
-                </div>
-              </Link>
-              </StaggerItem>
+                  {/* Content */}
+                  <div className="p-5 flex flex-col gap-1 text-right grow">
+                    <h3 className="text-sm font-bold text-brand-text">
+                      {grade.title}
+                    </h3>
+                    <p className="text-sm text-brand-muted-strong">{grade.desc}</p>
+                    <div className="flex items-center gap-1 text-brand-primary text-[13px] font-semibold mt-3">
+                      استعرض الكورسات
+                      <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform duration-200" />
+                    </div>
+                  </div>
+                </Link>
+              </Reveal>
             ))}
-          </StaggerGroup>
+          </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════
            WHY US SECTION
       ══════════════════════════════════════════════════════════ */}
-      <section className="py-20 bg-surface">
-        <div className="max-w-7xl mx-auto px-4 lg:px-12">
+      <section className="border-y border-brand-border bg-brand-surface py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Image side */}
-            <ScaleIn className="relative w-full flex justify-center">
+            <Reveal className="relative w-full flex justify-center">
               <div className="relative w-full max-w-sm aspect-square">
                 <Image
                   src="/brain.png"
@@ -267,12 +236,12 @@ export default function Home() {
                   className="object-contain"
                 />
               </div>
-            </ScaleIn>
+            </Reveal>
 
             {/* Text side */}
-            <FadeIn className="bg-surface-white rounded-2xl p-8 border border-outline-border shadow-level-2 text-right">
-              <h2 className="text-[28px] font-bold text-on-surface mb-6">
-                <span className="text-primary">تفتكر</span> هنا ليه..؟
+            <Reveal delayMs={90} className="rounded-2xl border border-brand-border bg-brand-bg p-8 shadow-sm text-right">
+              <h2 className="text-2xl font-extrabold text-brand-text sm:text-3xl mb-6">
+                تفتكر هنا ليه..؟
               </h2>
               <div className="flex flex-col gap-4">
                 {[
@@ -280,12 +249,11 @@ export default function Home() {
                   'هتلاقي فيديوهات بتشرح لك المفاهيم بشكل بسيط وممتع، ومعاها تمارين تفاعلية تقدر تطبق اللي تعلمته.',
                   'هدفنا إنك تحب الكيمياء وتتعلمها بشكل ممتع وسهل.',
                 ].map((text, i) => (
-           
                   <div key={i} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
+                    <div className="w-6 h-6 rounded-full bg-brand-primary/15 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-2 h-2 rounded-full bg-brand-primary" />
                     </div>
-                    <p className="text-[16px] text-on-surface-variant leading-relaxed">{text}</p>
+                    <p className="text-[16px] text-brand-muted-strong leading-relaxed">{text}</p>
                   </div>
                 ))}
               </div>
@@ -294,24 +262,42 @@ export default function Home() {
                 {isLoggedIn ? (
                   <Link
                     href="/me/user/courses"
-                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-on-primary px-7 py-3.5 rounded-xl font-semibold text-[16px] shadow-primary-glow transition-all duration-200 hover:-translate-y-0.5"
+                    className="rounded-lg bg-brand-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-primary/90"
                   >
                     كورساتي
-                    <ArrowLeft className="w-4 h-4" />
                   </Link>
                 ) : (
                   <Link
                     href="/register"
-                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-on-primary px-7 py-3.5 rounded-xl font-semibold text-[16px] shadow-primary-glow transition-all duration-200 hover:-translate-y-0.5"
+                    className="rounded-lg bg-brand-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-primary/90"
                   >
                     انضم لعيلتنا دلوقتي
-                    <ArrowLeft className="w-4 h-4" />
                   </Link>
                 )}
               </div>
-            </FadeIn>
+            </Reveal>
           </div>
         </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════
+           CTA BAND (reference pattern — accent does the work here)
+      ══════════════════════════════════════════════════════════ */}
+      <section className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6">
+        <Reveal>
+          <h2 className="text-2xl font-extrabold text-brand-text sm:text-3xl">
+            ابدأ رحلتك التعليمية اليوم
+          </h2>
+          <p className="mx-auto mt-3 max-w-lg text-brand-muted">
+            تصفّح الدورات المتاحة واختر ما يناسب مستواك، وابدأ بخطوات واضحة نحو التميّز.
+          </p>
+          <Link
+            href="/grades/1"
+            className="mt-6 inline-flex items-center rounded-lg bg-brand-accent px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-accent/90"
+          >
+            تصفح الدورات المتاحة
+          </Link>
+        </Reveal>
       </section>
     </main>
   );

@@ -1,0 +1,53 @@
+/* =====================================================================
+   BRAND THEME — THE SINGLE PLACE FOR PALETTE + TYPOGRAPHY.
+   ---------------------------------------------------------------------
+   TO CHANGE THE PALETTE: edit the hex values in the two blocks below
+   (light @theme + [data-theme="dark"]) and nothing else — every component
+   references these tokens, never raw colors.
+   TO CHANGE THE TYPEFACE: drop the new woff2 files into app/fonts/,
+   update the `src` list + family name in app/layout.tsx (the ONE font
+   declaration, next/font/local `brandFont`), and update --font-sans below
+   to var(--font-brand). Nothing else references a font name.
+   Values copied verbatim from the reference implementation (source of
+   truth); only the file location is ours.
+   ===================================================================== */
+@theme {
+  --font-sans: var(--font-brand), ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-text: #0B1119;
+  --color-brand-bg: #F4F6F8;
+  --color-brand-primary: #4685CE;
+  --color-brand-secondary: #90BAE9;
+  --color-brand-accent: #EA5D79;
+
+  --color-brand-ink: #0B1119;
+  --color-brand-surface: #FFFFFF;
+  --color-brand-border: #E2E8F0;
+  --color-brand-border-strong: #CBD5E1;
+  --color-brand-muted: #94A3B8;
+  --color-brand-muted-strong: #475569;
+  --color-brand-chip: #F1F5F9;
+  --color-brand-hover: #F8FAFC;
+}
+
+[data-theme="dark"] {
+  --color-brand-text: #EDF1F5;
+  --color-brand-bg: #0A0D12;
+  --color-brand-primary: #5C93D6;
+  --color-brand-secondary: #7FA7D6;
+  --color-brand-accent: #EF7089;
+
+  --color-brand-ink: #05080A;
+  --color-brand-surface: #12181C;
+  --color-brand-border: #232C31;
+  --color-brand-border-strong: #38444B;
+  --color-brand-muted: #7C8B92;
+  --color-brand-muted-strong: #C3D0D4;
+  --color-brand-chip: #182027;
+  --color-brand-hover: #171E22;
+
+  --color-emerald-50: #0E251B;
+  --color-emerald-100: #123322;
+
+  color-scheme: dark;
+}
