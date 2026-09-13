@@ -322,13 +322,6 @@ layer(base);
     background-size: 140px 140px;
   }
 
-  /* -------------------------------------------------------
-   Smooth transitions for interactive elements
------------------------------------------------------- */
-  .interactive {
-    @apply transition-all duration-300 ease-in-out;
-  }
-
   /* Safe-area helpers for fixed mobile shell chrome. */
   .pt-safe {
     padding-top: env(safe-area-inset-top, 0px);
