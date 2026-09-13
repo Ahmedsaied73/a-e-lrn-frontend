@@ -96,8 +96,6 @@
   --radius-xl: 1.5rem;
   --radius-full: 9999px;
 
-  --font-sans: var(--font-brand), ui-sans-serif, system-ui, sans-serif;
-  --font-cairo: var(--font-brand), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-code: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 

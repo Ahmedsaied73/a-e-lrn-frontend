@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useRef, useState } from 'react';
 
 // One-shot count-up: animates from 0 to `value` once the element scrolls

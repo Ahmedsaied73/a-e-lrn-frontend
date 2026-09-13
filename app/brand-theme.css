@@ -11,8 +11,15 @@
    Values copied verbatim from the reference implementation (source of
    truth); only the file location is ours.
    ===================================================================== */
-@theme {
+@theme inline {
+  /* var() references MUST live under `@theme inline` (not plain @theme):
+     plain @theme drops values containing var(), leaving --font-sans empty
+     and the whole site on system fallback. `inline` writes the chain into
+     every font-sans usage instead. */
   --font-sans: var(--font-brand), ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme {
 
   --color-brand-text: #0B1119;
   --color-brand-bg: #F4F6F8;
