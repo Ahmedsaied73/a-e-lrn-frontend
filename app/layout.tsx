@@ -44,7 +44,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className={`${brandFont.variable} min-h-screen bg-background flex flex-col font-sans`}>
+      <body className={`${brandFont.variable} min-h-screen bg-brand-bg flex flex-col font-sans`}>
         <ReduxProvider>
           <AuthInitializer>
             <Navbar />
