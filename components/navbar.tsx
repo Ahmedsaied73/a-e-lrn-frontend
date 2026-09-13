@@ -8,6 +8,7 @@ import { logoutUser } from "@/services/authService";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectIsAuthenticated, selectUser, logout } from "@/store/slices/authSlice";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV_LINKS = [
   { href: "/", label: "الرئيسية" },
@@ -109,6 +110,7 @@ export function Navbar() {
 
         {/* ── Right Controls ── */}
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           {isAuthenticated ? (
             <>
               <NotificationBell />
