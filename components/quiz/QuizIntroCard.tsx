@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -49,6 +49,8 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
   const metaStatus = useSelector(selectQuizMetaStatus);
   const quizError = useSelector(selectQuizError);
 
+  const [showGradingConfirm, setShowGradingConfirm] = useState(false);
+
   useEffect(() => {
     dispatch(fetchQuizMeta(videoId));
   }, [videoId, dispatch]);
@@ -82,7 +84,7 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
   // From here: meta.exists === true
   const timeLimitDisplay = meta.timeLimitSec ? formatMinutes(meta.timeLimitSec) : "بدون حد زمني";
 
-  const handleStartOrResume = async () => {
+  const doStart = async () => {
     try {
       await dispatch(startQuizAttempt(videoId)).unwrap();
       router.push(`/course/${courseId}/video/${videoId}/quiz/run`);
@@ -92,6 +94,21 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
       // exhausted state.
       dispatch(fetchQuizMeta(videoId));
     }
+  };
+
+  const handleStartOrResume = () => {
+    // A fresh attempt consumes one of the limited retakes while another
+    // attempt may still be graded — warn first, but leave the choice open.
+    if (isPendingReview) {
+      setShowGradingConfirm(true);
+      return;
+    }
+    void doStart();
+  };
+
+  const handleConfirmStartWhileGrading = () => {
+    setShowGradingConfirm(false);
+    void doStart();
   };
 
   const isLocked = !meta.unlocked;
@@ -203,6 +220,34 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
           </div>
         ) : null}
       </Reveal>
+
+      {showGradingConfirm && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-brand-surface p-6 text-center">
+            <span className="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">بانتظار التصحيح</span>
+            <p className="mt-3 text-base font-bold text-brand-text">يوجد محاولة قيد التصحيح</p>
+            <p className="mt-2 text-sm leading-relaxed text-brand-muted">
+              أُرسلت إجاباتك للتصحيح ولم تصدر النتيجة بعد. يُفضل الانتظار حتى تظهر النتيجة قبل بدء محاولة جديدة — البدء الآن سيستهلك واحدة من محاولاتك المتبقية ({meta.maxAttempts - meta.attemptsUsed} من {meta.maxAttempts}).
+            </p>
+            <div className="mt-5 flex gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowGradingConfirm(false)}
+                className="flex-1 rounded-full bg-brand-primary py-2.5 text-sm font-bold text-white transition hover:bg-brand-primary/90"
+              >
+                انتظار النتيجة
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmStartWhileGrading}
+                className="flex-1 rounded-full border border-brand-accent/40 py-2.5 text-sm font-bold text-brand-accent transition hover:bg-brand-accent/10"
+              >
+                بدء محاولة جديدة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
