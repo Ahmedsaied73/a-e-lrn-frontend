@@ -1,50 +1,38 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
-import { toast } from 'react-hot-toast';
-import {
-  CircleDollarSign,
-  ListVideo,
-  Timer,
-  FileQuestion,
-  ShoppingBag,
-  Play,
-  ShieldCheck,
-  FlaskConical,
-  Check,
-  BadgeCheck,
-  Lock,
-} from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { enrollInCourse } from '@/services/courseService';
+import { toast } from 'react-hot-toast';
 
 interface EnrollmentCardProps {
   courseId: string;
   isEnrolled: boolean;
-  courseTitle: string;
   coursePrice: string | number;
   courseDuration: string | number;
   examsCount: string | number;
-  lessonsCount: string | number;
-  thumbnail?: string | null;
-  gradeLabel?: string;
+  lessonsCount: number;
+  completedCount?: number;
   primaryVideoHref?: string;
   className?: string;
   onEnrollSuccess?: () => void;
 }
 
+const PERKS = [
+  'وصول فوري لكل الفيديوهات والملفات',
+  'متابعة دورية وتصحيح تفصيلي للأسئلة المقالية',
+  'شهادة معتمدة عند اجتياز الاختبارات',
+];
+
 export function EnrollmentCard({
   courseId,
   isEnrolled,
-  courseTitle,
   coursePrice,
   courseDuration,
   examsCount,
   lessonsCount,
-  thumbnail,
-  gradeLabel,
+  completedCount = 0,
   primaryVideoHref,
   className,
   onEnrollSuccess,
@@ -63,8 +51,8 @@ export function EnrollmentCard({
       } else {
         window.location.reload();
       }
-    } catch (err: any) {
-      toast.error(err?.message || 'حدث خطأ أثناء الاشتراك في الكورس');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'حدث خطأ أثناء الاشتراك في الكورس');
     } finally {
       setLoading(false);
     }
@@ -76,156 +64,101 @@ export function EnrollmentCard({
       : typeof coursePrice === 'string' && coursePrice.trim() !== ''
         ? coursePrice
         : 'مجاني';
+  const isFree = priceDisplay === 'مجاني';
+  const progress = lessonsCount > 0 ? Math.round((completedCount / lessonsCount) * 100) : 0;
 
   return (
-    <aside
-      className={cn(
-        'flex flex-col gap-5 rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-5 shadow-xs',
-        className,
-      )}
-    >
-      {/* Course Image with Badge */}
-      <div className="group relative aspect-video overflow-hidden rounded-xl shadow-xs">
-        {thumbnail ? (
-          <Image
-            src={thumbnail}
-            alt={courseTitle}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 1024px) 100vw, 33vw"
-          />
-        ) : (
-          <div className="primary-gradient flex h-full w-full items-center justify-center">
-            <FlaskConical className="h-12 w-12 text-white/90" aria-hidden="true" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/10" />
-        {gradeLabel && (
-          <span className="absolute top-3 right-3 rounded-full bg-primary px-3 py-1 text-[11px] font-bold text-on-primary shadow-md">
-            {gradeLabel}
-          </span>
-        )}
-        <span className="absolute inset-0 m-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface-container-lowest/90 text-primary shadow-lg">
-          <Play size={28} className="pr-0.5" fill="currentColor" aria-hidden="true" />
-        </span>
-      </div>
-
-      {/* Title + Verified */}
-      <div className="flex flex-col gap-2">
-        <h2 className="text-[18px] font-bold leading-tight text-on-surface">
-          {courseTitle}
-        </h2>
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <BadgeCheck size={16} aria-hidden="true" />
-          </div>
-          <span className="text-[13px] font-semibold text-on-surface">محتوى معتمد</span>
-          <BadgeCheck className="text-primary" size={16} aria-hidden="true" />
-        </div>
-      </div>
-
-      {/* Meta Information Grid */}
-      <div className="grid grid-cols-2 gap-3 border-t border-outline-variant/40 pt-2">
-        <div className="flex items-center gap-2.5 rounded-xl bg-surface-container-low p-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <CircleDollarSign size={20} aria-hidden="true" />
-          </div>
-          <div>
-            <div className="text-[11px] font-medium text-on-surface-variant">سعر الدورة</div>
-            <div className="text-[15px] font-bold text-primary">{priceDisplay}</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2.5 rounded-xl bg-surface-container-low p-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary-color/10 text-secondary-color">
-            <ListVideo size={20} aria-hidden="true" />
-          </div>
-          <div>
-            <div className="text-[11px] font-medium text-on-surface-variant">عدد الحصص</div>
-            <div className="text-[14px] font-bold text-on-surface">{lessonsCount} محاضرة</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2.5 rounded-xl bg-surface-container-low p-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tertiary/10 text-tertiary">
-            <Timer size={20} aria-hidden="true" />
-          </div>
-          <div>
-            <div className="text-[11px] font-medium text-on-surface-variant">المدة الإجمالية</div>
-            <div className="text-[14px] font-bold text-on-surface">{courseDuration}</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2.5 rounded-xl bg-surface-container-low p-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-            <FileQuestion size={20} aria-hidden="true" />
-          </div>
-          <div>
-            <div className="text-[11px] font-medium text-on-surface-variant">الاختبارات</div>
-            <div className="text-[14px] font-bold text-on-surface">{examsCount} اختبار</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Course Features */}
-      <div className="flex flex-col gap-2 py-1 text-[13px] text-on-surface-variant">
-        <div className="flex items-center gap-2">
-          <Check className="text-emerald-600" size={18} aria-hidden="true" />
-          <span>وصول فوري لكافة الفيديوهات والملفات</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Check className="text-emerald-600" size={18} aria-hidden="true" />
-          <span>متابعة دورية وتصحيح تفصيلي للأسئلة المقالية</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Check className="text-emerald-600" size={18} aria-hidden="true" />
-          <span>شهادة إتمام معتمدة بعد اجتياز الاختبارات</span>
-        </div>
-      </div>
-
-      {/* CTA Actions */}
-      <div className="flex flex-col gap-2.5 border-t border-outline-variant/40 pt-2">
-        {isEnrolled ? (
-          primaryVideoHref ? (
+    <div className={cn('sticky top-24 space-y-5', className)}>
+      <div className="overflow-hidden rounded-xl border border-brand-border bg-brand-surface shadow-sm">
+        <div className="relative flex h-44 items-center justify-center bg-gradient-to-br from-brand-primary to-brand-secondary">
+          {primaryVideoHref ? (
             <Link
               href={primaryVideoHref}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-[15px] font-bold text-on-primary shadow-md shadow-primary/20 transition-all hover:bg-on-primary-fixed-variant"
+              aria-label="تشغيل الفيديو التعريفي"
+              className="grid h-14 w-14 place-items-center rounded-full bg-white/90 text-brand-primary shadow transition hover:scale-105"
             >
-              <Play size={20} aria-hidden="true" />
-              متابعة التعلم
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5Z" /></svg>
             </Link>
           ) : (
-            <button
-              disabled
-              className="flex w-full cursor-default items-center justify-center gap-2 rounded-xl bg-surface-container px-4 py-3 text-[15px] font-bold text-on-surface-variant"
-            >
-              <Lock size={18} aria-hidden="true" />
-              أنت مشترك في هذه الدورة
-            </button>
-          )
-        ) : (
-          <button
-            onClick={handleEnrollment}
-            disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-[15px] font-bold text-on-primary shadow-md shadow-primary/20 transition-all hover:bg-on-primary-fixed-variant disabled:opacity-60"
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                جاري الاشتراك...
-              </span>
-            ) : (
-              <>
-                <ShoppingBag size={20} aria-hidden="true" />
-                الاشتراك في الدورة الآن
-              </>
-            )}
-          </button>
-        )}
-      </div>
+            <span className="grid h-14 w-14 place-items-center rounded-full bg-white/90 text-brand-primary shadow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5Z" /></svg>
+            </span>
+          )}
+        </div>
+        <div className="p-5">
+          <div className="mb-4">
+            <div className="mb-1 flex items-center justify-between text-xs text-brand-muted">
+              <span>تقدمك في الدورة</span>
+              <span>{progress}٪</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-brand-chip">
+              <div className="h-full rounded-full bg-brand-primary transition-all" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
 
-      {/* Guarantee */}
-      <div className="flex items-center justify-center gap-2 text-[11px] font-medium text-on-surface-variant">
-        <ShieldCheck size={14} className="text-emerald-600" aria-hidden="true" />
-        ضمان استرجاع 100% خلال 7 أيام من بدء الدراسة
+          <div className="grid grid-cols-2 gap-3 text-center text-xs">
+            <div className="rounded-lg bg-brand-bg py-3">
+              <p className="font-bold text-brand-text">{lessonsCount}</p>
+              <p className="mt-0.5 text-brand-muted">محاضرات</p>
+            </div>
+            <div className="rounded-lg bg-brand-bg py-3">
+              <p className={'font-bold ' + (isFree ? 'text-emerald-600' : 'text-brand-text')}>{priceDisplay}</p>
+              <p className="mt-0.5 text-brand-muted">سعر الدورة</p>
+            </div>
+            <div className="rounded-lg bg-brand-bg py-3">
+              <p className="font-bold text-brand-text">{examsCount}</p>
+              <p className="mt-0.5 text-brand-muted">اختبارات</p>
+            </div>
+            <div className="rounded-lg bg-brand-bg py-3">
+              <p className="font-bold text-brand-text">{courseDuration}</p>
+              <p className="mt-0.5 text-brand-muted">المدة الإجمالية</p>
+            </div>
+          </div>
+
+          <ul className="mt-5 space-y-2.5">
+            {PERKS.map((p) => (
+              <li key={p} className="flex items-start gap-2 text-sm text-brand-muted-strong">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="mt-0.5 shrink-0 text-emerald-500"><path d="M5 12.5 10 17l9-10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                {p}
+              </li>
+            ))}
+          </ul>
+
+          {isEnrolled ? (
+            primaryVideoHref ? (
+              <Link
+                href={primaryVideoHref}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary py-3 text-sm font-semibold text-white transition hover:bg-brand-primary/90"
+              >
+                متابعة التعلم
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5Z" /></svg>
+              </Link>
+            ) : (
+              <span className="mt-5 flex w-full cursor-default items-center justify-center gap-2 rounded-lg bg-brand-chip py-3 text-sm font-semibold text-brand-muted">
+                أنت مشترك في هذه الدورة
+              </span>
+            )
+          ) : (
+            <button
+              onClick={handleEnrollment}
+              disabled={loading}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary py-3 text-sm font-semibold text-white transition hover:bg-brand-primary/90 disabled:opacity-60"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  جاري الاشتراك...
+                </span>
+              ) : (
+                'الاشتراك في الدورة الآن'
+              )}
+            </button>
+          )}
+          <p className="mt-3 text-center text-xs text-brand-muted">
+            ضمان استرجاع ١٠٠٪ خلال ٧ أيام من بدء الدراسة
+          </p>
+        </div>
       </div>
-    </aside>
+    </div>
   );
 }
