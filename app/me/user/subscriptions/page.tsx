@@ -1,13 +1,10 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CreditCard, ArrowLeft, Clock, BookOpenCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { Reveal } from '@/components/reveal';
 import { getEnrolledCourses } from '@/services/courseService';
-import { CourseListItem } from '@/services/courseService';
+import type { CourseListItem } from '@/services/courseService';
 
 export default function UserSubscriptionsPage() {
   const [courses, setCourses] = useState<CourseListItem[]>([]);
@@ -19,9 +16,9 @@ export default function UserSubscriptionsPage() {
       try {
         const data = await getEnrolledCourses();
         setCourses(Array.isArray(data) ? data : []);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('خطأ في جلب الاشتراكات:', err);
-        setError(err.message || 'حدث خطأ أثناء جلب الاشتراكات');
+        setError(err instanceof Error ? err.message : 'حدث خطأ أثناء جلب الاشتراكات');
       } finally {
         setLoading(false);
       }
@@ -30,82 +27,77 @@ export default function UserSubscriptionsPage() {
     fetchEnrolledCourses();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-4xl animate-pulse px-4 py-12 sm:px-6">
+        <div className="h-9 w-48 rounded-lg bg-brand-chip" />
+        <div className="mt-2 h-4 w-72 rounded bg-brand-chip" />
+        <div className="mt-8 h-28 rounded-2xl bg-brand-chip" />
+        <div className="mt-10 h-40 rounded-2xl bg-brand-chip" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-12 text-center sm:px-6">
+        <p className="text-base font-bold text-brand-text">تعذر تحميل الاشتراكات</p>
+        <p className="mt-2 text-sm text-brand-muted">{error}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="account-page">
-      {/* Header with subscriptions icon */}
-      <div className="flex flex-col items-center justify-center mb-8">
-        <div className="bg-primary-color rounded-full p-3 mb-2">
-          <CreditCard className="text-on-surface h-6 w-6" />
+    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+      <Reveal>
+        <h1 className="text-2xl font-extrabold text-brand-text sm:text-3xl">اشتراكاتك</h1>
+        <p className="mt-2 text-sm text-brand-muted">الدورات التي انضممت إليها، وحالتها الحالية.</p>
+      </Reveal>
+
+      <Reveal delayMs={80} className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-brand-border bg-brand-surface px-6 py-5">
+        <div>
+          <p className="text-xs font-semibold text-brand-secondary">خطتك الحالية</p>
+          <p className="mt-1 text-lg font-extrabold text-brand-text">الوصول الكامل للدورات</p>
+          <p className="mt-1 text-xs text-brand-muted">
+            {courses.length > 0 ? `لديك ${courses.length} دورات نشطة` : "لم تشترك في أي دورة بعد"}
+          </p>
         </div>
-        <h1 className="text-2xl font-bold text-on-surface text-center">الاشتراكات</h1>
-      </div>
-
-      {/* Back to profile button */}
-      <div className="mb-6">
-        <Link href="/me/user">
-          <Button variant="outline" className="text-on-surface border-outline-variant bg-white hover:bg-surface-container-low">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            العودة إلى ملف المستخدم
-          </Button>
+        <Link
+          href="/grades/1"
+          className="rounded-full bg-brand-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-primary/90"
+        >
+          إدارة الاشتراك
         </Link>
-      </div>
+      </Reveal>
 
-      {/* Subscriptions list */}
-      <Card className="shadow-level-2 text-on-surface">
-        <CardHeader>
-          <CardTitle className="text-center">
-            <span className="text-primary-color">★</span> الاشتراكات الحالية <span className="text-primary-color">★</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-10">
-              <p className="text-xl">جاري تحميل الاشتراكات...</p>
-            </div>
-          ) : error ? (
-            <div className="text-center py-10">
-              <p className="text-xl text-error">حدث خطأ</p>
-              <p className="text-on-surface-variant mt-2">{error}</p>
-            </div>
-          ) : courses.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course) => (
-                <Link href={`/course/${course.id}`} key={course.id}>
-                  <div className="bg-surface-container-low rounded-lg p-4 h-full hover:bg-surface-container transition-colors cursor-pointer">
-                    <div className="relative w-full h-40 mb-4 overflow-hidden rounded-md group">
-                      <Image 
-                        src={course.thumbnail || '/placeholder.jpg'} 
-                        alt={course.title || 'Course'} 
-                        fill 
-                        className="object-cover transition-transform group-hover:scale-105" 
-                      />
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 text-primary-color line-clamp-1">{course.title}</h3>
-                    <p className="text-on-surface-variant mb-3 line-clamp-2 h-12">{course.description}</p>
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex items-center text-on-surface-variant">
-                        <Clock className="h-4 w-4 ml-1" />
-                        <span>{course.price && course.price > 0 ? `${course.price} ج.م` : 'مجاني'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center text-on-surface-variant">
-                          <BookOpenCheck className="h-4 w-4 ml-1" />
-                          <span className="text-sm">{course.grade}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-10">
-              <p className="text-xl">لا يوجد اشتراكات حالياً</p>
-              <p className="text-on-surface-variant mt-2">يمكنك الاشتراك في الكورسات من صفحة الكورسات الرئيسية</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Reveal delayMs={130} className="mt-10">
+        <p className="text-sm font-bold text-brand-text">الدورات المشترك بها</p>
+        {courses.length > 0 ? (
+          <div className="mt-3 divide-y divide-brand-border rounded-2xl border border-brand-border bg-brand-surface">
+            {courses.map((course) => (
+              <div key={course.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                <div>
+                  <p className="text-sm font-semibold text-brand-text">{course.title}</p>
+                  <p className="mt-0.5 text-xs text-brand-muted">
+                    {course.price && course.price > 0 ? "مدفوع" : "مجاني"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-bold text-brand-primary">نشط</span>
+                  <Link href={`/course/${course.id}`} className="text-sm font-semibold text-brand-primary hover:underline">
+                    عرض الدورة
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-3 rounded-2xl border border-brand-border bg-brand-surface px-5 py-10 text-center">
+            <p className="text-sm font-semibold text-brand-text">لا يوجد اشتراكات حالياً</p>
+            <p className="mt-1 text-xs text-brand-muted">يمكنك الاشتراك في الكورسات من صفحة الدورات</p>
+          </div>
+        )}
+      </Reveal>
     </div>
   );
 }
