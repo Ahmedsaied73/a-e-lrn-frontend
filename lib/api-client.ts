@@ -23,6 +23,7 @@ import {
 } from './errors';
 import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 import { clearUserCache } from '@/lib/user-cache';
+import { clearUserEntries } from '@/lib/data-cache';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -189,6 +190,7 @@ async function request<T>(
     const errBody = await safeParseJson(response);
     purgeLegacyAuthStorage();
     clearUserCache();
+    clearUserEntries();
     if (typeof window !== 'undefined') {
       document.cookie = 'isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       // Redirect to login if unauthenticated on protected action

@@ -1,6 +1,10 @@
 /**
  * Current-user profile cache.
  *
+ * Thin facade over lib/data-cache.ts `persistedEntry` — the mechanics (TTL,
+ * corruption-safe reads, best-effort writes) live in the unified cache layer.
+ * Behavior is unchanged from the original implementation:
+ *
  * The /user/me profile is needed for Navbar, guards, and personal pages on
  * every app load. Without a cache, every full page refresh fires a new request
  * (AuthInitializer runs once per app session = once per hard navigation). This
@@ -18,49 +22,22 @@
  *    resets), and the storage event in AuthInitializer drops this cache when
  *    another tab logs out.
  */
+import { persistedEntry, ELRN_USER_KEY } from '@/lib/data-cache';
 import { User } from '@/types/api';
 
-export const USER_CACHE_KEY = 'elrn:user-cache';
+export const USER_CACHE_KEY = ELRN_USER_KEY;
 const TTL_MS = 5 * 60 * 1000;
 
-interface UserCacheEntry {
-  user: User;
-  expiresAt: number;
-}
+const entry = persistedEntry<User>(USER_CACHE_KEY, TTL_MS);
 
 export function getCachedUser(): User | null {
-  if (typeof localStorage === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(USER_CACHE_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw) as UserCacheEntry;
-    if (!parsed?.user || typeof parsed.expiresAt !== 'number') return null;
-
-    if (Date.now() > parsed.expiresAt) {
-      localStorage.removeItem(USER_CACHE_KEY);
-      return null;
-    }
-
-    return parsed.user;
-  } catch {
-    return null;
-  }
+  return entry.get();
 }
 
 export function setCachedUser(user: User): void {
-  if (typeof localStorage === 'undefined') return;
-  try {
-    localStorage.setItem(
-      USER_CACHE_KEY,
-      JSON.stringify({ user, expiresAt: Date.now() + TTL_MS } satisfies UserCacheEntry),
-    );
-  } catch {
-    // Quota/full-storage — cache is best-effort only.
-  }
+  entry.set(user);
 }
 
 export function clearUserCache(): void {
-  if (typeof localStorage === 'undefined') return;
-  localStorage.removeItem(USER_CACHE_KEY);
+  entry.clear();
 }
