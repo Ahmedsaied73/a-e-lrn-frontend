@@ -14,6 +14,7 @@
  */
 
 import { apiClient } from '@/lib/api-client';
+import { cached, userKey } from '@/lib/data-cache';
 import { ForbiddenError, NotFoundError, ApiError } from '@/lib/errors';
 import type { BunnyVideo, BunnyPlaybackData, BunnyErrorCode } from '@/types/bunny';
 
@@ -91,27 +92,34 @@ export function formatBunnyDuration(seconds: number | null | undefined): string 
 export async function fetchBunnyCourseVideos(
   courseId: string | number,
 ): Promise<BunnyVideo[]> {
-  try {
-    // apiClient.get unwraps { success, data } automatically, so we get
-    // the array directly.
-    const data = await apiClient.get<BunnyVideo[]>(
-      `/courses/${courseId}/bunny-videos`,
-    );
-    // Guard: ensure we always return an array even if the server sends null.
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    // If the error is a 404 (course not found), return empty list gracefully.
-    if (err instanceof NotFoundError) {
-      return [];
+  // User-scoped 60s cache: the backend filters this list by enrollment/role,
+  // so it is per-viewer data. Hottest key in the app (course page + every
+  // video page) — revisits within the TTL fire zero requests.
+  // NOTE: resolved [] (not-enrolled / no videos) is cached too; enroll and
+  // video-publish flows drop this key explicitly.
+  return cached(userKey(`/courses/${courseId}/bunny-videos`), 60_000, async () => {
+    try {
+      // apiClient.get unwraps { success, data } automatically, so we get
+      // the array directly.
+      const data = await apiClient.get<BunnyVideo[]>(
+        `/courses/${courseId}/bunny-videos`,
+      );
+      // Guard: ensure we always return an array even if the server sends null.
+      return Array.isArray(data) ? data : [];
+    } catch (err) {
+      // If the error is a 404 (course not found), return empty list gracefully.
+      if (err instanceof NotFoundError) {
+        return [];
+      }
+      // For 403 (not enrolled), the backend returns [] for list endpoints,
+      // so this branch is just a safety net.
+      if (err instanceof ForbiddenError) {
+        return [];
+      }
+      // Re-throw everything else (network errors, 5xx, etc.)
+      throw err;
     }
-    // For 403 (not enrolled), the backend returns [] for list endpoints,
-    // so this branch is just a safety net.
-    if (err instanceof ForbiddenError) {
-      return [];
-    }
-    // Re-throw everything else (network errors, 5xx, etc.)
-    throw err;
-  }
+  });
 }
 
 export async function fetchBunnyCourseProgress(

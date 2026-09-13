@@ -6,6 +6,7 @@
  */
 
 import { apiClient } from '@/lib/api-client';
+import { cached, userKey } from '@/lib/data-cache';
 import { PaginationMeta } from '@/types/api';
 
 // ---------------------------------------------------------------------------
@@ -141,20 +142,25 @@ export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage
  * requests to initialize.
  */
 export async function fetchCourseById(courseId: string | number): Promise<CourseDetail> {
-  const raw = await apiClient.get<unknown>(`/courses/${courseId}`);
-  const payload = extractData<{
-    course: CourseListItem & Record<string, unknown>;
-    videos?: CourseDetail['videos'];
-    enrollment?: CourseEnrollment | null;
-    progress?: VideoProgress[];
-  }>(raw);
+  // User-scoped 60s cache: the aggregate embeds the viewer's own enrollment +
+  // progress. Matches the backend video-list TTL; progress/enrollment flips
+  // drop this key explicitly (see markVideoCompleted / enrollInCourse).
+  return cached(userKey(`/courses/${courseId}`), 60_000, async () => {
+    const raw = await apiClient.get<unknown>(`/courses/${courseId}`);
+    const payload = extractData<{
+      course: CourseListItem & Record<string, unknown>;
+      videos?: CourseDetail['videos'];
+      enrollment?: CourseEnrollment | null;
+      progress?: VideoProgress[];
+    }>(raw);
 
-  return {
-    ...(payload.course as object),
-    videos: payload.videos ?? [],
-    enrollment: payload.enrollment ?? null,
-    progress: payload.progress ?? [],
-  } as CourseDetail;
+    return {
+      ...(payload.course as object),
+      videos: payload.videos ?? [],
+      enrollment: payload.enrollment ?? null,
+      progress: payload.progress ?? [],
+    } as CourseDetail;
+  });
 }
 
 /**
