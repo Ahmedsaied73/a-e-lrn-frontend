@@ -2,15 +2,15 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { submitQuizAttempt, fetchQuizMeta, fetchQuizResult, selectActiveAttempt, selectSubmitResult } from "@/store/slices/quizSlice";
+import { submitQuizAttempt, fetchQuizMeta, fetchQuizResult } from "@/store/slices/quizSlice";
 import { API_BASE_URL } from "@/lib/api-client";
 import { useQuizTimer } from "@/hooks/useQuizTimer";
 import { useQuizAutosave } from "@/hooks/useQuizAutosave";
 import { ApiError } from "@/lib/errors";
 import type { StartQuizData } from "@/types/quiz";
-import { Flag, ChevronRight, ChevronLeft, CheckCircle, Clock, Loader2, AlertTriangle } from "lucide-react";
+import { Flag, Loader2, AlertTriangle } from "lucide-react";
 import DOMPurify from 'dompurify';
 
 // --- Types from SurveyJS surveyJson shape ---
@@ -60,9 +60,6 @@ function formatTimer(sec: number): string {
   return `${m}:${s}`;
 }
 
-/** Arabic letter labels for radio choices */
-const ARABIC_LETTERS = ["أ", "ب", "ج", "د", "هـ", "و", "ز"];
-
 const SAFE_HTML_TAGS = new Set([
   "a", "b", "blockquote", "br", "code", "div", "em", "h1", "h2", "h3",
   "h4", "h5", "h6", "i", "img", "li", "ol", "p", "pre", "span", "strong",
@@ -80,11 +77,11 @@ function isSafeHtmlUrl(value: string): boolean {
 /** Keep authored display HTML useful while preventing script and event-handler injection. */
 function sanitizeQuizHtml(html: string, allowDomParser: boolean): string {
   if (!allowDomParser || typeof window === "undefined" || typeof DOMParser === "undefined") {
-    return html.replace(/[&<>\"']/g, (character) => ({
+    return html.replace(/[&<>"']/g, (character) => ({
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
-      '\"': "&quot;",
+      '"': "&quot;",
       "'": "&#39;",
     }[character] ?? character));
   }
@@ -311,21 +308,19 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
     const isFlagged = flagged.has(idx);
 
     if (isActive) {
-      return "shrink-0 w-9 h-9 rounded-lg bg-primary-color text-white font-bold text-xs shadow-xs ring-2 ring-primary-color/30 ring-offset-1 flex items-center justify-center transition";
+      return "flex h-9 w-9 items-center justify-center rounded-lg bg-brand-ink text-sm font-bold text-white transition";
     }
     if (isFlagged) {
-      return "shrink-0 w-9 h-9 rounded-lg bg-amber-50 border border-amber-300 text-amber-700 font-semibold text-xs hover:bg-amber-100 flex items-center justify-center transition relative";
+      return "flex h-9 w-9 items-center justify-center rounded-lg border border-amber-400 text-sm font-bold text-amber-700 transition hover:bg-amber-50";
     }
     if (answered) {
-      return "shrink-0 w-9 h-9 rounded-lg bg-primary-pale border border-primary-color/30 text-primary-color font-semibold text-xs hover:bg-blue-100 flex items-center justify-center transition relative";
+      return "flex h-9 w-9 items-center justify-center rounded-lg bg-brand-primary/15 text-sm font-bold text-brand-primary transition";
     }
-    return "shrink-0 w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 text-xs hover:bg-slate-100 flex items-center justify-center";
+    return "flex h-9 w-9 items-center justify-center rounded-lg border border-brand-border text-sm font-bold text-brand-muted transition hover:border-brand-primary/40";
   }
 
   // Render per-question UI
   function renderQuestion(q: SurveyElement) {
-    const qIdx = questions.indexOf(q);
-
     // Optional photo attached to an answerable question (MCQ/essay) —
     // same guard as standalone image elements.
     const attachedImage = typeof q.imageLink === "string" && isSafeHtmlUrl(q.imageLink)
@@ -342,54 +337,31 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
       return (
         <>
           {attachedImageNode}
-          <fieldset className="space-y-3.5">
-          <legend className="sr-only">خيارات الإجابة</legend>
-          {choices.map((choice, ci) => {
-            const val = getChoiceValue(choice);
-            const txt = getChoiceText(choice);
-            const isSelected = selected === val;
-            return (
-              <label
-                key={val}
-                className={`group relative flex items-center justify-between p-4 sm:p-5 rounded-xl border-2 cursor-pointer transition-all duration-150 ${
-                  isSelected
-                    ? "border-primary-color bg-primary-pale/50 shadow-xs"
-                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`w-8 h-8 rounded-lg text-sm font-bold flex items-center justify-center shrink-0 transition ${
-                      isSelected
-                        ? "bg-primary-color text-white"
-                        : "bg-slate-100 group-hover:bg-slate-200 text-slate-700"
-                    }`}
-                  >
-                    {ARABIC_LETTERS[ci] ?? (ci + 1)}
-                  </span>
-                  <span className={`text-sm sm:text-base font-medium ${isSelected ? "font-semibold text-slate-900" : "text-slate-800"}`}>
-                    {txt}
-                  </span>
-                </div>
-                <div
-                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 bg-white transition ${
-                    isSelected ? "border-primary-color" : "border-slate-300 group-hover:border-slate-400"
-                  }`}
+          <div className="mt-6 space-y-2.5">
+            {choices.map((choice, ci) => {
+              const val = getChoiceValue(choice);
+              const txt = getChoiceText(choice);
+              const isSelected = selected === val;
+              return (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setAnswer(q.name, val)}
+                  className={
+                    "flex w-full items-center gap-3 rounded-xl border-s-4 bg-brand-surface px-4 py-3.5 text-start text-sm transition " +
+                    (isSelected
+                      ? "border-s-brand-primary bg-brand-primary/5 font-semibold text-brand-primary"
+                      : "border-s-transparent text-brand-muted-strong hover:bg-brand-bg")
+                  }
                 >
-                  {isSelected && <div className="w-3 h-3 rounded-full bg-primary-color" />}
-                </div>
-                <input
-                  className="sr-only"
-                  type="radio"
-                  name={`q-${q.name}`}
-                  value={val}
-                  checked={isSelected}
-                  onChange={() => setAnswer(q.name, val)}
-                />
-              </label>
-            );
-          })}
-        </fieldset>
+                  <span className={"font-mono text-xs " + (isSelected ? "text-brand-primary" : "text-brand-muted")}>
+                    {String.fromCharCode(65 + ci)}
+                  </span>
+                  {txt}
+                </button>
+              );
+            })}
+          </div>
         </>
       );
     }
@@ -399,12 +371,12 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
         <>
           {attachedImageNode}
           <textarea
-          className="w-full min-h-[160px] p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm font-medium placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary-color/30 focus:border-primary-color transition resize-y"
-          placeholder="اكتب إجابتك هنا..."
-          value={(answers[q.name] as string) ?? ""}
-          onChange={(e) => setAnswer(q.name, e.target.value)}
-          dir="rtl"
-        />
+            className="mt-6 min-h-[160px] w-full resize-y rounded-xl border border-brand-border bg-brand-bg p-4 text-sm font-medium text-brand-text placeholder:text-brand-muted transition focus:border-brand-primary focus:outline-none"
+            placeholder="اكتب إجابتك هنا..."
+            value={(answers[q.name] as string) ?? ""}
+            onChange={(e) => setAnswer(q.name, e.target.value)}
+            dir="rtl"
+          />
         </>
       );
     }
@@ -412,7 +384,7 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
     if (q.type === "html") {
       return (
         <div
-          className="prose prose-slate max-w-none text-slate-700"
+          className="prose max-w-none text-brand-muted-strong"
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(sanitizeQuizHtml(q.html ?? "", isHydrated)) }}
         />
       );
@@ -433,7 +405,7 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
 
     // image or unknown types — static display
     return (
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-center text-slate-500 text-sm">
+      <div className="rounded-xl border border-brand-border bg-brand-bg p-6 text-center text-sm text-brand-muted">
         عنصر عرض — {q.type}
       </div>
     );
@@ -441,235 +413,154 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
 
   if (!currentQ) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-slate-500">لا توجد أسئلة في هذا الاختبار.</p>
+      <div className="flex h-64 items-center justify-center bg-brand-bg">
+        <p className="text-brand-muted">لا توجد أسئلة في هذا الاختبار.</p>
       </div>
     );
   }
 
-  const isCurrentAnswered = isAnswered(currentIndex);
+  const answeredCount = questions.filter((_, idx) => isAnswered(idx)).length;
   const isCurrentFlagged = flagged.has(currentIndex);
 
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-50 flex flex-col">
-      {/* ─── Sticky Top Header ─── */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          {/* Quiz title */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary-pale border border-blue-100 flex items-center justify-center text-primary-color">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-            </div>
-            <h1 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
-              {startData.quiz.title}
-            </h1>
-          </div>
-
-          {/* Timer + Submit */}
-          <div className="flex items-center gap-3">
-            {/* Timer */}
-            {remainingSec !== null && (
-              <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg border font-mono text-sm font-bold transition ${
-                timerUrgent
-                  ? "bg-rose-50 border-rose-200 text-rose-700 animate-pulse"
-                  : "bg-slate-100 border-slate-200 text-slate-700"
-              }`}>
-                <Clock className={`w-4 h-4 ${timerUrgent ? "text-rose-500" : "text-primary-color"}`} />
-                <span className="text-xs text-slate-500 font-sans hidden sm:inline">الوقت المتبقي:</span>
-                <span>{formatTimer(remainingSec)}</span>
-              </div>
-            )}
-
+    <div dir="rtl" className="min-h-dvh bg-brand-bg">
+      <header className="sticky top-0 z-30 border-b border-brand-border bg-brand-surface">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <p className="text-sm font-bold text-brand-text">{startData.quiz.title}</p>
+          <div className="flex items-center gap-4">
             {startData.status === "IN_PROGRESS" && (
-              <span className="text-xs text-slate-500 hidden sm:inline">
+              <span className="hidden text-xs text-brand-muted sm:inline">
                 {isSaving ? "جاري حفظ الإجابات..." : "يتم حفظ الإجابات تلقائياً"}
               </span>
             )}
-
-            {/* Submit button */}
+            {remainingSec !== null && (
+              <span className={"font-mono text-sm font-bold text-brand-accent" + (timerUrgent ? " animate-pulse" : "")}>
+                {formatTimer(remainingSec)}
+              </span>
+            )}
             <button
               onClick={() => setShowConfirm(true)}
               disabled={isSubmitting}
-              className="bg-primary-color hover:bg-[#1a66d9] active:bg-[#1451b2] text-white font-bold text-sm px-5 py-2 rounded-lg transition-all shadow-xs shadow-blue-500/30 flex items-center gap-2 disabled:opacity-70"
+              className="rounded-full border border-brand-accent/40 px-4 py-1.5 text-xs font-bold text-brand-accent transition hover:bg-brand-accent/10 disabled:opacity-60"
             >
-              {isSubmitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /><span>جاري التسليم...</span></>
-              ) : (
-                <><span>تسليم الامتحان</span><CheckCircle className="w-4 h-4" /></>
-              )}
+              {isSubmitting ? "جاري التسليم..." : "تسليم الاختبار"}
             </button>
           </div>
         </div>
       </header>
 
-      {/* ─── Question Navigator Strip ─── */}
-      <section className="bg-white border-b border-slate-200/90 py-3 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-xs font-semibold text-slate-500 whitespace-nowrap hidden md:inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-primary-color" />
-              قائمة الأسئلة ({totalQ} سؤال):
-            </span>
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full py-1" style={{ scrollbarWidth: "none" }}>
-              {questions.map((q, idx) => (
-                <button
-                  key={q.name}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={navBtnClass(idx)}
-                  title={flagged.has(idx) ? "محدد للمراجعة" : undefined}
-                >
-                  {idx + 1}
-                  {flagged.has(idx) && idx !== currentIndex && (
-                    <span className="absolute top-1 left-1 w-1.5 h-1.5 bg-amber-500 rounded-full" />
-                  )}
-                  {isAnswered(idx) && !flagged.has(idx) && idx !== currentIndex && (
-                    <span className="absolute top-1 left-1 w-1.5 h-1.5 bg-primary-color rounded-full" />
-                  )}
-                </button>
-              ))}
-            </div>
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        {submitError && (
+          <div className="mb-4 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-brand-accent">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <p className="text-sm font-medium">{submitError}</p>
           </div>
+        )}
+
+        {saveError && (
+          <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <p className="text-sm font-medium">{saveError} سيُعاد الحفظ تلقائياً عند تعديل الإجابات.</p>
+          </div>
+        )}
+
+        <div className="mb-6 flex flex-wrap gap-1.5">
+          {questions.map((q, i) => (
+            <button
+              key={q.name}
+              type="button"
+              onClick={() => setCurrentIndex(i)}
+              title={flagged.has(i) ? "محدد للمراجعة" : undefined}
+              className={navBtnClass(i)}
+            >
+              {i + 1}
+            </button>
+          ))}
         </div>
-      </section>
+        <p className="mb-4 text-xs text-brand-muted">
+          تمت الإجابة على {answeredCount} من {totalQ}
+        </p>
 
-      {/* ─── Main Question Area ─── */}
-      <main className="grow py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-           {submitError && (
-            <div className="mb-4 flex items-center gap-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-4 py-3">
-              <AlertTriangle className="w-5 h-5 shrink-0" />
-              <p className="text-sm font-medium">{submitError}</p>
-             </div>
-           )}
-
-          {saveError && (
-            <div className="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3">
-              <AlertTriangle className="w-5 h-5 shrink-0" />
-              <p className="text-sm font-medium">{saveError} سيُعاد الحفظ تلقائياً عند تعديل الإجابات.</p>
-            </div>
+        <div className="rounded-2xl border border-brand-border bg-brand-surface p-6 sm:p-8">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold text-brand-primary">السؤال {currentIndex + 1}</p>
+            <button
+              type="button"
+              onClick={() => toggleFlag(currentIndex)}
+              className={
+                "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition " +
+                (isCurrentFlagged
+                  ? "bg-amber-100 text-amber-700"
+                  : "text-brand-muted hover:bg-brand-bg hover:text-amber-700")
+              }
+            >
+              <Flag className="h-3.5 w-3.5" />
+              {isCurrentFlagged ? "محدد للمراجعة" : "تحديد للمراجعة"}
+            </button>
+          </div>
+          {currentQ.title && (
+            <h2 className="mt-2 text-lg font-bold leading-relaxed text-brand-text">{currentQ.title}</h2>
           )}
 
-          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 sm:p-8">
-            {/* Question header */}
-            <div className="flex flex-wrap items-center justify-between pb-5 mb-6 border-b border-slate-100 gap-3">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary-pale text-primary-color font-bold text-sm">
-                  {currentIndex + 1}
-                </span>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-                  السؤال {currentIndex + 1}{" "}
-                  <span className="text-sm font-normal text-slate-500">(من {totalQ})</span>
-                </h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium">
-                  {currentQ.type === "radiogroup" ? "اختيار من متعدد" : currentQ.type === "comment" ? "سؤال مقالي" : "عرض"}
-                </span>
-                {isCurrentAnswered && !isCurrentFlagged && (
-                  <span className="text-xs bg-primary-pale text-primary-color px-3 py-1 rounded-full font-semibold border border-blue-100">
-                    تمت الإجابة
-                  </span>
-                )}
-                {isCurrentFlagged && (
-                  <span className="text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded-full font-semibold border border-amber-200">
-                    محدد للمراجعة
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Question title */}
-            {currentQ.title && (
-              <div className="mb-6">
-                <p className="text-base sm:text-lg font-medium text-slate-800 leading-relaxed">
-                  {currentQ.title}
-                </p>
-              </div>
-            )}
-
-            {/* Question body */}
-            {renderQuestion(currentQ)}
-          </div>
+          {renderQuestion(currentQ)}
         </div>
-      </main>
 
-      {/* ─── Bottom Navigation Bar ─── */}
-      <footer className="bg-white border-t border-slate-200 sticky bottom-0 z-30 py-4 shadow-lg">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-wrap items-center justify-between gap-3">
-          {/* Previous */}
+        <div className="mt-6 flex items-center justify-between">
           <button
-            onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+            type="button"
+            onClick={() => setCurrentIndex((c) => Math.max(0, c - 1))}
             disabled={currentIndex === 0}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="text-sm font-semibold text-brand-muted transition hover:text-brand-primary disabled:opacity-30"
           >
-            <ChevronRight className="w-4 h-4" />
-            <span>السابق</span>
+            ← السابق
           </button>
-
-          {/* Flag */}
-          <button
-            onClick={() => toggleFlag(currentIndex)}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
-              isCurrentFlagged
-                ? "text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200"
-                : "text-slate-600 hover:text-amber-600 hover:bg-amber-50"
-            }`}
-          >
-            <Flag className={`w-4 h-4 ${isCurrentFlagged ? "text-amber-500 fill-amber-400" : "text-amber-500"}`} />
-            <span>{isCurrentFlagged ? "إلغاء التحديد" : "تحديد للمراجعة لاحقاً"}</span>
-          </button>
-
-          {/* Next */}
           {currentIndex < totalQ - 1 ? (
             <button
-              onClick={() => setCurrentIndex((i) => Math.min(totalQ - 1, i + 1))}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary-color hover:bg-[#1a66d9] text-white font-bold text-sm transition shadow-xs shadow-blue-500/30"
+              type="button"
+              onClick={() => setCurrentIndex((c) => Math.min(totalQ - 1, c + 1))}
+              className="rounded-full bg-brand-ink px-6 py-2.5 text-sm font-bold text-white transition hover:bg-brand-ink/90"
             >
-              <span>السؤال التالي</span>
-              <ChevronLeft className="w-4 h-4" />
+              السؤال التالي →
             </button>
           ) : (
             <button
+              type="button"
               onClick={() => setShowConfirm(true)}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition shadow-xs"
+              className="rounded-full bg-brand-primary px-6 py-2.5 text-sm font-bold text-white transition hover:bg-brand-primary/90"
             >
-              <span>مراجعة وتسليم</span>
-              <CheckCircle className="w-4 h-4" />
+              إنهاء وتسليم
             </button>
           )}
         </div>
-      </footer>
+      </main>
 
-      {/* ─── Submit Confirmation Dialog ─── */}
       {showConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center" dir="rtl">
-            <div className="w-16 h-16 rounded-full bg-blue-50 border-2 border-primary-color flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-primary-color" />
-            </div>
-            <h2 className="text-xl font-bold text-slate-900 mb-2">تأكيد تسليم الاختبار</h2>
-            <p className="text-slate-500 text-sm mb-2">
-              أجبت على {Object.keys(answers).length} من {totalQ} سؤال.
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-brand-surface p-6 text-center">
+            <p className="text-base font-bold text-brand-text">تسليم الاختبار؟</p>
+            <p className="mt-2 text-sm text-brand-muted">
+              أجبت على {answeredCount} من {totalQ} سؤال. لن تتمكن من التعديل بعد التسليم.
             </p>
             {flagged.size > 0 && (
-              <p className="text-amber-600 text-xs mb-4 bg-amber-50 rounded-lg px-3 py-2 border border-amber-100">
+              <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
                 لديك {flagged.size} سؤال محدد للمراجعة — بعد التسليم لا يمكن التراجع.
               </p>
             )}
-            <div className="flex gap-3 mt-6">
+            <div className="mt-5 flex gap-2.5">
               <button
-                onClick={() => { setShowConfirm(false); void doSubmit(false); }}
-                className="flex-1 py-3 rounded-xl bg-primary-color hover:bg-[#1a66d9] text-white font-bold transition"
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 rounded-full border border-brand-border py-2.5 text-sm font-semibold text-brand-muted-strong hover:bg-brand-hover"
               >
-                تسليم الآن
+                تراجع
               </button>
               <button
-                onClick={() => setShowConfirm(false)}
-                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition"
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => { setShowConfirm(false); void doSubmit(false); }}
+                className="flex-1 rounded-full bg-brand-primary py-2.5 text-sm font-bold text-white hover:bg-brand-primary/90 disabled:opacity-60"
               >
-                متابعة الحل
+                {isSubmitting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "تسليم"}
               </button>
             </div>
           </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { ResultQuestion, McqResultQuestion, EssayResultQuestion, AttemptSummary } from "@/types/quiz";
-import { CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface QuizReviewListProps {
   questions: ResultQuestion[];
@@ -18,8 +18,6 @@ function isEssay(q: ResultQuestion): q is EssayResultQuestion {
 function isMcq(q: ResultQuestion): q is McqResultQuestion {
   return q.type === "radiogroup";
 }
-
-const ARABIC_LETTERS = ["أ", "ب", "ج", "د", "هـ", "و", "ز"];
 
 function formatDate(iso: string): string {
   try {
@@ -39,10 +37,10 @@ function statusLabel(status: AttemptSummary["status"]): { text: string; cls: str
   switch (status) {
     case "GRADED": return { text: "مصحح", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" };
     case "GRADING": return { text: "بانتظار التصحيح", cls: "bg-amber-50 text-amber-700 border-amber-200" };
-    case "SUBMITTED": return { text: "مسلّم", cls: "bg-blue-50 text-primary-color border-blue-100" };
-    case "EXPIRED": return { text: "منتهية الصلاحية", cls: "bg-slate-100 text-slate-600 border-slate-200" };
-    case "IN_PROGRESS": return { text: "قيد التنفيذ", cls: "bg-indigo-50 text-indigo-700 border-indigo-200" };
-    default: return { text: status, cls: "bg-slate-100 text-slate-600 border-slate-200" };
+    case "SUBMITTED": return { text: "مسلّم", cls: "bg-brand-primary/10 text-brand-primary border-brand-primary/20" };
+    case "EXPIRED": return { text: "منتهية الصلاحية", cls: "bg-brand-chip text-brand-muted border-brand-border" };
+    case "IN_PROGRESS": return { text: "قيد التنفيذ", cls: "bg-brand-primary/10 text-brand-primary border-brand-primary/20" };
+    default: return { text: status, cls: "bg-brand-chip text-brand-muted border-brand-border" };
   }
 }
 
@@ -51,76 +49,54 @@ function McqCard({ q, index }: { q: McqResultQuestion; index: number }) {
   const correct = q.isCorrect;
 
   return (
-    <article className={`bg-white rounded-2xl border shadow-xs overflow-hidden ${
-      correct ? "border-slate-200/90" : "border-rose-200/80"
-    }`}>
-      {/* Card top bar */}
-      <div className={`px-6 py-4 border-b flex flex-wrap items-center justify-between gap-3 ${
-        correct ? "bg-slate-50/80 border-slate-200/70" : "bg-rose-50/60 border-rose-200/60"
-      }`}>
-        <div className="flex items-center gap-3">
-          <span className={`text-xs font-bold px-3 py-1 rounded-md border ${
-            correct
-              ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-              : "bg-rose-100 text-rose-700 border-rose-200"
-          }`}>
-            السؤال رقم {index + 1} • {correct ? "إجابة صحيحة" : "إجابة غير صحيحة"}
-          </span>
-        </div>
-        <div className="text-xs font-semibold text-slate-500">
-          درجة السؤال: <span className={`font-bold ${correct ? "text-emerald-600" : "text-rose-600"}`}>{q.earnedPoints}</span> / {q.maxPoints}
-        </div>
+    <article className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-xs">
+      <div className="flex items-center justify-between px-6 py-4">
+        <p className="text-xs font-semibold text-brand-muted">السؤال {index + 1}</p>
+        <span
+          className={
+            "rounded-full px-3 py-1 text-xs font-bold " +
+            (correct
+              ? "bg-brand-primary/10 text-brand-primary"
+              : "bg-brand-accent/10 text-brand-accent")
+          }
+        >
+          {correct ? "إجابة صحيحة" : "إجابة خاطئة"}
+        </span>
       </div>
 
-      <div className="p-6 sm:p-8 space-y-6">
-        {/* Question text — name serves as identifier */}
-        <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">{q.name}</h2>
-
-        {/* Options display */}
-        <div className="space-y-3">
-          {/* Correct answer — withheld until grading unlocks it (hide-until-pass) */}
-          {q.correctAnswer != null ? (
-          <>
-          <div className="flex items-center justify-between p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/70">
-            <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
-                ✓
-              </span>
-              <span className="text-slate-900 font-bold text-sm sm:text-base">{q.correctAnswer}</span>
-            </div>
-            <span className="hidden sm:inline-block text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-md">
-              الإجابة الصحيحة النموذجية
-            </span>
-          </div>
-
-          {/* Student answer (if different from correct) */}
-          {q.studentAnswer && q.studentAnswer !== q.correctAnswer && (
-            <div className="flex items-center justify-between p-4 rounded-xl border-2 border-rose-400 bg-rose-50/70">
-              <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-lg bg-rose-500 text-white font-bold text-sm flex items-center justify-center shadow-xs">
-                  ✗
-                </span>
-                <span className="text-slate-900 font-medium text-sm sm:text-base">{q.studentAnswer}</span>
-              </div>
-              <span className="hidden sm:inline-block text-xs font-bold text-rose-700 bg-rose-100 px-2.5 py-1 rounded-md">
-                اختيارك غير الصحيح
-              </span>
-            </div>
-          )}
-          </>
-          ) : (
-            <div className="flex items-center p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-sm">
-              <span>الإجابات النموذجية تظهر بعد اجتياز الاختبار</span>
-            </div>
-          )}
-
-          {/* No answer */}
-          {!q.studentAnswer && (
-            <div className="flex items-center p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-sm">
-              <span>لم تتم الإجابة على هذا السؤال</span>
-            </div>
-          )}
+      <div className="px-6 pb-6 sm:px-7 sm:pb-7">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-bold leading-relaxed text-brand-text">{q.name}</h2>
+          <span className="shrink-0 text-xs font-semibold text-brand-muted">
+            {q.earnedPoints} / {q.maxPoints}
+          </span>
         </div>
+
+        <ul className="mt-5 space-y-2">
+          {q.correctAnswer != null ? (
+            <>
+              <li className="flex items-center justify-between rounded-lg bg-brand-primary/10 px-4 py-2.5 text-sm font-semibold text-brand-primary">
+                <span>{q.correctAnswer}</span>
+                <span className="text-xs">✓ الإجابة النموذجية</span>
+              </li>
+              {q.studentAnswer && q.studentAnswer !== q.correctAnswer && (
+                <li className="flex items-center justify-between rounded-lg bg-brand-accent/10 px-4 py-2.5 text-sm text-brand-accent line-through">
+                  <span>{q.studentAnswer}</span>
+                  <span className="text-xs">اخترتَ هذه</span>
+                </li>
+              )}
+            </>
+          ) : (
+            <li className="rounded-lg bg-brand-bg px-4 py-2.5 text-sm text-brand-muted">
+              الإجابات النموذجية تظهر بعد اجتياز الاختبار
+            </li>
+          )}
+          {!q.studentAnswer && (
+            <li className="rounded-lg bg-brand-bg px-4 py-2.5 text-sm text-brand-muted">
+              لم تتم الإجابة على هذا السؤال
+            </li>
+          )}
+        </ul>
       </div>
     </article>
   );
@@ -132,53 +108,36 @@ function EssayCard({ q, index }: { q: EssayResultQuestion; index: number }) {
   const isGraded = q.status === "GRADED";
 
   return (
-    <article className={`bg-white rounded-2xl border shadow-xs overflow-hidden ${
-      isPending ? "border-amber-200/80" : isGraded ? "border-slate-200/90" : "border-slate-200"
-    }`}>
-      {/* Card top bar */}
-      <div className={`px-6 py-4 border-b flex flex-wrap items-center justify-between gap-3 ${
-        isPending ? "bg-amber-50/60 border-amber-200/60" : "bg-slate-50/80 border-slate-200/70"
-      }`}>
-        <div className="flex items-center gap-3">
-          <span className={`text-xs font-bold px-3 py-1 rounded-md border ${
-            isPending
-              ? "bg-amber-100 text-amber-700 border-amber-200"
-              : "bg-slate-100 text-slate-700 border-slate-200"
-          }`}>
-            السؤال رقم {index + 1} • سؤال مقالي
+    <article className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-xs">
+      <div className="flex items-center justify-between px-6 py-4">
+        <p className="text-xs font-semibold text-brand-muted">السؤال {index + 1} • سؤال مقالي</p>
+        {isPending ? (
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+            قيد المراجعة
           </span>
-          {isPending && (
-            <span className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              قيد المراجعة
-            </span>
-          )}
-        </div>
-        <div className="text-xs font-semibold text-slate-500">
-          درجة السؤال:{" "}
-          <span className="font-bold">
-            {isPending ? "--" : (q.earnedPoints ?? "--")}
-          </span>{" "}
-          / {q.maxPoints}
-        </div>
+        ) : (
+          <span className="rounded-full bg-brand-chip px-3 py-1 text-xs font-bold text-brand-muted">
+            {q.earnedPoints ?? "--"} / {q.maxPoints}
+          </span>
+        )}
       </div>
 
-      <div className="p-6 sm:p-8 space-y-5">
-        <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">{q.name}</h2>
+      <div className="space-y-5 px-6 pb-6 sm:px-7 sm:pb-7">
+        <h2 className="text-base font-bold leading-relaxed text-brand-text">{q.name}</h2>
 
         {/* Student answer */}
         <div>
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">إجابتك</h3>
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-            {q.studentAnswer || <span className="text-slate-400 italic">لم تتم الإجابة</span>}
+          <h3 className="mb-2 text-xs font-bold text-brand-muted">إجابتك</h3>
+          <div className="whitespace-pre-wrap rounded-xl border border-brand-border bg-brand-bg p-4 text-sm leading-relaxed text-brand-muted-strong">
+            {q.studentAnswer || <span className="italic text-brand-muted">لم تتم الإجابة</span>}
           </div>
         </div>
 
         {/* Model answer — ONLY shown when GRADED (backend withholds it pre-pass) */}
         {isGraded && q.modelAnswer && (
           <div>
-            <h3 className="text-xs font-bold text-primary-color uppercase tracking-wide mb-2">الإجابة النموذجية</h3>
-            <div className="bg-primary-pale/60 border border-blue-100 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+            <h3 className="mb-2 text-xs font-bold text-brand-primary">الإجابة النموذجية</h3>
+            <div className="whitespace-pre-wrap rounded-xl border border-brand-primary/20 bg-brand-primary/5 p-4 text-sm leading-relaxed text-brand-muted-strong">
               {q.modelAnswer}
             </div>
           </div>
@@ -186,14 +145,9 @@ function EssayCard({ q, index }: { q: EssayResultQuestion; index: number }) {
 
         {/* Feedback — ONLY when GRADED */}
         {isGraded && q.feedback && (
-          <div className="bg-linear-to-br from-primary-pale/40 via-white to-slate-50 border border-blue-100 rounded-xl p-5">
-            <div className="flex items-center gap-2 text-primary-color font-bold text-sm mb-2">
-              <svg className="w-5 h-5 text-primary-color shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <h3>تغذية راجعة من المصحح</h3>
-            </div>
-            <p className="text-sm text-slate-700 leading-relaxed">{q.feedback}</p>
+          <div className="border-s-2 border-brand-secondary/50 ps-4 text-sm leading-relaxed text-brand-muted-strong">
+            <p className="mb-1 text-xs font-bold text-brand-secondary">تغذية راجعة من المصحح</p>
+            {q.feedback}
           </div>
         )}
       </div>
@@ -205,14 +159,14 @@ function EssayCard({ q, index }: { q: EssayResultQuestion; index: number }) {
 function AttemptsHistory({ attempts }: { attempts: AttemptSummary[] }) {
   if (!attempts.length) return null;
   return (
-    <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      <div className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
-        <Clock className="w-5 h-5 text-primary-color" />
-        <h2 className="font-bold text-slate-900">سجل المحاولات السابقة</h2>
+    <section className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-xs">
+      <div className="flex items-center gap-2 border-b border-brand-border px-6 py-4">
+        <Clock className="h-5 w-5 text-brand-primary" />
+        <h2 className="font-bold text-brand-text">سجل المحاولات السابقة</h2>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          <thead className="bg-brand-bg text-xs font-semibold text-brand-muted">
             <tr>
               <th className="px-5 py-3 text-right">رقم المحاولة</th>
               <th className="px-5 py-3 text-right">التاريخ</th>
@@ -220,30 +174,30 @@ function AttemptsHistory({ attempts }: { attempts: AttemptSummary[] }) {
               <th className="px-5 py-3 text-right">النتيجة</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-brand-border">
             {attempts.map((a) => {
               const { text, cls } = statusLabel(a.status);
               return (
-                <tr key={a.id} className="hover:bg-slate-50/60 transition">
-                  <td className="px-5 py-3.5 font-bold text-slate-900">#{a.attemptNumber}</td>
-                  <td className="px-5 py-3.5 text-slate-600">{formatDate(a.startedAt)}</td>
+                <tr key={a.id} className="transition hover:bg-brand-bg">
+                  <td className="px-5 py-3.5 font-bold text-brand-text">#{a.attemptNumber}</td>
+                  <td className="px-5 py-3.5 text-brand-muted-strong">{formatDate(a.startedAt)}</td>
                   <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${cls}`}>
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${cls}`}>
                       {text}
                     </span>
                   </td>
                   <td className="px-5 py-3.5">
                     {a.scorePercent != null ? (
-                      <span className="font-bold text-slate-700">
+                      <span className="font-bold text-brand-muted-strong">
                         {a.scorePercent.toFixed(1)}%
                         {a.earnedPoints != null && a.totalPoints != null && (
-                          <span className="text-slate-400 font-normal ml-1">
+                          <span className="ml-1 font-normal text-brand-muted">
                             ({a.earnedPoints}/{a.totalPoints})
                           </span>
                         )}
                       </span>
                     ) : (
-                      <span className="text-slate-400">--</span>
+                      <span className="text-brand-muted">--</span>
                     )}
                   </td>
                 </tr>
@@ -285,35 +239,34 @@ export default function QuizReviewList({ questions, attempts }: QuizReviewListPr
   return (
     <div dir="rtl" className="space-y-6">
       {/* The server remains the source of truth for all scores and grading. */}
-      <section className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <section className="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-xs sm:p-5">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-primary-pale flex items-center justify-center text-primary-color">
-              <CheckCircle className="w-6 h-6" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary">
+              <CheckCircle className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500">مراجعة إجاباتك</p>
-              <p className="text-sm font-semibold text-slate-700">الدرجات والحالة معروضة كما أرسلها الخادم</p>
+              <p className="text-xs font-medium text-brand-muted">مراجعة إجاباتك</p>
+              <p className="text-sm font-semibold text-brand-muted-strong">الدرجات والحالة معروضة كما أرسلها الخادم</p>
             </div>
           </div>
 
           {/* Filter toggle */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+          <div className="flex items-center rounded-xl bg-brand-chip p-1">
             {(["all", "wrong", "correct"] as FilterMode[]).map((f) => (
               <button
                 key={f}
                 onClick={() => handleFilter(f)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
                   filter === f
                     ? f === "wrong"
-                      ? "bg-white text-rose-600 shadow-xs flex items-center gap-1.5"
+                      ? "bg-brand-surface text-brand-accent shadow-xs"
                       : f === "correct"
-                        ? "bg-white text-emerald-600 shadow-xs"
-                        : "bg-white text-slate-800 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                        ? "bg-brand-surface text-emerald-600 shadow-xs"
+                        : "bg-brand-surface text-brand-text shadow-xs"
+                    : "text-brand-muted hover:text-brand-text"
                 }`}
               >
-                {f === "wrong" && filter === "wrong" && <span className="w-2 h-2 rounded-full bg-rose-500" />}
                 {f === "all" ? "الكل" : f === "wrong" ? "الأسئلة الخاطئة فقط" : "الأسئلة الصحيحة"}
               </button>
             ))}
@@ -323,11 +276,11 @@ export default function QuizReviewList({ questions, attempts }: QuizReviewListPr
 
       {/* Question cards */}
       {paginated.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400">
+        <div className="rounded-2xl border border-brand-border bg-brand-surface p-8 text-center text-brand-muted">
           لا توجد أسئلة تطابق هذا الفلتر.
         </div>
       ) : (
-        paginated.map((q, i) => {
+        paginated.map((q) => {
           const globalIdx = filteredQuestions.indexOf(q);
           return isMcq(q)
             ? <McqCard key={q.name} q={q} index={globalIdx} />
@@ -341,21 +294,21 @@ export default function QuizReviewList({ questions, attempts }: QuizReviewListPr
           <button
             onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
             disabled={currentPage === 0}
-            className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="inline-flex items-center gap-1 rounded-lg border border-brand-border px-4 py-2 text-sm font-semibold text-brand-muted-strong transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="h-4 w-4" />
             السابق
           </button>
-          <span className="text-xs text-slate-500 font-medium">
+          <span className="text-xs font-medium text-brand-muted">
             صفحة {currentPage + 1} من {totalPages}
           </span>
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={currentPage === totalPages - 1}
-            className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="inline-flex items-center gap-1 rounded-lg border border-brand-border px-4 py-2 text-sm font-semibold text-brand-muted-strong transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           >
             التالي
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
         </div>
       )}

@@ -55,16 +55,16 @@ export default function QuizRunPage({ params }: PageProps) {
 
   if (!startData && !errorMsg) {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3">
-        <Loader2 className="h-10 w-10 animate-spin text-primary-color" />
-        <p className="font-medium text-slate-500">جاري تجهيز الاختبار...</p>
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 bg-brand-bg">
+        <Loader2 className="h-10 w-10 animate-spin text-brand-primary" />
+        <p className="font-medium text-brand-muted">جاري تجهيز الاختبار...</p>
       </div>
     );
   }
 
   if (errorMsg || !startData) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh] text-rose-600 bg-rose-50 p-4 rounded-xl max-w-2xl mx-auto mt-10">
+      <div className="mx-auto mt-10 flex min-h-[50vh] max-w-2xl items-center justify-center rounded-xl bg-brand-accent/10 p-4 text-brand-accent">
         <p className="font-bold">{errorMsg || "حدث خطأ غير متوقع"}</p>
       </div>
     );

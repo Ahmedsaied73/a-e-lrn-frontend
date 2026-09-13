@@ -71,21 +71,21 @@ export default function QuizResultPage({ params }: PageProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-primary-color mb-4" />
-        <p className="text-slate-500 font-medium">جاري تحميل النتيجة...</p>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center bg-brand-bg">
+        <Loader2 className="mb-4 h-10 w-10 animate-spin text-brand-primary" />
+        <p className="font-medium text-brand-muted">جاري تحميل النتيجة...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="bg-rose-50 border border-rose-200 text-rose-700 p-6 rounded-xl max-w-md text-center">
-          <p className="font-bold mb-4">{error}</p>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center bg-brand-bg">
+        <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center text-brand-accent">
+          <p className="mb-4 font-bold">{error}</p>
           <button
             onClick={() => router.push(`/course/${params.id}/video/${params.video}/quiz`)}
-            className="bg-primary-color text-white px-4 py-2 rounded-lg text-sm font-bold"
+            className="rounded-full bg-brand-primary px-4 py-2 text-sm font-bold text-white"
           >
             العودة للاختبار
           </button>
@@ -99,7 +99,7 @@ export default function QuizResultPage({ params }: PageProps) {
   const isPending = result.status === "SUBMITTED" || result.status === "GRADING";
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-12">
+    <div className="min-h-screen bg-brand-bg pb-12">
       {/* 1. Summary Card */}
       {isPending ? (
         <QuizResultSummary
@@ -128,7 +128,7 @@ export default function QuizResultPage({ params }: PageProps) {
 
       {/* 2. Review List (Hidden if pending) */}
       {!isPending && (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-8">
+        <div id="quiz-review" className="mx-auto mt-8 max-w-4xl scroll-mt-24 px-4 sm:px-6">
           <QuizReviewList
             questions={result.questions}
             attempts={attempts}
