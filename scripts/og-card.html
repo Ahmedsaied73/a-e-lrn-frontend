@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<!--
+  OG social-card SOURCE (1200x630). Rendered with headless Chromium, saved as
+  app/opengraph-image.png (Next.js serves it at /opengraph-image and emits
+  og:image + twitter:image automatically).
+
+  White-label regen (no rebuild of the app needed for the procedure itself):
+    1. Edit the three text nodes below (brand / teacher / tagline).
+    2. node "C:/Users/Ahmed Saied/.agents/skills/playwright-skill/run.js" C:\Users\AHMEDS~1\AppData\Local\Temp\opencode\shot-og.js
+       (script screenshots this file at exactly 1200x630 -> app/opengraph-image.png)
+    3. Commit the PNG. System fonts shape Arabic natively — no font deps.
+
+  Why a baked PNG and not opengraph-image.tsx: this repo runs Next 13.5.11,
+  whose install has no next/og subpath, and @vercel/og/satori are not
+  installed (adding them would violate the no-new-dependencies rule).
+  Revisit dynamic OG when the stack is upgraded.
+-->
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"></head>
+<body style="margin:0">
+<div style="width:1200px;height:630px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0b1119;color:#fff;font-family:'Segoe UI',Tahoma,Arial,sans-serif">
+  <svg width="180" height="180" viewBox="0 0 320 320" fill="none" style="color:#90BAE9" aria-hidden="true">
+    <circle cx="160" cy="160" r="14" fill="currentColor" opacity="0.9" />
+    <ellipse cx="160" cy="160" rx="100" ry="44" stroke="currentColor" stroke-width="3" opacity="0.5" />
+    <ellipse cx="160" cy="160" rx="100" ry="44" stroke="currentColor" stroke-width="3" opacity="0.5" transform="rotate(60 160 160)" />
+    <ellipse cx="160" cy="160" rx="100" ry="44" stroke="currentColor" stroke-width="3" opacity="0.5" transform="rotate(120 160 160)" />
+    <circle cx="260" cy="160" r="10" fill="currentColor" />
+    <circle cx="105" cy="72" r="10" fill="currentColor" />
+    <circle cx="105" cy="248" r="10" fill="currentColor" />
+  </svg>
+  <div style="margin-top:8px;font-size:40px;font-weight:700;color:#90BAE9">أكاديميا</div>
+  <div style="margin-top:12px;font-size:64px;font-weight:800">الأستاذ عبد الهادي موسى</div>
+  <div style="margin-top:14px;font-size:32px;color:#90BAE9">تعلم الكيمياء بأسهل الطرق مع الأستاذ عبد الهادي موسى</div>
+</div>
+</body>
+</html>

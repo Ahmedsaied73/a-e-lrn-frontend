@@ -1,7 +1,14 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Reveal } from '@/components/reveal';
 import { AnimatedNumber } from '@/components/animated-number';
 import { AiAssistantDemo } from '@/components/ai-assistant-demo';
+import { siteConfig } from '@/lib/site-config';
+
+export const metadata: Metadata = {
+  title: { absolute: siteConfig.tagline },
+  description: siteConfig.tagline,
+};
 
 const STATS = [
   { value: 4.9, suffix: '', decimals: 1, label: 'تقييم عام' },
