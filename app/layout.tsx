@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
+import { siteConfig } from '@/lib/site-config';
 import { ReduxProvider } from '@/store/provider';
 import { AuthInitializer } from '@/store/auth-initializer';
 import { Toaster } from '@/components/ui/toaster';
@@ -30,8 +31,32 @@ const brandFont = localFont({
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("akademya-theme");document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light")}catch(e){document.documentElement.setAttribute("data-theme","light")}})()`;
 
 export const metadata: Metadata = {
-  title: 'الأستاذ عبد الهادي موسى | مدرس الكيمياء',
-  description: 'تعلم الكيمياء بأسهل الطرق مع الأستاذ عبد الهادي موسى',
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: siteConfig.tagline,
+    template: `%s | ${siteConfig.teacherName}`,
+  },
+  description: siteConfig.tagline,
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'ar_EG',
+    url: '/',
+    siteName: siteConfig.teacherName,
+    title: siteConfig.tagline,
+    description: siteConfig.tagline,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteConfig.tagline,
+    description: siteConfig.tagline,
+  },
+  icons: {
+    icon: '/icon.svg',
+  },
+  themeColor: '#4685CE',
 };
 
 export default function RootLayout({
