@@ -46,6 +46,19 @@ next-env.d.ts
 # dev logs
 fe*.log
 fe*.err.log
+*.log
+build-*.log
+dev-*.log
+prod-*.log
+
+# botched shell-redirect leftovers (git log > "utput ...")
+*utput*
+
+# playwright-cli workspace (transient console/page snapshots)
+.playwright-cli/
+
+# stitch screenshot artifacts (regenerable verification output)
+stitch_screen*
 
 design-ref/
 
