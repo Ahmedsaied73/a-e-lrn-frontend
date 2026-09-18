@@ -327,6 +327,7 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
       ? q.imageLink
       : null;
     const attachedImageNode = attachedImage ? (
+      // eslint-disable-next-line @next/next/no-img-element -- images are admin-pasted from unbounded external hosts; next/image requires per-host remotePatterns and a wildcard would reopen the SSRF hole (see next.config.js)
       <img src={attachedImage} alt={q.title ?? "صورة السؤال"} className="mx-auto mb-4 max-h-96 rounded-xl object-contain" />
     ) : null;
 
@@ -395,6 +396,7 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
         ? q.imageLink
         : null;
       return imageLink ? (
+        // eslint-disable-next-line @next/next/no-img-element -- see attachedImageNode above
         <img src={imageLink} alt={q.title ?? "صورة السؤال"} className="mx-auto max-h-96 rounded-xl object-contain" />
       ) : (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-sm text-amber-800">

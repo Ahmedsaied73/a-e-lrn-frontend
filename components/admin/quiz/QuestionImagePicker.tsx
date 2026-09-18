@@ -29,6 +29,7 @@ export default function QuestionImagePicker({
       {optional ? "صورة توضيحية (اختياري)" : "صورة السؤال"}
       <div className="mt-1">
         {(imageUrl || imagePreview) && (
+          // eslint-disable-next-line @next/next/no-img-element -- imagePreview is a blob: object URL (URL.createObjectURL) pending upload; next/image cannot render blob sources
           <img
             src={imageUrl || imagePreview || ""}
             alt="معاينة صورة السؤال"

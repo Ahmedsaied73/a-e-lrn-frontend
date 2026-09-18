@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [Dev, main, master]
+  pull_request:
+    branches: [Dev, main, master]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # Next 13.5 build-time tooling all lives in devDependencies (moved in the
+    # production-readiness round). No .env is committed: PostHog is optional at
+    # runtime (PostHogProvider no-ops without a key) and the app does no
+    # server-side data fetching, so a bare build is green.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  # Grilled decision (production-readiness G4): lint + build + the 2 existing
+  # Playwright smokes in CI, NO Vitest baseline this round.
+  #
+  # The smokes hit a REAL backend (login uses grader-demo@localhost.test;
+  # register creates a throwaway regproof<ts>@localhost.test row). CI needs
+  # FE + BE running, so this job is gated on CI_TEST_BACKEND_URL — the staging
+  # backend already seeded with the demo fixtures (same class of fixture the
+  # backend suite needs). When the secret is unset the job is skipped with an
+  # annotation, not failed (exit-0 style skip, per G4).
+  #
+  # Playwright is installed CI-only (--no-save): the app itself has zero
+  # test/e2e dependencies, keeping the runtime package.json clean.
+  e2e-smokes:
+    runs-on: ubuntu-latest
+    needs: check
+    if: ${{ secrets.CI_TEST_BACKEND_URL != '' }}
+    env:
+      NEXT_PUBLIC_API_URL: ${{ secrets.CI_TEST_BACKEND_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright (CI-only, chromium)
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Build against test backend
+        run: npm run build
+
+      - name: Boot the FE server
+        run: |
+          npx next start -p 3000 > /tmp/next-start.log 2>&1 &
+          echo "FE_PID=$!" >> "$GITHUB_ENV"
+
+      - name: Wait for FE to accept traffic
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/login > /dev/null 2>&1; then
+              echo "FE up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "FE did not come up within 60s"
+          tail -n 40 /tmp/next-start.log || true
+          exit 1
+
+      - name: Smoke — login credentials never in URL
+        run: node e2e/login-credentials-never-in-url.js
+
+      - name: Smoke — register PII never in URL
+        run: node e2e/register-credentials-never-in-url.js
+
+      - name: Shut down FE server
+        if: always()
+        run: kill "$FE_PID" || true
