@@ -68,7 +68,7 @@ export default function ExemptionResetPanel({ videoSlug }: ExemptionResetPanelPr
       <p className="mt-1 text-sm text-on-surface-variant">الفيديو الحالي: {videoSlug}. يتطلب الإلغاء رقم الاستثناء من النظام.</p>
       <form onSubmit={grant} className="mt-5 grid gap-3 sm:grid-cols-3">
         <label className="text-sm font-semibold text-on-surface/80">معرّف الطالب (slug)
-          <input value={userSlug} onChange={(event) => setUserSlug(event.target.value)} placeholder="u_..." className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
+          <input value={userSlug} onChange={(event) => setUserSlug(event.target.value)} placeholder="abc123def456" className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
         </label>
         <label className="text-sm font-semibold text-on-surface/80 sm:col-span-2">سبب الاستثناء
           <input value={reason} onChange={(event) => setReason(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />

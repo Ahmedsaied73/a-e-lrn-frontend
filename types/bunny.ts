@@ -27,6 +27,7 @@ export type BunnyVideoStatus =
  * Students only ever receive videos with status === 'READY'.
  * Admins additionally receive failureReason and processingProgress.
  * Numeric ids are internal — the public identifiers are slug/courseSlug/quizSlug.
+ * Slugs are opaque random `[0-9a-z]{12}` tokens (never readable/guessable).
  */
 export interface BunnyVideo {
   slug: string;

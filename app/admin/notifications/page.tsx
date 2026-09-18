@@ -100,8 +100,8 @@ export default function AdminNotificationsPage() {
           <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">الرسالة (اختياري)
             <textarea value={body} onChange={(e) => setBody(e.target.value)} className="mt-1 min-h-24 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
           </label>
-          <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">رابط داخلي (اختياري، مثال: /course/1)
-            <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} dir="ltr" placeholder="/course/1" className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
+          <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">رابط داخلي (اختياري، مثال: /course/abc123def456)
+            <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} dir="ltr" placeholder="/course/abc123def456" className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
           </label>
           <div className="sm:col-span-2 text-sm font-semibold text-on-surface/80">الجمهور
             <div className="mt-1 flex flex-wrap gap-4 text-sm font-normal">

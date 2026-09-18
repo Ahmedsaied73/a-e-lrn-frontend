@@ -41,7 +41,7 @@ export type GradeEnum =
 
 export interface User {
   id: number;
-  /** Opaque public identifier (backend assigns u_<random>) — used in /user/:slug routes. */
+  /** Opaque public identifier (backend-random `[0-9a-z]{12}`) — used in /user/:slug routes. */
   slug: string;
   name: string;
   email: string;
