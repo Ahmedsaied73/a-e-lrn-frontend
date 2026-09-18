@@ -7,7 +7,7 @@ import { enrollInCourse } from '@/services/courseService';
 import { toast } from 'react-hot-toast';
 
 interface EnrollmentCardProps {
-  courseId: string;
+  courseSlug: string;
   isEnrolled: boolean;
   coursePrice: string | number;
   courseDuration: string | number;
@@ -26,7 +26,7 @@ const PERKS = [
 ];
 
 export function EnrollmentCard({
-  courseId,
+  courseSlug,
   isEnrolled,
   coursePrice,
   courseDuration,
@@ -44,7 +44,7 @@ export function EnrollmentCard({
 
     setLoading(true);
     try {
-      await enrollInCourse(courseId);
+      await enrollInCourse(courseSlug);
       toast.success('تم الاشتراك في الكورس بنجاح!');
       if (onEnrollSuccess) {
         onEnrollSuccess();

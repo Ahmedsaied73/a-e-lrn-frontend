@@ -28,10 +28,10 @@ interface AssignmentResultsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   assignmentResults: any | null;
-  courseId: string;
+  courseSlug: string;
 }
 
-function AssignmentResultsDialog({ open, onOpenChange, assignmentResults, courseId }: AssignmentResultsDialogProps) {
+function AssignmentResultsDialog({ open, onOpenChange, assignmentResults, courseSlug }: AssignmentResultsDialogProps) {
   const router = useRouter();
 
   const handleViewResults = () => {
@@ -41,7 +41,7 @@ function AssignmentResultsDialog({ open, onOpenChange, assignmentResults, course
   };
 
   const handleReturnToCourse = () => {
-    router.push(`/course/${courseId}`);
+    router.push(`/course/${courseSlug}`);
   };
 
   if (!assignmentResults) return null;
@@ -107,8 +107,8 @@ export default function AssignmentPage() {
   const dispatch = useDispatch<AppDispatch>();
   
   const assignmentId = Number(params.assignment);
-  const courseId = params.id as string;
-  const videoId = params.video as string;
+  const courseSlug = params.courseSlug as string;
+  const videoSlug = params.videoSlug as string;
   
   const assignment = useSelector(selectCurrentAssignment);
   const selectedAnswers = useSelector(selectSelectedAnswers);
@@ -251,7 +251,7 @@ export default function AssignmentPage() {
           </CardHeader>
           <CardContent className="text-center">
             <p>{error}</p>
-            <Link href={`/course/${courseId}/video/${videoId}`}>
+            <Link href={`/course/${courseSlug}/video/${videoSlug}`}>
               <Button className="mt-4 bg-primary-color hover:bg-primary-hover">العودة للفيديو</Button>
             </Link>
           </CardContent>
@@ -269,7 +269,7 @@ export default function AssignmentPage() {
           </CardHeader>
           <CardContent className="text-center">
             <p>لم يتم العثور على الواجب المطلوب</p>
-            <Link href={`/course/${courseId}/video/${videoId}`}>
+            <Link href={`/course/${courseSlug}/video/${videoSlug}`}>
               <Button className="mt-4 bg-primary-color hover:bg-primary-hover">العودة للفيديو</Button>
             </Link>
           </CardContent>
@@ -439,7 +439,7 @@ export default function AssignmentPage() {
         open={showResults} 
         onOpenChange={setShowResults} 
         assignmentResults={assignmentResults} 
-        courseId={courseId} 
+        courseSlug={courseSlug} 
       />
     </div>
   );

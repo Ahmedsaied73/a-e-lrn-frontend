@@ -17,8 +17,8 @@ function toQuery(filters: AdminEnrollmentFilters): string {
   const params = new URLSearchParams();
   if (filters.page) params.set("page", String(filters.page));
   if (filters.limit) params.set("limit", String(filters.limit));
-  if (filters.userId) params.set("userId", String(filters.userId));
-  if (filters.courseId) params.set("courseId", String(filters.courseId));
+  if (filters.userSlug) params.set("userSlug", filters.userSlug);
+  if (filters.courseSlug) params.set("courseSlug", filters.courseSlug);
   if (filters.isPaid !== undefined && filters.isPaid !== "")
     params.set("isPaid", String(filters.isPaid));
   if (filters.isCompleted !== undefined && filters.isCompleted !== "")
@@ -38,12 +38,12 @@ export async function getAdminEnrollments(
 }
 
 export async function adminEnrollStudent(
-  userId: number,
-  courseId: number,
+  userSlug: string,
+  courseSlug: string,
 ): Promise<{ enrollment: { id: number } }> {
   return apiClient.post<{ enrollment: { id: number } }>(
     `/admin/enrollments`,
-    { userId, courseId },
+    { userSlug, courseSlug },
   );
 }
 

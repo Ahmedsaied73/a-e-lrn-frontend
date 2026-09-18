@@ -9,8 +9,8 @@ import { AppDispatch } from "@/store/store";
 import { fetchQuizMeta, startQuizAttempt, selectQuizMeta, selectQuizMetaStatus, selectQuizError } from "@/store/slices/quizSlice";
 
 interface QuizIntroCardProps {
-  videoId: number | string;
-  courseId: string;
+  videoSlug: string;
+  courseSlug: string;
 }
 
 const RULES = [
@@ -42,7 +42,7 @@ function QuizIntroSkeleton() {
   );
 }
 
-export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps) {
+export default function QuizIntroCard({ videoSlug, courseSlug }: QuizIntroCardProps) {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const meta = useSelector(selectQuizMeta);
@@ -52,8 +52,8 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
   const [showGradingConfirm, setShowGradingConfirm] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchQuizMeta(videoId));
-  }, [videoId, dispatch]);
+    dispatch(fetchQuizMeta(videoSlug));
+  }, [videoSlug, dispatch]);
 
   // Loading
   if (metaStatus === "idle" || metaStatus === "loading") {
@@ -67,7 +67,7 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
         <p className="mt-2 text-sm text-brand-muted">{quizError || "يرجى المحاولة مرة أخرى لاحقاً."}</p>
         <button
           type="button"
-          onClick={() => dispatch(fetchQuizMeta(videoId))}
+          onClick={() => dispatch(fetchQuizMeta(videoSlug))}
           className="mt-6 rounded-full bg-brand-primary px-8 py-2.5 text-sm font-bold text-white transition hover:bg-brand-primary/90"
         >
           إعادة المحاولة
@@ -86,13 +86,13 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
 
   const doStart = async () => {
     try {
-      await dispatch(startQuizAttempt(videoId)).unwrap();
-      router.push(`/course/${courseId}/video/${videoId}/quiz/run`);
+      await dispatch(startQuizAttempt(videoSlug)).unwrap();
+      router.push(`/course/${courseSlug}/video/${videoSlug}/quiz/run`);
     } catch {
       // Error handled in slice. On 409 ALREADY_PASSED the meta refresh below
       // shows the success state; on MAX_ATTEMPTS_REACHED it shows the
       // exhausted state.
-      dispatch(fetchQuizMeta(videoId));
+      dispatch(fetchQuizMeta(videoSlug));
     }
   };
 
@@ -212,7 +212,7 @@ export default function QuizIntroCard({ videoId, courseId }: QuizIntroCardProps)
               {btnLabel}
             </button>
             <Link
-              href={`/course/${courseId}/video/${videoId}`}
+              href={`/course/${courseSlug}/video/${videoSlug}`}
               className="text-sm font-semibold text-brand-muted hover:text-brand-primary"
             >
               العودة إلى الدرس

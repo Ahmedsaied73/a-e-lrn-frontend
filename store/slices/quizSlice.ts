@@ -67,22 +67,22 @@ const initialState: QuizState = {
 // Async Thunks
 // ---------------------------------------------------------------------------
 
-export const fetchQuizMeta = createAsyncThunk<QuizMeta, number | string, { rejectValue: QuizThunkError }>(
+export const fetchQuizMeta = createAsyncThunk<QuizMeta, string, { rejectValue: QuizThunkError }>(
   'quiz/fetchQuizMeta',
-  async (videoId, { rejectWithValue }) => {
+  async (videoSlug, { rejectWithValue }) => {
     try {
-      return await getQuizMeta(videoId);
+      return await getQuizMeta(videoSlug);
     } catch (err: unknown) {
       return rejectWithValue(toQuizThunkError(err, 'حدث خطأ أثناء تحميل بيانات الاختبار'));
     }
   },
 );
 
-export const startQuizAttempt = createAsyncThunk<StartQuizData, number | string, { rejectValue: QuizThunkError }>(
+export const startQuizAttempt = createAsyncThunk<StartQuizData, string, { rejectValue: QuizThunkError }>(
   'quiz/startQuizAttempt',
-  async (videoId, { rejectWithValue }) => {
+  async (videoSlug, { rejectWithValue }) => {
     try {
-      return await startQuiz(videoId);
+      return await startQuiz(videoSlug);
     } catch (err: unknown) {
       return rejectWithValue(toQuizThunkError(err, 'تعذر بدء الاختبار'));
     }
@@ -117,13 +117,13 @@ export const fetchQuizResult = createAsyncThunk<QuizResultData, number | string,
 
 export const fetchQuizAttempts = createAsyncThunk<
   { attempts: AttemptSummary[] },
-  number | string,
+  string,
   { rejectValue: QuizThunkError }
 >(
   'quiz/fetchQuizAttempts',
-  async (videoId, { rejectWithValue }) => {
+  async (videoSlug, { rejectWithValue }) => {
     try {
-      const data = await getQuizAttempts(videoId);
+      const data = await getQuizAttempts(videoSlug);
       return { attempts: data.attempts };
     } catch (err: unknown) {
       return rejectWithValue(toQuizThunkError(err, 'تعذر تحميل سجل المحاولات'));

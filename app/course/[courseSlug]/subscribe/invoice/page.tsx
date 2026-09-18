@@ -1,39 +1,31 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Play, Clock, ArrowLeft, Shield, CreditCard } from 'lucide-react';
-import { useAppSelector } from '@/store/hooks';
-// Quiz metadata is loaded on the video page after completion.
-import {
-  selectAssignments,
-} from '@/store/slices/assignmentSlice';
+import { ChevronDown, ChevronUp, Play, ArrowLeft, Shield, CreditCard } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { fetchCourseById, checkEnrollmentStatus, enrollInCourse } from '@/services/courseService';
+import { fetchCourseBySlug, checkEnrollmentStatus, enrollInCourse } from '@/services/courseService';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page({ params }: { params: { courseSlug: string } }) {
   const router = useRouter();
   const [courseData, setCourseData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
-  const [openVideoIds, setOpenVideoIds] = useState<Record<string, boolean>>({});
-  
-  // Get assignments from Redux store
-  const assignments = useAppSelector(selectAssignments);
+  const [openVideoSlugs, setOpenVideoSlugs] = useState<Record<string, boolean>>({});
 
   // Function to toggle a specific video dropdown
-  const toggleVideo = (videoId: string) => {
-    setOpenVideoIds(prev => ({
+  const toggleVideo = (videoSlug: string) => {
+    setOpenVideoSlugs(prev => ({
       ...prev,
-      [videoId]: !prev[videoId]
+      [videoSlug]: !prev[videoSlug]
     }));
   };
 
@@ -68,31 +60,26 @@ export default function Page({ params }: { params: { id: string } }) {
   };
 
   // Helper function to find assignments for a specific video
-  const findAssignmentsForVideo = useCallback((videoId: number | string) => {
-    const videoIdNum = typeof videoId === 'string' ? parseInt(videoId, 10) : videoId;
-    return assignments.filter(assignment => assignment.videoId === videoIdNum);
-  }, [assignments]);
-
-  // Helper function to get assignment status
+  // (legacy assignments are dormant — never matched against Bunny videos)
   useEffect(() => {
     const loadCourseData = async () => {
       try {
         setIsLoading(true);
 
         // Fetch course data
-        const data = await fetchCourseById(params.id);
+        const data = await fetchCourseBySlug(params.courseSlug);
         setCourseData(data);
         
         // Initialize all videos as closed
         const initialOpenState: Record<string, boolean> = {};
         data.videos?.forEach((video: any) => {
-          initialOpenState[video.id] = false;
+          initialOpenState[video.slug] = false;
         });
-        setOpenVideoIds(initialOpenState);
+        setOpenVideoSlugs(initialOpenState);
         
         // Check enrollment status
         try {
-          const status = await checkEnrollmentStatus(params.id);
+          const status = await checkEnrollmentStatus(params.courseSlug);
           setIsEnrolled(status.enrolled);
         } catch (enrollErr) {
           console.error('Error checking enrollment status:', enrollErr);
@@ -106,22 +93,22 @@ export default function Page({ params }: { params: { id: string } }) {
     };
 
     loadCourseData();
-  }, [params.id, router]);
+  }, [params.courseSlug, router]);
 
   const handleSubscription = async () => {
     if (isEnrolled) {
       toast.success('أنت مشترك بالفعل في هذا الكورس');
-      router.push(`/course/${params.id}`);
+      router.push(`/course/${params.courseSlug}`);
       return;
     }
 
     setEnrollmentLoading(true);
     try {
-      await enrollInCourse(params.id);
+      await enrollInCourse(params.courseSlug);
       setIsEnrolled(true);
       toast.success('تم الاشتراك في الكورس بنجاح! جاري التوجيه...');
       setTimeout(() => {
-        router.push(`/course/${params.id}`);
+        router.push(`/course/${params.courseSlug}`);
       }, 1500);
     } catch (error: any) {
       toast.error(error.message || 'حدث خطأ أثناء الاشتراك في الكورس');
@@ -139,7 +126,7 @@ export default function Page({ params }: { params: { id: string } }) {
       {/* Back Button */}
       <div className="mb-6">
         <Link 
-          href={`/course/${params.id}`}
+          href={`/course/${params.courseSlug}`}
           className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-600/80 transition-colors"
         >
           <ArrowLeft size={20} />
@@ -167,10 +154,6 @@ export default function Page({ params }: { params: { id: string } }) {
               <div className="flex justify-between">
                 <span>عدد الامتحانات:</span>
                 <span>{courseData.exams_count || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>عدد الواجبات:</span>
-                <span>{assignments.length || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span>عدد الملفات:</span>
@@ -266,15 +249,15 @@ export default function Page({ params }: { params: { id: string } }) {
               {courseData.videos && courseData.videos.length > 0 ? (
                 courseData.videos.map((video: any, index: number) => {
                   return (
-                    <div key={video.id} className="transition-colors">
+                    <div key={video.slug} className="transition-colors">
                       <div 
                         className="p-6 hover:bg-surface-container-low transition-colors cursor-pointer"
-                        onClick={() => toggleVideo(video.id)}
+                        onClick={() => toggleVideo(video.slug)}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <span className="text-xl">
-                              {openVideoIds[video.id] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                              {openVideoSlugs[video.slug] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                             </span>
                             <h3 className="text-lg font-semibold">المحاضرة {getArabicOrdinal(index)}</h3>
                           </div>
@@ -286,7 +269,7 @@ export default function Page({ params }: { params: { id: string } }) {
                         </div>
                       </div>
                       
-                      {openVideoIds[video.id] && (
+                      {openVideoSlugs[video.slug] && (
                         <div className="px-6 pb-6">
                           <div className="space-y-4 pl-10">
                             {/* Video Card */}
@@ -299,31 +282,6 @@ export default function Page({ params }: { params: { id: string } }) {
                                 متاح بعد الاشتراك
                               </span>
                             </div>
-                            
-                            {/* Assignment Cards - if there are assignments for this video */}
-                            {findAssignmentsForVideo(video.id).map(assignment => {
-                              const isPastDue = new Date(assignment.dueDate) < new Date();
-                              
-                              return (
-                                <div 
-                                  key={assignment.id}
-                                  className="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border-l-4 border-primary-color mt-2"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Clock size={16} className="text-primary-color" />
-                                    <span className="font-medium">{assignment.title}</span>
-                                    
-                                    <span className="text-xs text-primary-color">
-                                      موعد التسليم: {new Date(assignment.dueDate).toLocaleDateString('ar-EG')}
-                                    </span>
-                                  </div>
-                                  
-                                  <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
-                                    متاح بعد الاشتراك
-                                  </span>
-                                </div>
-                              );
-                            })}
                           </div>
                         </div>
                       )}

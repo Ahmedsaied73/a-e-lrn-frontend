@@ -28,9 +28,9 @@ export default function AdminNotificationsPage() {
   const [body, setBody] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [audienceKind, setAudienceKind] = useState<"all" | "course" | "grade">("all");
-  const [courseId, setCourseId] = useState("");
+  const [courseSlug, setCourseSlug] = useState("");
   const [grade, setGrade] = useState<GradeEnum>("FIRST_SECONDARY");
-  const [courses, setCourses] = useState<{ id: number; title: string }[]>([]);
+  const [courses, setCourses] = useState<{ slug: string; title: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
@@ -58,12 +58,11 @@ export default function AdminNotificationsPage() {
     setResult(null);
     let audience: BroadcastAudience = { kind: "all" };
     if (audienceKind === "course") {
-      const id = Number(courseId);
-      if (!Number.isSafeInteger(id) || id <= 0) {
+      if (!courseSlug.trim()) {
         setError("اختر الدورة المستهدفة.");
         return;
       }
-      audience = { kind: "course", courseId: id };
+      audience = { kind: "course", courseSlug: courseSlug.trim() };
     } else if (audienceKind === "grade") {
       audience = { kind: "grade", grade };
     }
@@ -122,10 +121,10 @@ export default function AdminNotificationsPage() {
           </div>
           {audienceKind === "course" && (
             <label className="text-sm font-semibold text-on-surface/80">الدورة
-              <select value={courseId} onChange={(e) => setCourseId(e.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20">
+              <select value={courseSlug} onChange={(e) => setCourseSlug(e.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20">
                 <option value="">اختر الدورة...</option>
                 {courses.map((c) => (
-                  <option key={c.id} value={c.id}>{c.title}</option>
+                  <option key={c.slug} value={c.slug}>{c.title}</option>
                 ))}
               </select>
             </label>

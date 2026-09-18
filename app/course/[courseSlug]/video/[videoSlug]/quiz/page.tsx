@@ -7,13 +7,13 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  params: { id: string; video: string };
+  params: { courseSlug: string; videoSlug: string };
 }
 
 export default function QuizIntroPage({ params }: PageProps) {
   return (
     <div dir="rtl">
-      <QuizIntroCard videoId={params.video} courseId={params.id} />
+      <QuizIntroCard videoSlug={params.videoSlug} courseSlug={params.courseSlug} />
     </div>
   );
 }

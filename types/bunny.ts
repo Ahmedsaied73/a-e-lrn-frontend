@@ -22,18 +22,19 @@ export type BunnyVideoStatus =
 
 /**
  * A single Bunny Stream video record as returned by
- * GET /courses/:courseId/bunny-videos
+ * GET /courses/:courseSlug/bunny-videos
  *
  * Students only ever receive videos with status === 'READY'.
  * Admins additionally receive failureReason and processingProgress.
+ * Numeric ids are internal — the public identifiers are slug/courseSlug/quizSlug.
  */
 export interface BunnyVideo {
-  id: number;
-  courseId: number;
+  slug: string;
+  courseSlug: string;
   title: string;
   /** Position in the course sequence (1-based). Null for legacy rows. */
   position: number | null;
-  /** Bunny's remote GUID, used only to resolve legacy GUID-based links. */
+  /** Bunny's remote GUID — legacy only, never used for routing. */
   bunnyVideoId?: string;
   status: BunnyVideoStatus;
 
@@ -56,7 +57,7 @@ export interface BunnyVideo {
   processingProgress?: number | null;
 
   /** Quiz existence only (no content) — drives the admin "no quiz" guardrail. */
-  quiz?: { id: number } | null;
+  quizSlug?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,11 +65,11 @@ export interface BunnyVideo {
 // ---------------------------------------------------------------------------
 
 /**
- * Returned by GET /videos/:videoId/playback
+ * Returned by GET /videos/:videoSlug/playback
  * The playbackUrl is a signed Bunny iframe embed URL valid until expiresAt.
  */
 export interface BunnyPlaybackData {
-  videoId: number;
+  videoSlug: string;
   /**
    * Fully-formed signed Bunny embed URL, ready to drop into an <iframe src>.
    * Example: https://iframe.mediadelivery.net/embed/LIBRARY_ID/VIDEO_GUID?token=...&expires=...

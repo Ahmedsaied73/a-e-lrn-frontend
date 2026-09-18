@@ -68,7 +68,7 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [mobileActions, setMobileActions] = useState<number | null>(null);
+  const [mobileActions, setMobileActions] = useState<string | null>(null);
 
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [editName, setEditName] = useState('');
@@ -133,7 +133,7 @@ export default function StudentsPage() {
 
   const columns = useMemo<ColumnDef<AdminUser>[]>(
     () => [
-      { accessorKey: 'id', header: 'الرقم', size: 70 },
+      { accessorKey: 'slug', header: 'الرقم', size: 70 },
       {
         accessorKey: 'name',
         header: () => <SortableHeader label="الاسم" sortKey="name" sort={sort} onSort={onSortChange} />,
@@ -169,7 +169,7 @@ export default function StudentsPage() {
         header: '',
         cell: ({ row }) => (
           <div className="flex justify-end gap-1.5">
-            <button type="button" title="المقررات" onClick={() => { setCourseUser(row.original); setNewCourseId(''); void loadCourseRows(row.original.id); }} className="rounded-lg border border-sky-500/40 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:text-sky-200">
+            <button type="button" title="المقررات" onClick={() => { setCourseUser(row.original); setNewCourseId(''); void loadCourseRows(row.original.slug); }} className="rounded-lg border border-sky-500/40 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:text-sky-200">
               <BookOpen className="h-3.5 w-3.5" />
             </button>
             <button type="button" title="تعديل" onClick={() => { setEditing(row.original); setEditName(row.original.name || ''); setEditEmail(row.original.email); setEditGrade((row.original.grade as GradeEnum | null) ?? ''); setEditPhone(row.original.phoneNumber || ''); }} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-on-surface">
@@ -199,13 +199,13 @@ export default function StudentsPage() {
     if (!editing) return;
     setEditBusy(true);
     try {
-      const updated = await updateAdminUser(editing.id, {
+      const updated = await updateAdminUser(editing.slug, {
         name: editName,
         email: editEmail,
         grade: editGrade || undefined,
         phoneNumber: editPhone,
       });
-      setRows((current) => current.map((r) => (r.id === editing.id ? { ...r, ...updated } : r)));
+      setRows((current) => current.map((r) => (r.slug === editing.slug ? { ...r, ...updated } : r)));
       toast.success('تم تحديث بيانات الطالب.');
       setEditing(null);
     } catch {
@@ -231,11 +231,11 @@ export default function StudentsPage() {
     }
   };
 
-  const loadCourseRows = async (userId: number) => {
+  const loadCourseRows = async (userSlug: string) => {
     setCourseLoading(true);
     try {
       const [enr, courses] = await Promise.all([
-        getAdminEnrollments({ userId, limit: 100 }),
+        getAdminEnrollments({ userSlug, limit: 100 }),
         getAdminCourses({ limit: 100 }),
       ]);
       setCourseRows(enr.data);
@@ -251,10 +251,10 @@ export default function StudentsPage() {
     if (!courseUser || !newCourseId) return;
     setCourseBusy(true);
     try {
-      await adminEnrollStudent(courseUser.id, Number(newCourseId));
+      await adminEnrollStudent(courseUser.slug, newCourseId);
       toast.success('تم تسجيل الطالب في المقرر.');
       setNewCourseId('');
-      await loadCourseRows(courseUser.id);
+      await loadCourseRows(courseUser.slug);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'فشل تسجيل الطالب.');
     } finally {
@@ -267,7 +267,7 @@ export default function StudentsPage() {
     try {
       await adminUnenroll(enrollment.id);
       toast.success('تم إلغاء التسجيل.');
-      if (courseUser) await loadCourseRows(courseUser.id);
+      if (courseUser) await loadCourseRows(courseUser.slug);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'فشل إلغاء التسجيل.');
     } finally {
@@ -279,7 +279,7 @@ export default function StudentsPage() {
     if (!deleting) return;
     setDeleteBusy(true);
     try {
-      await deleteAdminUser(deleting.id);
+      await deleteAdminUser(deleting.slug);
       toast.success('تم حذف الطالب.');
       setDeleting(null);
       if (rows.length === 1 && page > 1) setPage((p) => p - 1);
@@ -472,10 +472,10 @@ export default function StudentsPage() {
           ) : (
             <ul className="divide-y divide-outline-variant/40 overflow-hidden rounded-2xl border border-outline-variant/70 bg-surface-container-lowest">
               {rows.map((u) => (
-                <li key={u.id}>
+                <li key={u.slug}>
                   <button
                     type="button"
-                    onClick={() => setMobileActions(mobileActions === u.id ? null : u.id)}
+                    onClick={() => setMobileActions(mobileActions === u.slug ? null : u.slug)}
                     className="flex w-full items-center justify-between gap-2 px-4 py-3 text-right"
                   >
                     <div className="flex min-w-0 items-center gap-3">
@@ -496,11 +496,11 @@ export default function StudentsPage() {
                       {ROLE_LABEL[u.role] ?? u.role}
                     </span>
                   </button>
-                  {mobileActions === u.id && (
+                  {mobileActions === u.slug && (
                     <div className="flex items-center gap-2 bg-surface px-4 py-2.5">
                       <button
                         type="button"
-                        onClick={() => { setCourseUser(u); setNewCourseId(''); void loadCourseRows(u.id); }}
+                        onClick={() => { setCourseUser(u); setNewCourseId(''); void loadCourseRows(u.slug); }}
                         className="flex items-center gap-1.5 rounded-full border border-sky-500/40 px-3 py-1.5 text-[11px] font-semibold text-sky-700"
                       >
                         <BookOpen className="h-3.5 w-3.5" /> المقررات
@@ -682,7 +682,7 @@ export default function StudentsPage() {
                   </SelectTrigger>
                   <SelectContent className="max-h-72 border-outline-variant bg-card text-on-surface">
                     {allCourses.map((course) => (
-                      <SelectItem key={course.id} value={String(course.id)}>
+                      <SelectItem key={course.slug} value={course.slug}>
                         {course.title}
                       </SelectItem>
                     ))}

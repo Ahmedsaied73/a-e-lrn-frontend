@@ -101,7 +101,7 @@ export default function AdminEnrollmentsPage() {
     if (!enrollStudentId || !enrollCourseId) return;
     setEnrollBusy(true);
     try {
-      await adminEnrollStudent(Number(enrollStudentId), Number(enrollCourseId));
+      await adminEnrollStudent(enrollStudentId, enrollCourseId);
       toast.success('تم تسجيل الطالب في المقرر.');
       setEnrollOpen(false);
       void load();
@@ -143,7 +143,7 @@ export default function AdminEnrollmentsPage() {
         cell: ({ row }) => (
           <span className="text-on-surface-variant">
             {row.original.course.title}
-            <span className="mr-2 text-[11px] text-on-surface-variant/70">#{row.original.course.id}</span>
+            <span className="mr-2 text-[11px] text-on-surface-variant/70">#{row.original.course.slug}</span>
           </span>
         ),
       },
@@ -313,7 +313,7 @@ export default function AdminEnrollmentsPage() {
                   <SelectValue placeholder="اختر الطالب" />
                 </SelectTrigger>
                 <SelectContent className="max-h-72 border-outline-variant bg-card text-on-surface">
-                  {students.map((student) => <SelectItem key={student.id} value={String(student.id)}>{student.name || student.email}</SelectItem>)}
+                  {students.map((student) => <SelectItem key={student.slug} value={student.slug}>{student.name || student.email}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -324,7 +324,7 @@ export default function AdminEnrollmentsPage() {
                   <SelectValue placeholder="اختر المقرر" />
                 </SelectTrigger>
                 <SelectContent className="max-h-72 border-outline-variant bg-card text-on-surface">
-                  {courses.map((course) => <SelectItem key={course.id} value={String(course.id)}>{course.title}</SelectItem>)}
+                  {courses.map((course) => <SelectItem key={course.slug} value={course.slug}>{course.title}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

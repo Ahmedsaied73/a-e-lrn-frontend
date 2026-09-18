@@ -9,15 +9,15 @@ import type { QuizResultData, SubmitQuizData, McqResultQuestion } from "@/types/
 
 interface FinalModeProps {
   result: QuizResultData;
-  courseId: string;
-  videoId: string;
+  courseSlug: string;
+  videoSlug: string;
 }
 
 interface PendingModeProps {
   submitResult: PendingSubmitResult;
   attemptId: number;
-  courseId: string;
-  videoId: string;
+  courseSlug: string;
+  videoSlug: string;
 }
 
 type PendingSubmitResult = Omit<SubmitQuizData, "status" | "earnedPoints" | "totalPoints" | "scorePercent"> & {
@@ -51,7 +51,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 /** Final graded result view */
-function FinalResult({ result, courseId, videoId }: FinalModeProps) {
+function FinalResult({ result, courseSlug, videoSlug }: FinalModeProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [retakeError, setRetakeError] = useState<string | null>(null);
@@ -66,8 +66,8 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
   const handleRetake = async () => {
     setRetakeError(null);
     try {
-      await dispatch(startQuizAttempt(videoId)).unwrap();
-      router.push(`/course/${courseId}/video/${videoId}/quiz/run`);
+      await dispatch(startQuizAttempt(videoSlug)).unwrap();
+      router.push(`/course/${courseSlug}/video/${videoSlug}/quiz/run`);
     } catch (error: unknown) {
       setRetakeError(getErrorMessage(error, "تعذر بدء محاولة جديدة"));
     }
@@ -136,7 +136,7 @@ function FinalResult({ result, courseId, videoId }: FinalModeProps) {
 }
 
 /** Pending / awaiting admin review view */
-function PendingResult({ submitResult, courseId }: PendingModeProps) {
+function PendingResult({ submitResult, courseSlug }: PendingModeProps) {
   return (
     <div dir="rtl" className="mx-auto max-w-lg px-4 py-14 text-center sm:px-6">
       <span className="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
@@ -159,7 +159,7 @@ function PendingResult({ submitResult, courseId }: PendingModeProps) {
 
       <div className="mt-8">
         <a
-          href={`/course/${courseId}`}
+          href={`/course/${courseSlug}`}
           className="text-sm font-semibold text-brand-muted hover:text-brand-primary"
         >
           العودة إلى محتوى الدورة
@@ -174,8 +174,8 @@ export default function QuizResultSummary(props: QuizResultSummaryProps) {
     return (
       <FinalResult
         result={props.result}
-        courseId={props.courseId}
-        videoId={props.videoId}
+        courseSlug={props.courseSlug}
+        videoSlug={props.videoSlug}
       />
     );
   }
@@ -183,8 +183,8 @@ export default function QuizResultSummary(props: QuizResultSummaryProps) {
     <PendingResult
       submitResult={props.submitResult}
       attemptId={props.attemptId}
-      courseId={props.courseId}
-      videoId={props.videoId}
+      courseSlug={props.courseSlug}
+      videoSlug={props.videoSlug}
     />
   );
 }

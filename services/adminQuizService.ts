@@ -16,18 +16,18 @@ import type {
 } from "@/types/quiz";
 
 export async function upsertQuiz(
-  videoId: number | string,
+  videoSlug: string,
   input: UpsertQuizInput,
 ): Promise<StudentSafeQuiz> {
-  return apiClient.post<StudentSafeQuiz>(`/quizzes/videos/${videoId}`, input);
+  return apiClient.post<StudentSafeQuiz>(`/quizzes/videos/${videoSlug}`, input);
 }
 
 export async function listQuizAttempts(
-  quizId: number | string,
+  quizSlug: string,
   status = "GRADING",
 ): Promise<AdminQuizAttempt[]> {
   return apiClient.get<AdminQuizAttempt[]>(
-    `/quizzes/${quizId}/attempts?status=${encodeURIComponent(status)}`,
+    `/quizzes/${quizSlug}/attempts?status=${encodeURIComponent(status)}`,
   );
 }
 
@@ -76,10 +76,10 @@ export async function listAllAdminAttempts(
 }
 
 export async function deleteQuiz(
-  quizId: number | string,
+  quizSlug: string,
 ): Promise<{ success: boolean; message: string }> {
   return apiClient.delete<{ success: boolean; message: string }>(
-    `/quizzes/${quizId}`,
+    `/quizzes/${quizSlug}`,
   );
 }
 
@@ -99,12 +99,12 @@ export async function uploadQuizImage(file: File): Promise<string> {
 }
 
 export async function grantQuizExemption(
-  videoId: number | string,
-  userId: number,
+  videoSlug: string,
+  userSlug: string,
   reason?: string,
 ): Promise<{ id: number }> {
-  return apiClient.post<{ id: number }>(`/quizzes/videos/${videoId}/exemptions`, {
-    userId,
+  return apiClient.post<{ id: number }>(`/quizzes/videos/${videoSlug}/exemptions`, {
+    userSlug,
     reason,
   });
 }

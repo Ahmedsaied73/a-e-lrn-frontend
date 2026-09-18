@@ -3,8 +3,8 @@
  *
  * GET /user — paginated, filterable user list (admin).
  * POST /auth/register — add a student (public endpoint, re-used by the admin console).
- * PUT /user/:id — update name/email/password; admin may also set grade + phoneNumber.
- * DELETE /user/:id — transactional cascade delete (409 if user owns courses).
+ * PUT /user/:userSlug — update name/email/password; admin may also set grade + phoneNumber.
+ * DELETE /user/:userSlug — transactional cascade delete (409 if user owns courses).
  */
 
 import { apiClient } from '@/lib/api-client';
@@ -37,12 +37,12 @@ export async function registerStudent(body: AdminStudentInput): Promise<AdminUse
 }
 
 export async function updateAdminUser(
-  id: number,
+  userSlug: string,
   body: { name?: string; email?: string; grade?: string; phoneNumber?: string },
 ): Promise<AdminUser> {
-  return apiClient.put<AdminUser>(`/user/${id}`, body);
+  return apiClient.put<AdminUser>(`/user/${userSlug}`, body);
 }
 
-export async function deleteAdminUser(id: number): Promise<{ success: boolean; message: string }> {
-  return apiClient.delete<{ success: boolean; message: string }>(`/user/${id}`);
+export async function deleteAdminUser(userSlug: string): Promise<{ success: boolean; message: string }> {
+  return apiClient.delete<{ success: boolean; message: string }>(`/user/${userSlug}`);
 }

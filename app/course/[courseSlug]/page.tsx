@@ -6,7 +6,7 @@ import { ChevronDown, Lock } from 'lucide-react';
 import { Reveal } from '@/components/reveal';
 import { EnrollmentCard } from '@/components/enrollment-card';
 
-import { fetchCourseById } from '@/services/courseService';
+import { fetchCourseBySlug } from '@/services/courseService';
 import type { VideoProgress } from '@/services/courseService';
 import { fetchBunnyCourseVideos } from '@/services/bunnyVideoService';
 import type { BunnyVideo } from '@/types/bunny';
@@ -14,7 +14,7 @@ import type { BunnyVideo } from '@/types/bunny';
 const INITIAL_VISIBLE_LESSONS = 6;
 const ARABIC_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page({ params }: { params: { courseSlug: string } }) {
   const [courseData, setCourseData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,27 +53,27 @@ export default function Page({ params }: { params: { id: string } }) {
   }, [formatDuration]);
 
   // Helper function to get video progress
-  const getVideoProgress = (videoId: string | number) => {
-    return videoProgressMap[String(videoId)] || { videoId, completed: false, watchedAt: null };
+  const getVideoProgress = (videoSlug: string) => {
+    return videoProgressMap[String(videoSlug)] || { videoSlug, completed: false, watchedAt: null };
   };
 
-  const fetchedCourseIdRef = useRef<string | null>(null);
+  const fetchedCourseSlugRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (fetchedCourseIdRef.current === params.id) return;
-    fetchedCourseIdRef.current = params.id;
+    if (fetchedCourseSlugRef.current === params.courseSlug) return;
+    fetchedCourseSlugRef.current = params.courseSlug;
 
     const loadCourseAndEnrollment = async () => {
       try {
         setIsLoading(true);
         const [data, bunnyData] = await Promise.all([
-          fetchCourseById(params.id),
-          fetchBunnyCourseVideos(params.id),
+          fetchCourseBySlug(params.courseSlug),
+          fetchBunnyCourseVideos(params.courseSlug),
         ]);
         setCourseData(data);
-        // Use progress already returned by fetchCourseById aggregate (no extra request)
+        // Use progress already returned by fetchCourseBySlug aggregate (no extra request)
         setVideoProgressMap(Object.fromEntries(
-          (data.progress ?? []).map((progress) => [String(progress.videoId), progress]),
+          (data.progress ?? []).map((progress) => [String(progress.videoSlug), progress]),
         ));
 
         setBunnyVideos(bunnyData);
@@ -88,7 +88,7 @@ export default function Page({ params }: { params: { id: string } }) {
     };
 
     loadCourseAndEnrollment();
-  }, [params.id]);
+  }, [params.courseSlug]);
 
   // Calculate course statistics when course data and videos are loaded.
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const remainingVideos = totalVideosCount - shownVideos.length;
   const firstVideo = sortedVideos.find((bv) => bv.status === 'READY');
   const examsCount = courseData.exams_count ?? courseData.questions_count ?? 0;
-  const completedCount = sortedVideos.filter((bv) => getVideoProgress(bv.id).completed).length;
+  const completedCount = sortedVideos.filter((bv) => getVideoProgress(bv.slug).completed).length;
 
   return (
     <div className="w-full">
@@ -132,7 +132,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 <h1 className="text-xl font-extrabold text-brand-text sm:text-2xl">
                   {courseData.title}
                 </h1>
-                <p className="mt-1 text-sm text-brand-muted">مرجع الدورة رقم {params.id}</p>
+                <p className="mt-1 text-sm text-brand-muted">مرجع الدورة {params.courseSlug}</p>
               </div>
               <span className="rounded-full bg-brand-secondary/10 px-3 py-1 text-xs font-semibold text-brand-secondary">
                 منهج معتمد
@@ -147,7 +147,7 @@ export default function Page({ params }: { params: { id: string } }) {
             <div className="mt-4 space-y-3">
               {shownVideos.length > 0 ? (
                 shownVideos.map((bv, index) => {
-                  const completed = getVideoProgress(bv.id).completed;
+                  const completed = getVideoProgress(bv.slug).completed;
                   const isReady = bv.status === 'READY';
                   const isProcessing = bv.status === 'PROCESSING' || bv.status === 'UPLOADING' || bv.status === 'PENDING';
                   const isFailed = bv.status === 'FAILED';
@@ -194,15 +194,15 @@ export default function Page({ params }: { params: { id: string } }) {
                   );
                   return linkable ? (
                     <Link
-                      key={`bunny-${bv.id}`}
-                      href={`/course/${params.id}/video/${bv.id}`}
+                      key={`bunny-${bv.slug}`}
+                      href={`/course/${params.courseSlug}/video/${bv.slug}`}
                       className={rowClassName}
                     >
                       {rowInner}
                     </Link>
                   ) : (
                     <span
-                      key={`bunny-${bv.id}`}
+                      key={`bunny-${bv.slug}`}
                       className={rowClassName}
                     >
                       {rowInner}
@@ -232,14 +232,14 @@ export default function Page({ params }: { params: { id: string } }) {
           {/* Sidebar: Course Overview & Enrollment Card */}
           <div className="order-1 lg:order-2">
             <EnrollmentCard
-              courseId={params.id}
+              courseSlug={params.courseSlug}
               isEnrolled={isEnrolled}
               coursePrice={courseData.price || 'مجاني'}
               courseDuration={courseDuration}
               examsCount={examsCount}
               lessonsCount={totalVideosCount}
               completedCount={completedCount}
-              primaryVideoHref={firstVideo ? `/course/${params.id}/video/${firstVideo.id}` : undefined}
+              primaryVideoHref={firstVideo ? `/course/${params.courseSlug}/video/${firstVideo.slug}` : undefined}
               onEnrollSuccess={() => setIsEnrolled(true)}
             />
           </div>

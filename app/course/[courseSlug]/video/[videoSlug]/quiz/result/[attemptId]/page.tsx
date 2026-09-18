@@ -19,7 +19,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 interface PageProps {
-  params: { id: string; video: string; attemptId: string };
+  params: { courseSlug: string; videoSlug: string; attemptId: string };
 }
 
 export default function QuizResultPage({ params }: PageProps) {
@@ -39,7 +39,7 @@ export default function QuizResultPage({ params }: PageProps) {
         setIsLoading(true);
         await Promise.all([
           dispatch(fetchQuizResult(params.attemptId)).unwrap(),
-          dispatch(fetchQuizAttempts(params.video)).unwrap()
+          dispatch(fetchQuizAttempts(params.videoSlug)).unwrap()
         ]);
       } catch (err: unknown) {
         setError(getErrorMessage(err, "تعذر تحميل النتيجة"));
@@ -48,7 +48,7 @@ export default function QuizResultPage({ params }: PageProps) {
       }
     };
     load();
-  }, [params.attemptId, params.video, dispatch]);
+  }, [params.attemptId, params.videoSlug, dispatch]);
 
   // Auto-refetch while grading: reflects the real backend state (AI worker or
   // human grader flips GRADING → GRADED). Polls every 10s, max ~2 minutes,
@@ -84,7 +84,7 @@ export default function QuizResultPage({ params }: PageProps) {
         <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center text-brand-accent">
           <p className="mb-4 font-bold">{error}</p>
           <button
-            onClick={() => router.push(`/course/${params.id}/video/${params.video}/quiz`)}
+            onClick={() => router.push(`/course/${params.courseSlug}/video/${params.videoSlug}/quiz`)}
             className="rounded-full bg-brand-primary px-4 py-2 text-sm font-bold text-white"
           >
             العودة للاختبار
@@ -114,15 +114,15 @@ export default function QuizResultPage({ params }: PageProps) {
             perQuestion: []
           }}
           attemptId={result.attemptId}
-          courseId={params.id}
-          videoId={params.video}
+          courseSlug={params.courseSlug}
+          videoSlug={params.videoSlug}
         />
       ) : (
         <QuizResultSummary
           mode="final"
           result={result}
-          courseId={params.id}
-          videoId={params.video}
+          courseSlug={params.courseSlug}
+          videoSlug={params.videoSlug}
         />
       )}
 

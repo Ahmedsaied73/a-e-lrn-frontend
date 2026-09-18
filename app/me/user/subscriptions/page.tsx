@@ -75,7 +75,7 @@ export default function UserSubscriptionsPage() {
         {courses.length > 0 ? (
           <div className="mt-3 divide-y divide-brand-border rounded-2xl border border-brand-border bg-brand-surface">
             {courses.map((course) => (
-              <div key={course.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+              <div key={course.slug} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                 <div>
                   <p className="text-sm font-semibold text-brand-text">{course.title}</p>
                   <p className="mt-0.5 text-xs text-brand-muted">
@@ -84,7 +84,7 @@ export default function UserSubscriptionsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-bold text-brand-primary">نشط</span>
-                  <Link href={`/course/${course.id}`} className="text-sm font-semibold text-brand-primary hover:underline">
+                  <Link href={`/course/${course.slug}`} className="text-sm font-semibold text-brand-primary hover:underline">
                     عرض الدورة
                   </Link>
                 </div>

@@ -1,7 +1,7 @@
 /**
  * Student self-service profile updates.
  *
- * Backend: PUT /user/:userId (see H:\e-learning-platform\src\routes\users.js).
+ * Backend: PUT /user/:userSlug (see H:\e-learning-platform\src\routes\users.js).
  * Self-edits may change name; email/password changes must also send
  * `currentPassword` or the backend answers 401. grade/phoneNumber are
  * admin-only and are never sent from here.
@@ -17,8 +17,8 @@ export interface UpdateProfileInput {
 }
 
 export async function updateMyProfile(
-  userId: number | string,
+  userSlug: string,
   body: UpdateProfileInput,
 ): Promise<User> {
-  return apiClient.put<User>(`/user/${userId}`, body);
+  return apiClient.put<User>(`/user/${userSlug}`, body);
 }

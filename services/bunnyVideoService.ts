@@ -2,8 +2,8 @@
  * Bunny Stream Video Service — services/bunnyVideoService.ts
  *
  * Provides typed wrappers around the two student-facing Bunny endpoints:
- *   - GET /courses/:courseId/bunny-videos  → list of videos in a course
- *   - GET /videos/:videoId/playback        → signed iframe embed URL
+ *   - GET /courses/:courseSlug/bunny-videos  → list of videos in a course
+ *   - GET /videos/:videoSlug/playback        → signed iframe embed URL
  *
  * Uses the centralized apiClient from lib/api-client.ts which:
  *   - Sends `credentials: 'include'` for HttpOnly cookie auth
@@ -19,10 +19,10 @@ import { ForbiddenError, NotFoundError, ApiError } from '@/lib/errors';
 import type { BunnyVideo, BunnyPlaybackData, BunnyErrorCode } from '@/types/bunny';
 
 export interface BunnyCourseProgressData {
-  courseId: number;
+  courseSlug: string;
   totalVideos: number;
   completedVideos: number;
-  videos: Array<{ id: number; completed: boolean; watchedAt: string | null }>;
+  videos: Array<{ slug: string; completed: boolean; watchedAt: string | null }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -86,23 +86,23 @@ export function formatBunnyDuration(seconds: number | null | undefined): string 
  * or if the user is not enrolled (the backend returns [] rather than 403
  * for the list endpoint).
  *
- * @param courseId  The numeric or string course ID
+ * @param courseSlug  The public course slug
  * @throws {ApiError} On network failure or unexpected server error
  */
 export async function fetchBunnyCourseVideos(
-  courseId: string | number,
+  courseSlug: string,
 ): Promise<BunnyVideo[]> {
   // User-scoped 60s cache: the backend filters this list by enrollment/role,
   // so it is per-viewer data. Hottest key in the app (course page + every
   // video page) — revisits within the TTL fire zero requests.
   // NOTE: resolved [] (not-enrolled / no videos) is cached too; enroll and
   // video-publish flows drop this key explicitly.
-  return cached(userKey(`/courses/${courseId}/bunny-videos`), 60_000, async () => {
+  return cached(userKey(`/courses/${courseSlug}/bunny-videos`), 60_000, async () => {
     try {
       // apiClient.get unwraps { success, data } automatically, so we get
       // the array directly.
       const data = await apiClient.get<BunnyVideo[]>(
-        `/courses/${courseId}/bunny-videos`,
+        `/courses/${courseSlug}/bunny-videos`,
       );
       // Guard: ensure we always return an array even if the server sends null.
       return Array.isArray(data) ? data : [];
@@ -123,16 +123,16 @@ export async function fetchBunnyCourseVideos(
 }
 
 export async function fetchBunnyCourseProgress(
-  courseId: string | number,
+  courseSlug: string,
 ): Promise<BunnyCourseProgressData> {
-  return apiClient.get<BunnyCourseProgressData>(`/progress/course/${courseId}`);
+  return apiClient.get<BunnyCourseProgressData>(`/progress/course/${courseSlug}`);
 }
 
 /**
  * Fetches a signed Bunny embed playback URL for a specific video.
  *
- * @param videoId  The numeric or string BunnyVideo.id (NOT the Bunny GUID)
- * @returns        BunnyPlaybackData with playbackUrl and expiresAt
+ * @param videoSlug  The public BunnyVideo slug (NOT the Bunny GUID)
+ * @returns          BunnyPlaybackData with playbackUrl and expiresAt
  *
  * @throws {BunnyVideoError} with code 'VIDEO_ACCESS_DENIED' on 403
  * @throws {BunnyVideoError} with code 'VIDEO_NOT_FOUND'    on 404
@@ -140,11 +140,11 @@ export async function fetchBunnyCourseProgress(
  * @throws {ApiError}        on network failure or unexpected server error
  */
 export async function fetchBunnyPlaybackUrl(
-  videoId: string | number,
+  videoSlug: string,
 ): Promise<BunnyPlaybackData> {
   try {
     const data = await apiClient.get<BunnyPlaybackData>(
-      `/videos/${videoId}/playback`,
+      `/videos/${videoSlug}/playback`,
     );
     return data;
   } catch (err) {

@@ -30,9 +30,9 @@ function formatDuration(seconds: number | null): string {
 }
 
 export default function AdminCourseVideosPage() {
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ courseSlug: string }>();
   const router = useRouter();
-  const courseId = Number(params.id);
+  const courseSlug = params.courseSlug;
 
   const [videos, setVideos] = useState<BunnyVideo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,14 +58,14 @@ export default function AdminCourseVideosPage() {
     setLoading(true);
     setError(null);
     try {
-      const vids = await getCourseVideos(courseId);
+      const vids = await getCourseVideos(courseSlug);
       setVideos(vids);
     } catch {
       setError('تعذر تحميل الفيديوهات.');
     } finally {
       setLoading(false);
     }
-  }, [courseId]);
+  }, [courseSlug]);
 
   useEffect(() => {
     void load();
@@ -75,12 +75,12 @@ export default function AdminCourseVideosPage() {
     if (!newTitle.trim()) return;
     setCreateBusy(true);
     try {
-      const created = await createVideo(courseId, newTitle.trim());
+      const created = await createVideo(courseSlug, newTitle.trim());
       toast.success('تم إنشاء الفيديو. يمكنك الآن رفع الملف.');
       setCreateOpen(false);
       setNewTitle('');
       void load();
-      setUploadingFor({ ...created, courseId, status: 'PENDING' } as unknown as BunnyVideo);
+      setUploadingFor({ ...created, status: 'PENDING' } as unknown as BunnyVideo);
     } catch {
       toast.error('فشل إنشاء الفيديو.');
     } finally {
@@ -99,7 +99,7 @@ export default function AdminCourseVideosPage() {
     setUploadBusy(true);
     setBpLabel('جارٍ رفع الملف إلى Bunny...');
     try {
-      const res = await uploadVideo(uploadingFor.id, selectedFile);
+      const res = await uploadVideo(uploadingFor.slug, selectedFile);
       toast.success(res.message || 'تم رفع الفيديو بنجاح.');
       setUploadingFor(null);
       setSelectedFile(null);
@@ -121,7 +121,7 @@ export default function AdminCourseVideosPage() {
     next[index] = next[target];
     next[target] = swap;
     try {
-      await reorderVideos(courseId, next.map((v) => v.id));
+      await reorderVideos(courseSlug, next.map((v) => v.slug));
       setVideos(next);
       toast.success('تم تحديث الترتيب.');
     } catch {
@@ -134,7 +134,7 @@ export default function AdminCourseVideosPage() {
     if (!deleting) return;
     setDeleteBusy(true);
     try {
-      await deleteVideo(deleting.id);
+      await deleteVideo(deleting.slug);
       toast.success('تم حذف الفيديو.');
       setDeleting(null);
       void load();
@@ -157,7 +157,7 @@ export default function AdminCourseVideosPage() {
   const showSearch = videos.length > 0;
 
   const renderRow = (video: BunnyVideo, index: number) => (
-    <div key={video.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-outline-variant/70 bg-surface p-3">
+    <div key={video.slug} className="flex flex-wrap items-center gap-3 rounded-xl border border-outline-variant/70 bg-surface p-3">
       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/10 text-sky-400">
         <Film className="h-4 w-4" aria-hidden="true" />
       </div>
@@ -172,7 +172,7 @@ export default function AdminCourseVideosPage() {
         )}
       </div>
       <StatusBadge status={video.status} className="shrink-0" />
-      {!video.quiz && (
+      {!video.quizSlug && (
         <span title="هذه المحاضرة بلا اختبار — الطلاب يتقدمون بمجرد المشاهدة" className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
           بدون اختبار
         </span>
@@ -194,7 +194,7 @@ export default function AdminCourseVideosPage() {
             <Upload className="h-3.5 w-3.5" />
           </button>
         )}
-        <button type="button" title="اختبار الفيديو" onClick={() => router.push(`/admin/quizzes/${video.id}`)} className="rounded-lg border border-sky-500/40 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:text-sky-200">
+        <button type="button" title="اختبار الفيديو" onClick={() => router.push(`/admin/quizzes/${video.slug}`)} className="rounded-lg border border-sky-500/40 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:text-sky-200">
           <FileQuestion className="h-3.5 w-3.5" />
         </button>
         <button type="button" title="حذف" onClick={() => setDeleting(video)} className="rounded-lg border border-red-200 p-2 text-red-600 transition-colors duration-150 hover:border-red-400 hover:bg-red-50">
@@ -213,7 +213,7 @@ export default function AdminCourseVideosPage() {
             العودة إلى الدورات
           </button>
           <h1 className="text-2xl font-bold text-on-surface">فيديوهات الدورة</h1>
-          <p className="mt-1 text-sm text-on-surface-variant">إدارة فيديوهات الدورة #{courseId} — {videos.length} فيديو.</p>
+          <p className="mt-1 text-sm text-on-surface-variant">إدارة فيديوهات الدورة {courseSlug} — {videos.length} فيديو.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="border-outline-variant text-on-surface/80 hover:border-primary-color hover:text-on-surface" onClick={() => void load()}>

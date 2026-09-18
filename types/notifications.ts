@@ -22,7 +22,7 @@ export interface NotificationListResponse {
 
 export type BroadcastAudience =
   | { kind: "all" }
-  | { kind: "course"; courseId: number }
+  | { kind: "course"; courseSlug: string }
   | { kind: "grade"; grade: GradeEnum };
 
 export interface BroadcastResult {

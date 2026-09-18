@@ -19,12 +19,12 @@ export type AttemptStatus =
   | 'EXPIRED';
 
 // ---------------------------------------------------------------------------
-// GET /quizzes/videos/:videoId/meta
+// GET /quizzes/videos/:videoSlug/meta
 // ---------------------------------------------------------------------------
 
 export interface QuizMetaNoQuiz {
   exists: false;
-  videoId: number;
+  videoSlug: string;
   videoTitle: string;
 }
 
@@ -36,8 +36,8 @@ export interface InProgressAttemptInfo {
 
 export interface QuizMetaExists {
   exists: true;
-  quizId: number;
-  videoId: number;
+  quizSlug: string;
+  videoSlug: string;
   videoTitle: string;
   title: string;
   timeLimitSec: number | null;
@@ -62,8 +62,8 @@ export type QuizMeta = QuizMetaNoQuiz | QuizMetaExists;
 // ---------------------------------------------------------------------------
 
 export interface StudentSafeQuiz {
-  id: number;
-  videoId: number;
+  slug: string;
+  videoSlug: string;
   title: string;
   timeLimitSec: number | null;
   passingScore: number;
@@ -202,7 +202,8 @@ export interface AttemptSummary {
 }
 
 export interface StudentAttemptsData {
-  quizId: number;
+  quizSlug: string;
+  videoSlug: string;
   title: string;
   passingScore: number;
   attempts: AttemptSummary[];
@@ -216,9 +217,9 @@ export interface StudentAttemptsData {
 export interface QuizGate403 {
   message: string;
   code?: 'SEQUENTIAL_GATE' | 'NOT_ENROLLED' | 'VIDEO_NOT_FOUND';
-  previousVideoId?: number;
-  currentVideoId?: number;
-  quizId?: number;
+  previousVideoSlug?: string;
+  currentVideoSlug?: string;
+  quizSlug?: string;
   yourScore?: number | null;
   requiredScore?: number;
 }
@@ -229,6 +230,7 @@ export interface QuizGate403 {
 
 export interface AchievementCourse {
   id: number;
+  slug: string;
   title: string;
   description: string | null;
   thumbnail: string | null;
@@ -244,8 +246,10 @@ export interface AchievementProgress {
 
 export interface AchievementExam {
   videoId: number;
+  videoSlug: string;
   videoTitle: string;
   quizId: number;
+  quizSlug: string;
   quizTitle: string;
   passingScore: number;
   timeLimitSec: number | null;

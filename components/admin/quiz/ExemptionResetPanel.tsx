@@ -4,7 +4,7 @@ import { useState } from "react";
 import { grantQuizExemption, revokeQuizExemption } from "@/services/adminQuizService";
 
 interface ExemptionResetPanelProps {
-  videoId: string;
+  videoSlug: string;
 }
 
 function errorMessage(error: unknown): string {
@@ -12,8 +12,8 @@ function errorMessage(error: unknown): string {
   return "تعذر تنفيذ العملية.";
 }
 
-export default function ExemptionResetPanel({ videoId }: ExemptionResetPanelProps) {
-  const [userId, setUserId] = useState("");
+export default function ExemptionResetPanel({ videoSlug }: ExemptionResetPanelProps) {
+  const [userSlug, setUserSlug] = useState("");
   const [reason, setReason] = useState("");
   const [exemptionId, setExemptionId] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -22,18 +22,19 @@ export default function ExemptionResetPanel({ videoId }: ExemptionResetPanelProp
 
   const grant = async (event: React.FormEvent) => {
     event.preventDefault();
-    const parsedUserId = Number(userId);
-    if (!Number.isInteger(parsedUserId) || parsedUserId <= 0) {
-      setError("أدخل رقم مستخدم صحيحاً.");
+    const slug = userSlug.trim();
+    if (!slug) {
+      setError("أدخل معرّف الطالب (slug).");
       return;
     }
     setWorking(true);
     setError(null);
     setMessage(null);
     try {
-      await grantQuizExemption(videoId, parsedUserId, reason.trim() || undefined);
+      await grantQuizExemption(videoSlug, slug, reason.trim() || undefined);
       setMessage("تم منح الاستثناء بنجاح.");
       setReason("");
+      setUserSlug("");
     } catch (grantError) {
       setError(errorMessage(grantError));
     } finally {
@@ -64,10 +65,10 @@ export default function ExemptionResetPanel({ videoId }: ExemptionResetPanelProp
   return (
     <section dir="rtl" className="rounded-xl border border-outline-variant/70 bg-card p-6">
       <h2 className="text-xl font-bold text-on-surface">صلاحيات تجاوز بوابة الاختبار</h2>
-      <p className="mt-1 text-sm text-on-surface-variant">الفيديو الحالي: {videoId}. يتطلب الإلغاء رقم الاستثناء من النظام.</p>
+      <p className="mt-1 text-sm text-on-surface-variant">الفيديو الحالي: {videoSlug}. يتطلب الإلغاء رقم الاستثناء من النظام.</p>
       <form onSubmit={grant} className="mt-5 grid gap-3 sm:grid-cols-3">
-        <label className="text-sm font-semibold text-on-surface/80">رقم الطالب
-          <input value={userId} onChange={(event) => setUserId(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
+        <label className="text-sm font-semibold text-on-surface/80">معرّف الطالب (slug)
+          <input value={userSlug} onChange={(event) => setUserSlug(event.target.value)} placeholder="u_..." className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
         </label>
         <label className="text-sm font-semibold text-on-surface/80 sm:col-span-2">سبب الاستثناء
           <input value={reason} onChange={(event) => setReason(event.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />

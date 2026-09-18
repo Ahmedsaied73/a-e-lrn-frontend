@@ -16,19 +16,19 @@ import type {
 } from '@/types/quiz';
 
 /**
- * GET /quizzes/videos/:videoId/meta
+ * GET /quizzes/videos/:videoSlug/meta
  * Returns quiz metadata for a video (exists, unlocked, in-progress attempt, etc.)
  */
-export async function getQuizMeta(videoId: number | string): Promise<QuizMeta> {
-  return apiClient.get<QuizMeta>(`/quizzes/videos/${videoId}/meta`);
+export async function getQuizMeta(videoSlug: string): Promise<QuizMeta> {
+  return apiClient.get<QuizMeta>(`/quizzes/videos/${videoSlug}/meta`);
 }
 
 /**
- * POST /quizzes/videos/:videoId/start
+ * POST /quizzes/videos/:videoSlug/start
  * Start a new attempt OR resume an in-progress one — backend handles both cases identically.
  */
-export async function startQuiz(videoId: number | string): Promise<StartQuizData> {
-  return apiClient.post<StartQuizData>(`/quizzes/videos/${videoId}/start`, {});
+export async function startQuiz(videoSlug: string): Promise<StartQuizData> {
+  return apiClient.post<StartQuizData>(`/quizzes/videos/${videoSlug}/start`, {});
 }
 
 /**
@@ -68,9 +68,9 @@ export async function getQuizResult(attemptId: number | string): Promise<QuizRes
 }
 
 /**
- * GET /quizzes/videos/:videoId/attempts
+ * GET /quizzes/videos/:videoSlug/attempts
  * Fetch all past attempts for a video's quiz (ordered by attemptNumber desc from API).
  */
-export async function getQuizAttempts(videoId: number | string): Promise<StudentAttemptsData> {
-  return apiClient.get<StudentAttemptsData>(`/quizzes/videos/${videoId}/attempts`);
+export async function getQuizAttempts(videoSlug: string): Promise<StudentAttemptsData> {
+  return apiClient.get<StudentAttemptsData>(`/quizzes/videos/${videoSlug}/attempts`);
 }

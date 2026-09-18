@@ -21,7 +21,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-export default function VideoPage({ params }: { params: { id: string; video: string } }) {
+export default function VideoPage({ params }: { params: { courseSlug: string; videoSlug: string } }) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -54,11 +54,11 @@ export default function VideoPage({ params }: { params: { id: string; video: str
       setBunnyVideo(null);
       setPlaybackData(null);
 
-      const courseVideos = await fetchBunnyCourseVideos(params.id);
+      const courseVideos = await fetchBunnyCourseVideos(params.courseSlug);
 
-      // Find matching video by numeric ID or Bunny GUID string
+      // Find matching video by public slug
       const foundVideo = courseVideos.find(
-        v => v.id === Number(params.video) || v.bunnyVideoId === params.video
+        v => v.slug === params.videoSlug
       );
 
       if (!foundVideo) {
@@ -66,7 +66,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
       }
       setBunnyVideo(foundVideo);
 
-      const playback = await fetchBunnyPlaybackUrl(foundVideo.id);
+      const playback = await fetchBunnyPlaybackUrl(foundVideo.slug);
       setPlaybackData(playback);
     } catch (err: unknown) {
       if (err instanceof BunnyVideoError) {
@@ -75,7 +75,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
           const isGate = body && (
             body.code === 'SEQUENTIAL_GATE' ||
             // fallback for older backends that predate structured `code`s
-            (!('code' in body) && 'quizId' in body)
+            (!('code' in body) && 'quizSlug' in body)
           );
           if (isGate) {
             setQuizGate(body as QuizGate403);
@@ -92,7 +92,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     } finally {
       setIsLoading(false);
     }
-  }, [params.video, params.id]);
+  }, [params.videoSlug, params.courseSlug]);
 
   useEffect(() => {
     loadVideo();
@@ -114,7 +114,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
 
     const timer = setTimeout(async () => {
       try {
-        const refreshed = await fetchBunnyPlaybackUrl(bunnyVideo.id);
+        const refreshed = await fetchBunnyPlaybackUrl(bunnyVideo.slug);
         setPlaybackData(refreshed);
       } catch (err) {
         console.warn('Failed to silently refresh Bunny video playback token:', err);
@@ -133,8 +133,8 @@ export default function VideoPage({ params }: { params: { id: string; video: str
 
       try {
         const { apiClient } = await import('@/lib/api-client');
-        const data = await apiClient.get<{ videoId: number | string; completed: boolean; watchedAt: string | null }>(
-          `/progress/${bunnyVideo.id}`
+        const data = await apiClient.get<{ videoSlug: string; completed: boolean; watchedAt: string | null }>(
+          `/progress/${bunnyVideo.slug}`
         );
         if (data) {
           setApiCompletionStatus(data.completed);
@@ -165,13 +165,13 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     try {
       setCompletingVideo(true);
       const { apiClient } = await import('@/lib/api-client');
-      const videoId = bunnyVideo?.id;
-      if (!videoId) {
+      const videoSlug = bunnyVideo?.slug;
+      if (!videoSlug) {
         throw new Error('تعذر تحديد المحاضرة لتحديث التقدم');
       }
-      await apiClient.post<{ videoId: number | string; completed: boolean; watchedAt: string | null }>(
+      await apiClient.post<{ videoSlug: string; completed: boolean; watchedAt: string | null }>(
         '/progress/complete',
-        { videoId }
+        { videoSlug }
       );
       setApiCompletionStatus(true);
       setCompletionDate(new Date().toISOString());
@@ -193,7 +193,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     } finally {
       setCompletingVideo(false);
     }
-  }, [apiCompletionStatus, bunnyVideo?.id, dispatch]);
+  }, [apiCompletionStatus, bunnyVideo?.slug, dispatch]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 5. Render Video Player or State Placeholders
@@ -208,7 +208,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
       </div>
     );
   } else if (quizGate) {
-    const blockingVideoId = quizGate.previousVideoId ?? quizGate.currentVideoId;
+    const blockingVideoSlug = quizGate.previousVideoSlug ?? quizGate.currentVideoSlug;
     playerContent = (
       <div className="flex aspect-video w-full flex-col items-center justify-center border border-amber-200 bg-amber-50 p-6 text-center">
         <div className="mb-4 grid h-16 w-16 place-items-center rounded-full bg-amber-100 text-amber-700 shadow-xs">
@@ -221,9 +221,9 @@ export default function VideoPage({ params }: { params: { id: string; video: str
         <p className="mb-6 text-sm font-semibold text-amber-900">
           نتيجتك: {quizGate.yourScore ?? 'لم تحاول بعد'} / المطلوب: {quizGate.requiredScore ?? '--'}%
         </p>
-        {blockingVideoId != null && (
+        {blockingVideoSlug != null && (
           <button
-            onClick={() => router.push(`/course/${params.id}/video/${blockingVideoId}/quiz`)}
+            onClick={() => router.push(`/course/${params.courseSlug}/video/${blockingVideoSlug}/quiz`)}
             className="rounded-full bg-brand-primary px-6 py-2.5 text-sm font-bold text-white transition hover:bg-brand-primary/90"
           >
             الانتقال إلى الاختبار
@@ -242,7 +242,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
           يجب أن تكون مشتركاً في هذا الكورس لتتمكن من مشاهدة المحاضرة والاستفادة من المواد التعليمية والاختبارات.
         </p>
         <button
-          onClick={() => router.push(`/course/${params.id}`)}
+          onClick={() => router.push(`/course/${params.courseSlug}`)}
           className="rounded-full bg-brand-primary px-6 py-2.5 text-sm font-bold text-white transition hover:bg-brand-primary/90"
         >
           اشترك في الكورس الآن
@@ -313,7 +313,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
     ? formatBunnyDuration(bunnyVideo.duration)
     : null;
   const canTrackProgress = bunnyVideo != null && !isNotEnrolled && !quizGate;
-  const quizHref = bunnyVideo ? `/course/${params.id}/video/${bunnyVideo.id}/quiz` : undefined;
+  const quizHref = bunnyVideo ? `/course/${params.courseSlug}/video/${bunnyVideo.slug}/quiz` : undefined;
 
   return (
     <div className="w-full">
@@ -324,7 +324,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
           <span>/</span>
           <Link href="/grades/1" className="hover:text-brand-primary">الدورات</Link>
           <span>/</span>
-          <Link href={`/course/${params.id}`} className="hover:text-brand-primary">محتوى الدورة</Link>
+          <Link href={`/course/${params.courseSlug}`} className="hover:text-brand-primary">محتوى الدورة</Link>
           <span>/</span>
           <span className="text-brand-muted-strong">{videoTitle}</span>
         </nav>
@@ -420,7 +420,7 @@ export default function VideoPage({ params }: { params: { id: string; video: str
               </div>
 
               <Link
-                href={`/course/${params.id}`}
+                href={`/course/${params.courseSlug}`}
                 className="mt-4 flex items-center justify-center gap-1.5 rounded-lg border border-brand-border py-2.5 text-sm font-semibold text-brand-muted-strong transition hover:bg-brand-bg"
               >
                 العودة إلى الدورة

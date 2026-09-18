@@ -70,7 +70,7 @@ export default function UserCoursesPage() {
           ) : courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
-                <Link href={`/course/${course.id}`} key={course.id}>
+                <Link href={`/course/${course.slug}`} key={course.slug}>
                   <div className="bg-surface-container rounded-lg p-4 h-full hover:bg-surface-container transition-colors cursor-pointer">
                     <div className="relative w-full h-40 mb-4 overflow-hidden rounded-md group">
                       <Image 

@@ -86,9 +86,9 @@ export default function UserAchievementsPage() {
           {data.courses.map((entry) => {
             const pct = Math.round(entry.progress.percent);
             return (
-              <div key={entry.course.id}>
+              <div key={entry.course.slug}>
                 <div className="mb-1.5 flex items-center justify-between text-sm">
-                  <Link href={`/course/${entry.course.id}`} className="font-medium text-brand-muted-strong hover:text-brand-primary">
+                  <Link href={`/course/${entry.course.slug}`} className="font-medium text-brand-muted-strong hover:text-brand-primary">
                     {entry.course.title}
                   </Link>
                   <span className="text-brand-muted">{entry.progress.watched} من {entry.progress.total} محاضرة</span>
@@ -110,10 +110,10 @@ export default function UserAchievementsPage() {
         <div className="mt-3 divide-y divide-brand-border rounded-2xl border border-brand-border bg-brand-surface">
           {data.courses.flatMap((entry) =>
             entry.exams.map((exam) => (
-              <div key={`${entry.course.id}-${exam.quizId}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+              <div key={`${entry.course.slug}-${exam.quizSlug}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                 <div>
                   <Link
-                    href={`/course/${entry.course.id}/video/${exam.videoId}/quiz`}
+                    href={`/course/${entry.course.slug}/video/${exam.videoSlug}/quiz`}
                     className="text-sm font-semibold text-brand-text hover:text-brand-primary"
                   >
                     {exam.quizTitle}

@@ -26,7 +26,7 @@ function scoreColor(score: number) {
 
 interface RecentExam extends AchievementExam {
   courseTitle: string;
-  courseId: number;
+  courseSlug: string;
 }
 
 export default function UserProfilePage() {
@@ -84,7 +84,7 @@ export default function UserProfilePage() {
   const courses = data?.courses ?? [];
   const recentExams: RecentExam[] = courses
     .flatMap((entry) =>
-      entry.exams.map((exam) => ({ ...exam, courseTitle: entry.course.title, courseId: entry.course.id })),
+      entry.exams.map((exam) => ({ ...exam, courseTitle: entry.course.title, courseSlug: entry.course.slug })),
     )
     .slice(0, 3);
   const gradedCount = courses.flatMap((entry) => entry.exams).filter((e) => e.bestScore != null).length;
@@ -127,9 +127,9 @@ export default function UserProfilePage() {
                   {courses.map((entry) => {
                     const pct = Math.round(entry.progress.percent);
                     return (
-                      <div key={entry.course.id}>
+                      <div key={entry.course.slug}>
                         <div className="mb-1.5 flex items-center justify-between text-sm">
-                          <Link href={`/course/${entry.course.id}`} className="font-medium text-brand-muted-strong hover:text-brand-primary">
+                          <Link href={`/course/${entry.course.slug}`} className="font-medium text-brand-muted-strong hover:text-brand-primary">
                             {entry.course.title}
                           </Link>
                           <span className="text-brand-muted">{pct}٪</span>
@@ -162,10 +162,10 @@ export default function UserProfilePage() {
               ) : recentExams.length > 0 ? (
                 <div className="mt-4 divide-y divide-brand-border">
                   {recentExams.map((exam) => (
-                    <div key={`${exam.courseId}-${exam.quizId}`} className="flex items-center justify-between py-3">
+                    <div key={`${exam.courseSlug}-${exam.quizSlug}`} className="flex items-center justify-between py-3">
                       <div>
                         <Link
-                          href={`/course/${exam.courseId}/video/${exam.videoId}/quiz`}
+                          href={`/course/${exam.courseSlug}/video/${exam.videoSlug}/quiz`}
                           className="text-sm font-semibold text-brand-muted-strong hover:text-brand-primary"
                         >
                           {exam.quizTitle}

@@ -8,7 +8,7 @@ import type { GradeEnum, User } from './api';
 export type RoleEnum = 'STUDENT' | 'ADMIN';
 
 /** Admin list row — backend safe-select adds lastLoginAt, no password/refreshToken. */
-export interface AdminUser extends Pick<User, 'id' | 'name' | 'email' | 'grade' | 'role' | 'createdAt'> {
+export interface AdminUser extends Pick<User, 'id' | 'slug' | 'name' | 'email' | 'grade' | 'role' | 'createdAt'> {
   lastLoginAt: string | null;
   phoneNumber?: string | null;
 }
@@ -138,9 +138,9 @@ export interface AdminDashboardData {
   recent: AdminRecent;
 }
 
-/** Admin course list row — GET /courses returns _count + category. */
+/** Admin course list row — GET /courses returns _count + category, ids hidden. */
 export interface AdminCourse {
-  id: number;
+  slug: string;
   title: string;
   description?: string | null;
   price?: number | null;
@@ -148,7 +148,7 @@ export interface AdminCourse {
   grade: GradeEnum;
   category?: string | null;
   createdAt: string;
-  teacher: Pick<User, 'id' | 'name' | 'email'>;
+  teacher: Pick<User, 'slug' | 'name' | 'email'>;
   _count: { videos: number; enrollments: number };
 }
 
@@ -173,13 +173,13 @@ export interface AdminCourseInput {
   thumbnail?: string;
 }
 
-/** Admin quiz index row — GET /admin/quizzes (answerKey never present). */
+/** Admin quiz index row — GET /admin/quizzes (answerKey never present; ids hidden). */
 export interface AdminQuiz {
-  id: number;
+  slug: string;
   title: string;
-  videoId: number;
+  videoSlug: string;
   videoTitle: string;
-  courseId: number;
+  courseSlug: string;
   courseTitle: string;
   timeLimitSec: number | null;
   passingScore: number;
@@ -236,11 +236,11 @@ export interface AdminGlobalAttemptFilters {
   search?: string;
 }
 
-/** Enrollment list row — GET /admin/enrollments. */
+/** Enrollment list row — GET /admin/enrollments (ids hidden: slug exposed). */
 export interface AdminEnrollment {
   id: number;
-  student: Pick<User, 'id' | 'name' | 'email' | 'grade'>;
-  course: { id: number; title: string; grade: GradeEnum };
+  student: Pick<User, 'id' | 'slug' | 'name' | 'email' | 'grade'>;
+  course: { slug: string; title: string; grade: GradeEnum };
   isPaid: boolean;
   paymentDate: string | null;
   progress: number;
@@ -260,8 +260,8 @@ export interface AdminEnrollmentListResponse {
 export interface AdminEnrollmentFilters {
   page?: number;
   limit?: number;
-  userId?: number;
-  courseId?: number;
+  userSlug?: string;
+  courseSlug?: string;
   isPaid?: boolean | '';
   isCompleted?: boolean | '';
   search?: string;

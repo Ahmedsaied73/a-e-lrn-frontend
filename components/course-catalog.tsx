@@ -84,7 +84,7 @@ export function CourseCatalog() {
       ) : (
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((course, i) => (
-            <Reveal key={course.id} delayMs={i * 70}>
+            <Reveal key={course.slug} delayMs={i * 70}>
               <article className="flex h-full flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-surface transition hover:-translate-y-0.5 hover:shadow-md">
                 <div className="relative flex h-36 items-center justify-center bg-gradient-to-br from-brand-primary to-brand-secondary">
                   <span className="absolute top-3 start-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-brand-primary">
@@ -105,7 +105,7 @@ export function CourseCatalog() {
                       {isFree(course) ? 'مجاني' : `${course.price} جنيه`}
                     </span>
                     <Link
-                      href={`/course/${course.id}`}
+                      href={`/course/${course.slug}`}
                       className="text-sm font-semibold text-brand-primary hover:underline"
                     >
                       عرض الدورة

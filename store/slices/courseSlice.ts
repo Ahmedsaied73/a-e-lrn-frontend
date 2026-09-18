@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import {
   fetchAllCourses as courseSvcFetchAll,
-  fetchCourseById as courseSvcFetchById,
+  fetchCourseBySlug as courseSvcFetchBySlug,
   checkEnrollmentStatus as courseSvcCheckEnrollment,
   enrollInCourse as courseSvcEnroll,
   CourseDetail,
@@ -18,7 +18,7 @@ export interface Course extends CourseDetail {
 }
 
 export interface EnrollmentStatus {
-  courseId: string | number;
+  courseSlug: string;
   enrolled: boolean;
   isPaid?: boolean;
 }
@@ -65,14 +65,14 @@ export const fetchCourses = createAsyncThunk(
   },
 );
 
-export const fetchCourseById = createAsyncThunk<
+export const fetchCourseBySlug = createAsyncThunk<
   CourseDetail,
   string
 >(
   'courses/fetchCourseById',
-  async (courseId: string, { rejectWithValue }) => {
+  async (courseSlug: string, { rejectWithValue }) => {
     try {
-      return await courseSvcFetchById(courseId);
+      return await courseSvcFetchBySlug(courseSlug);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
     }
@@ -81,9 +81,9 @@ export const fetchCourseById = createAsyncThunk<
 
 export const checkEnrollmentStatus = createAsyncThunk(
   'courses/checkEnrollmentStatus',
-  async (courseId: string, { rejectWithValue }) => {
+  async (courseSlug: string, { rejectWithValue }) => {
     try {
-      return await courseSvcCheckEnrollment(courseId);
+      return await courseSvcCheckEnrollment(courseSlug);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
     }
@@ -92,9 +92,9 @@ export const checkEnrollmentStatus = createAsyncThunk(
 
 export const enrollInCourse = createAsyncThunk(
   'courses/enrollInCourse',
-  async (courseId: string, { rejectWithValue }) => {
+  async (courseSlug: string, { rejectWithValue }) => {
     try {
-      return await courseSvcEnroll(courseId);
+      return await courseSvcEnroll(courseSlug);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
     }
@@ -116,8 +116,8 @@ const courseSlice = createSlice({
       state.currentCourse = null;
     },
     updateEnrollmentStatus: (state, action: PayloadAction<EnrollmentStatus>) => {
-      const { courseId, enrolled } = action.payload;
-      const idx = state.enrollments.findIndex((e) => String(e.courseId) === String(courseId));
+      const { courseSlug, enrolled } = action.payload;
+      const idx = state.enrollments.findIndex((e) => String(e.courseSlug) === String(courseSlug));
       if (idx >= 0) {
         state.enrollments[idx] = action.payload;
       } else {
@@ -142,12 +142,12 @@ const courseSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      // fetchCourseById
-      .addCase(fetchCourseById.pending, (state) => {
+      // fetchCourseBySlug
+      .addCase(fetchCourseBySlug.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchCourseById.fulfilled, (state, action) => {
+      .addCase(fetchCourseBySlug.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
         const course = action.payload;
@@ -155,44 +155,44 @@ const courseSlice = createSlice({
         state.currentCourse = course;
 
         // Upsert enrollment status from consolidated payload
-        const courseId = course?.id;
-        if (courseId !== undefined) {
+        const courseSlug = course?.slug;
+        if (courseSlug !== undefined) {
           const enrolled = enrollment !== null && enrollment !== undefined;
           const isPaid = enrollment?.isPaid ?? false;
           const idx = state.enrollments.findIndex(
-            (e) => String(e.courseId) === String(courseId),
+            (e) => String(e.courseSlug) === String(courseSlug),
           );
           if (idx >= 0) {
-            state.enrollments[idx] = { courseId, enrolled, isPaid };
+            state.enrollments[idx] = { courseSlug, enrolled, isPaid };
           } else {
-            state.enrollments.push({ courseId, enrolled, isPaid });
+            state.enrollments.push({ courseSlug, enrolled, isPaid });
           }
         }
       })
-      .addCase(fetchCourseById.rejected, (state, action) => {
+      .addCase(fetchCourseBySlug.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
       // checkEnrollmentStatus
       .addCase(checkEnrollmentStatus.fulfilled, (state, action) => {
-        const { courseId, enrolled, isPaid } = action.payload;
-        const idx = state.enrollments.findIndex((e) => String(e.courseId) === String(courseId));
+        const { courseSlug, enrolled, isPaid } = action.payload;
+        const idx = state.enrollments.findIndex((e) => String(e.courseSlug) === String(courseSlug));
         if (idx >= 0) {
-          state.enrollments[idx] = { courseId, enrolled, isPaid };
+          state.enrollments[idx] = { courseSlug, enrolled, isPaid };
         } else {
-          state.enrollments.push({ courseId, enrolled, isPaid });
+          state.enrollments.push({ courseSlug, enrolled, isPaid });
         }
       })
 
       // enrollInCourse
       .addCase(enrollInCourse.fulfilled, (state, action) => {
-        const { courseId, enrolled, isPaid } = action.payload;
-        const idx = state.enrollments.findIndex((e) => String(e.courseId) === String(courseId));
+        const { courseSlug, enrolled, isPaid } = action.payload;
+        const idx = state.enrollments.findIndex((e) => String(e.courseSlug) === String(courseSlug));
         if (idx >= 0) {
-          state.enrollments[idx] = { courseId, enrolled, isPaid };
+          state.enrollments[idx] = { courseSlug, enrolled, isPaid };
         } else {
-          state.enrollments.push({ courseId, enrolled, isPaid });
+          state.enrollments.push({ courseSlug, enrolled, isPaid });
         }
       });
   },
@@ -207,8 +207,8 @@ export const { setCurrentCourse, clearCurrentCourse, updateEnrollmentStatus } = 
 export const selectAllCourses = (state: RootState) => state.courses.courses;
 export const selectCurrentCourse = (state: RootState) => state.courses.currentCourse;
 export const selectCoursePagination = (state: RootState) => state.courses.pagination;
-export const selectEnrollmentStatus = (courseId: string | number) => (state: RootState) =>
-  state.courses.enrollments.find((e) => String(e.courseId) === String(courseId))?.enrolled ?? false;
+export const selectEnrollmentStatus = (courseSlug: string) => (state: RootState) =>
+  state.courses.enrollments.find((e) => String(e.courseSlug) === String(courseSlug))?.enrolled ?? false;
 export const selectCoursesLoading = (state: RootState) => state.courses.loading;
 export const selectCoursesError = (state: RootState) => state.courses.error;
 

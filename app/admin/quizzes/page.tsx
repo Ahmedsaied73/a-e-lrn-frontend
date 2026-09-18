@@ -63,7 +63,7 @@ export default function AdminQuizzesPage() {
 
   const columns = useMemo<ColumnDef<AdminQuiz>[]>(
     () => [
-      { accessorKey: 'id', header: 'الرقم', size: 70 },
+      { accessorKey: 'slug', header: 'الرقم', size: 70 },
       {
         accessorKey: 'title',
         header: 'الاختبار',
@@ -101,13 +101,13 @@ export default function AdminQuizzesPage() {
         header: '',
         cell: ({ row }) => (
           <div className="flex justify-end gap-1.5">
-            <button type="button" title="طابور التصحيح" onClick={() => router.push(`/admin/quizzes/quiz/${row.original.id}/attempts`)} className="rounded-lg border border-emerald-200 p-2 text-emerald-600 transition-colors duration-150 hover:border-emerald-400 hover:bg-emerald-50">
+            <button type="button" title="طابور التصحيح" onClick={() => router.push(`/admin/quizzes/quiz/${row.original.slug}/attempts`)} className="rounded-lg border border-emerald-200 p-2 text-emerald-600 transition-colors duration-150 hover:border-emerald-400 hover:bg-emerald-50">
               <ClipboardList className="h-3.5 w-3.5" />
             </button>
-            <button type="button" title="الوصول والاستثناءات" onClick={() => router.push(`/admin/quizzes/${row.original.videoId}/access`)} className="rounded-lg border border-sky-200 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:bg-sky-50">
+            <button type="button" title="الوصول والاستثناءات" onClick={() => router.push(`/admin/quizzes/${row.original.videoSlug}/access`)} className="rounded-lg border border-sky-200 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:bg-sky-50">
               <Lock className="h-3.5 w-3.5" />
             </button>
-            <button type="button" title="إنشاء / تعديل" onClick={() => router.push(`/admin/quizzes/${row.original.videoId}`)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-[#0057c0]">
+            <button type="button" title="إنشاء / تعديل" onClick={() => router.push(`/admin/quizzes/${row.original.videoSlug}`)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-[#0057c0]">
               <FileQuestion className="h-3.5 w-3.5" />
             </button>
             <button type="button" title="حذف" onClick={() => setDeleting(row.original)} className="rounded-lg border border-red-200 p-2 text-red-700 transition-colors duration-150 hover:border-red-400 hover:bg-red-50">
@@ -132,7 +132,7 @@ export default function AdminQuizzesPage() {
     if (!deleting) return;
     setDeleteBusy(true);
     try {
-      await deleteQuiz(deleting.id);
+      await deleteQuiz(deleting.slug);
       toast.success('تم حذف الاختبار.');
       setDeleting(null);
       if (rows.length === 1 && page > 1) setPage((p) => p - 1);

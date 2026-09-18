@@ -73,7 +73,7 @@ export default function AdminCoursesPage() {
   const [deleting, setDeleting] = useState<AdminCourse | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
 
-  const [mobileActions, setMobileActions] = useState<number | null>(null);
+  const [mobileActions, setMobileActions] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -128,8 +128,8 @@ export default function AdminCoursesPage() {
         category: form.category.trim() || undefined,
       };
       if (editingCourse) {
-        const updated = await updateAdminCourse(editingCourse.id, payload);
-        setRows((current) => current.map((c) => (c.id === editingCourse.id ? { ...c, ...updated, _count: c._count } : c)));
+        const updated = await updateAdminCourse(editingCourse.slug, payload);
+        setRows((current) => current.map((c) => (c.slug === editingCourse.slug ? { ...c, ...updated, _count: c._count } : c)));
         toast.success('تم تحديث الدورة.');
       } else {
         await createAdminCourse(payload);
@@ -149,7 +149,7 @@ export default function AdminCoursesPage() {
     if (!deleting) return;
     setDeleteBusy(true);
     try {
-      await deleteAdminCourse(deleting.id);
+      await deleteAdminCourse(deleting.slug);
       toast.success('تم حذف الدورة.');
       setDeleting(null);
       if (rows.length === 1 && page > 1) setPage((p) => p - 1);
@@ -164,7 +164,7 @@ export default function AdminCoursesPage() {
 
   const columns = useMemo<ColumnDef<AdminCourse>[]>(
     () => [
-      { accessorKey: 'id', header: 'الرقم', size: 70 },
+      { accessorKey: 'slug', header: 'الرقم', size: 70 },
       {
         accessorKey: 'title',
         header: 'العنوان',
@@ -208,7 +208,7 @@ export default function AdminCoursesPage() {
             <button
               type="button"
               title="الفيديوهات"
-              onClick={() => router.push(`/admin/courses/${row.original.id}/videos`)}
+              onClick={() => router.push(`/admin/courses/${row.original.slug}/videos`)}
               className="rounded-lg border border-sky-500/40 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:text-sky-200"
             >
               <Film className="h-3.5 w-3.5" />
@@ -366,10 +366,10 @@ export default function AdminCoursesPage() {
           ) : (
             <ul className="divide-y divide-outline-variant/40 overflow-hidden rounded-2xl border border-outline-variant/70 bg-surface-container-lowest">
               {rows.map((c) => (
-                <li key={c.id}>
+                <li key={c.slug}>
                   <button
                     type="button"
-                    onClick={() => setMobileActions(mobileActions === c.id ? null : c.id)}
+                    onClick={() => setMobileActions(mobileActions === c.slug ? null : c.slug)}
                     className="flex w-full items-start justify-between gap-2 px-4 py-3 text-right"
                   >
                     <div className="flex min-w-0 items-start gap-3">
@@ -399,13 +399,13 @@ export default function AdminCoursesPage() {
                         </p>
                       </div>
                     </div>
-                    <ChevronDown className={cn('mt-1 h-4 w-4 shrink-0 text-on-surface-variant transition-transform', mobileActions === c.id && 'rotate-180')} aria-hidden="true" />
+                    <ChevronDown className={cn('mt-1 h-4 w-4 shrink-0 text-on-surface-variant transition-transform', mobileActions === c.slug && 'rotate-180')} aria-hidden="true" />
                   </button>
-                  {mobileActions === c.id && (
+                  {mobileActions === c.slug && (
                     <div className="flex items-center gap-2 bg-surface px-4 py-2.5">
                       <button
                         type="button"
-                        onClick={() => router.push(`/admin/courses/${c.id}/videos`)}
+                        onClick={() => router.push(`/admin/courses/${c.slug}/videos`)}
                         className="flex items-center gap-1.5 rounded-full border border-sky-500/40 px-3 py-1.5 text-[11px] font-semibold text-sky-700"
                       >
                         <Film className="h-3.5 w-3.5" /> الفيديوهات

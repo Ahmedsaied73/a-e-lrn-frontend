@@ -31,7 +31,7 @@ interface AuthorQuestion {
 }
 
 interface QuizAuthoringFormProps {
-  videoId: string;
+  videoSlug: string;
 }
 
 function newChoice(text = ""): AuthorChoice {
@@ -132,7 +132,7 @@ function buildPayload(title: string, timeLimit: string, passingScore: string, qu
   };
 }
 
-export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
+export default function QuizAuthoringForm({ videoSlug }: QuizAuthoringFormProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [timeLimit, setTimeLimit] = useState("");
@@ -238,7 +238,7 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
     setIsSaving(true);
     setError(null);
     try {
-      const result = await upsertQuiz(videoId, buildPayload(title, timeLimit, passingScore, questions));
+      const result = await upsertQuiz(videoSlug, buildPayload(title, timeLimit, passingScore, questions));
       setSavedQuiz(result);
     } catch (saveError) {
       setError(errorMessage(saveError));
@@ -250,7 +250,7 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
   return (
     <form onSubmit={handleSubmit} dir="rtl" className="space-y-6">
       <section className="rounded-xl border border-outline-variant/70 bg-card p-6">
-        <h1 className="text-xl font-bold text-on-surface">إنشاء اختبار للفيديو {videoId}</h1>
+        <h1 className="text-xl font-bold text-on-surface">إنشاء اختبار للفيديو {videoSlug}</h1>
         <p className="mt-1 text-sm text-on-surface-variant">الحفظ يستبدل تعريف الاختبار الحالي لهذا الفيديو.</p>
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
           <label className="sm:col-span-3 text-sm font-semibold text-on-surface/80">عنوان الاختبار
@@ -382,7 +382,7 @@ export default function QuizAuthoringForm({ videoId }: QuizAuthoringFormProps) {
       {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
       {savedQuiz && <div className="flex flex-wrap items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">
         <span>تم حفظ الاختبار بنجاح.</span>
-        <button type="button" onClick={() => router.push(`/admin/quizzes/quiz/${savedQuiz.id}/attempts`)} className="rounded-lg bg-primary-color px-3 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0]">فتح طابور التصحيح</button>
+        <button type="button" onClick={() => router.push(`/admin/quizzes/quiz/${savedQuiz.slug}/attempts`)} className="rounded-lg bg-primary-color px-3 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0]">فتح طابور التصحيح</button>
       </div>}
       <div className="flex gap-3">
         <button type="button" onClick={() => setQuestions((current) => [...current, newQuestion()])} className="rounded-lg border border-outline-variant px-4 py-2.5 font-semibold text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-[#0057c0]">إضافة عنصر</button>

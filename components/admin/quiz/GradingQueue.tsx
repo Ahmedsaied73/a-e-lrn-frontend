@@ -10,7 +10,7 @@ import type { AdminQuizAttempt, QuizResultData } from "@/types/quiz";
 import GradingForm from "./GradingForm";
 
 interface GradingQueueProps {
-  quizId: string;
+  quizSlug: string;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -30,7 +30,7 @@ function errorMessage(error: unknown): string {
   return "تعذر تنفيذ العملية.";
 }
 
-export default function GradingQueue({ quizId }: GradingQueueProps) {
+export default function GradingQueue({ quizSlug }: GradingQueueProps) {
   const [attempts, setAttempts] = useState<AdminQuizAttempt[]>([]);
   const [selected, setSelected] = useState<QuizResultData | null>(null);
   const [selectedAttempt, setSelectedAttempt] = useState<AdminQuizAttempt | null>(null);
@@ -42,13 +42,13 @@ export default function GradingQueue({ quizId }: GradingQueueProps) {
     setLoading(true);
     setError(null);
     try {
-      setAttempts(await listQuizAttempts(quizId));
+      setAttempts(await listQuizAttempts(quizSlug));
     } catch (loadError) {
       setError(errorMessage(loadError));
     } finally {
       setLoading(false);
     }
-  }, [quizId]);
+  }, [quizSlug]);
 
   useEffect(() => {
     void loadAttempts();

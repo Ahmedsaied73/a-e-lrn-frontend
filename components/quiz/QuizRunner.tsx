@@ -135,11 +135,11 @@ function getErrorMessage(error: unknown, fallback: string): string {
 
 interface QuizRunnerProps {
   startData: StartQuizData;
-  courseId: string;
-  videoId: string;
+  courseSlug: string;
+  videoSlug: string;
 }
 
-export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerProps) {
+export default function QuizRunner({ startData, courseSlug, videoSlug }: QuizRunnerProps) {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
@@ -243,8 +243,8 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
 
       // Route based on grading status
       if (result.status === "GRADED" || result.status === "GRADING") {
-        await dispatch(fetchQuizMeta(videoId)).unwrap();
-        router.push(`/course/${courseId}/video/${videoId}/quiz/result/${startData.attemptId}`);
+        await dispatch(fetchQuizMeta(videoSlug)).unwrap();
+        router.push(`/course/${courseSlug}/video/${videoSlug}/quiz/result/${startData.attemptId}`);
       }
     } catch (err: unknown) {
       // 403 (deadline passed) or 409 (already graded) → fetch result and show it
@@ -252,7 +252,7 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
       if (status === 403 || status === 409) {
         try {
           await dispatch(fetchQuizResult(startData.attemptId)).unwrap();
-          router.push(`/course/${courseId}/video/${videoId}/quiz/result/${startData.attemptId}`);
+          router.push(`/course/${courseSlug}/video/${videoSlug}/quiz/result/${startData.attemptId}`);
           return;
         } catch (recoveryError: unknown) {
           setSubmitError(getErrorMessage(recoveryError, "تعذر تحميل حالة محاولة الاختبار."));
@@ -267,7 +267,7 @@ export default function QuizRunner({ startData, courseId, videoId }: QuizRunnerP
     } finally {
       setIsSubmitting(false);
     }
-  }, [answers, startData.attemptId, dispatch, router, courseId, videoId]);
+  }, [answers, startData.attemptId, dispatch, router, courseSlug, videoSlug]);
 
   const handleAutoSubmit = useCallback(() => {
     void doSubmit(true);

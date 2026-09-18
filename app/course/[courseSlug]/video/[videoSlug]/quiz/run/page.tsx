@@ -9,7 +9,7 @@ import { selectActiveAttempt, startQuizAttempt } from "@/store/slices/quizSlice"
 import { Loader2 } from "lucide-react";
 
 interface PageProps {
-  params: { id: string; video: string };
+  params: { courseSlug: string; videoSlug: string };
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -34,13 +34,13 @@ export default function QuizRunPage({ params }: PageProps) {
       setErrorMsg(null);
 
       const existingAttempt = activeAttempt;
-      if (existingAttempt && String(existingAttempt.quiz.videoId) === String(params.video)) {
+      if (existingAttempt && String(existingAttempt.quiz.videoSlug) === String(params.videoSlug)) {
         setStartData(existingAttempt);
         return;
       }
 
       try {
-        const data = await dispatch(startQuizAttempt(params.video)).unwrap();
+        const data = await dispatch(startQuizAttempt(params.videoSlug)).unwrap();
         if (!cancelled) setStartData(data);
       } catch (err: unknown) {
         if (!cancelled) setErrorMsg(getErrorMessage(err, "تعذر بدء الاختبار"));
@@ -51,7 +51,7 @@ export default function QuizRunPage({ params }: PageProps) {
     return () => {
       cancelled = true;
     };
-  }, [activeAttempt, dispatch, params.video]);
+  }, [activeAttempt, dispatch, params.videoSlug]);
 
   if (!startData && !errorMsg) {
     return (
@@ -73,8 +73,8 @@ export default function QuizRunPage({ params }: PageProps) {
   return (
     <QuizRunner
       startData={startData}
-      courseId={params.id}
-      videoId={params.video}
+      courseSlug={params.courseSlug}
+      videoSlug={params.videoSlug}
     />
   );
 }

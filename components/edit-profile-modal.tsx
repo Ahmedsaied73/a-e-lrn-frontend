@@ -62,7 +62,7 @@ export function EditProfileModal({ user, onClose }: EditProfileModalProps) {
         onClose();
         return;
       }
-      const updated = await updateMyProfile(user.id, body);
+      const updated = await updateMyProfile(user.slug, body);
       dispatch(loginSuccess(updated));
       setCachedUser(updated);
       dispatch(addNotification({ type: 'success', message: 'تم حفظ التعديلات بنجاح', duration: 3000 }));

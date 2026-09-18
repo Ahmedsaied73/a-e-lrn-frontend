@@ -14,7 +14,8 @@ import { PaginationMeta } from '@/types/api';
 // ---------------------------------------------------------------------------
 
 export interface CourseListItem {
-  id: number;
+  /** Public URL slug — numeric ids are never exposed by the backend. */
+  slug: string;
   title: string;
   description?: string;
   price?: number;
@@ -24,12 +25,10 @@ export interface CourseListItem {
 
 /**
  * The authenticated user's own enrollment row for a course, as returned
- * inline by GET /courses/:id — never another user's.
+ * inline by GET /courses/:slug — never another user's.
  */
 export interface CourseEnrollment {
   id: number;
-  userId: number;
-  courseId: number;
   isPaid: boolean;
   paymentDate?: string | null;
   progress: number;
@@ -51,7 +50,7 @@ export interface EnrolledCourseEntry {
 }
 
 export interface VideoProgress {
-  videoId: number | string;
+  videoSlug: string;
   completed: boolean;
   watchedAt: string | null;
 }
@@ -64,7 +63,8 @@ export interface CourseDetail extends CourseListItem {
   exams_count?: number;
   questions_count?: number | string;
   videos?: Array<{
-    id: number;
+    slug: string;
+    courseSlug: string;
     title: string;
     url?: string;
     thumbnail?: string;
@@ -84,7 +84,7 @@ export interface CoursesPage {
 }
 
 export interface EnrollmentResult {
-  courseId: number | string;
+  courseSlug: string;
   enrolled: boolean;
   isPaid?: boolean;
 };
@@ -136,7 +136,7 @@ export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage
 }
 
 /**
- * Fetch a single course by its ID.
+ * Fetch a single course by its public slug.
  *
  * Backend response is the aggregate shape `{ success, data: { course, videos,
  * enrollment, progress } }` — course, the authenticated user's videos,
@@ -144,12 +144,12 @@ export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage
  * Course page never needs separate enrollment-status or per-video progress
  * requests to initialize.
  */
-export async function fetchCourseById(courseId: string | number): Promise<CourseDetail> {
+export async function fetchCourseBySlug(courseSlug: string): Promise<CourseDetail> {
   // User-scoped 60s cache: the aggregate embeds the viewer's own enrollment +
   // progress. Matches the backend video-list TTL; progress/enrollment flips
   // drop this key explicitly (see markVideoCompleted / enrollInCourse).
-  return cached(userKey(`/courses/${courseId}`), 60_000, async () => {
-    const raw = await apiClient.get<unknown>(`/courses/${courseId}`);
+  return cached(userKey(`/courses/${courseSlug}`), 60_000, async () => {
+    const raw = await apiClient.get<unknown>(`/courses/${courseSlug}`);
     const payload = extractData<{
       course: CourseListItem & Record<string, unknown>;
       videos?: CourseDetail['videos'];
@@ -168,15 +168,13 @@ export async function fetchCourseById(courseId: string | number): Promise<Course
 
 /**
  * Check whether the authenticated user is enrolled in a course.
- * New API: POST /enroll/status  { courseId }
+ * POST /enroll/status  { courseSlug }
  */
-export async function checkEnrollmentStatus(
-  courseId: string | number,
-): Promise<EnrollmentResult> {
-  const raw = await apiClient.post<unknown>('/enroll/status', { courseId });
+export async function checkEnrollmentStatus(courseSlug: string): Promise<EnrollmentResult> {
+  const raw = await apiClient.post<unknown>('/enroll/status', { courseSlug });
   const data = extractData<{ enrolled?: boolean; isPaid?: boolean }>(raw);
   return {
-    courseId,
+    courseSlug,
     enrolled: !!data.enrolled,
     isPaid: data.isPaid,
   };
@@ -184,13 +182,13 @@ export async function checkEnrollmentStatus(
 
 /**
  * Enroll the authenticated user in a course.
- * POST /enroll/  { courseId }
+ * POST /enroll/  { courseSlug }
  */
-export async function enrollInCourse(courseId: string | number): Promise<EnrollmentResult> {
-  const raw = await apiClient.post<unknown>('/enroll/', { courseId });
+export async function enrollInCourse(courseSlug: string): Promise<EnrollmentResult> {
+  const raw = await apiClient.post<unknown>('/enroll/', { courseSlug });
   const data = extractData<{ enrollment?: { isPaid?: boolean } }>(raw);
   return {
-    courseId,
+    courseSlug,
     enrolled: true,
     isPaid: data.enrollment?.isPaid ?? false,
   };

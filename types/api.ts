@@ -41,6 +41,8 @@ export type GradeEnum =
 
 export interface User {
   id: number;
+  /** Opaque public identifier (backend assigns u_<random>) — used in /user/:slug routes. */
+  slug: string;
   name: string;
   email: string;
   phoneNumber?: string;
@@ -55,22 +57,29 @@ export interface User {
 }
 
 export interface Course {
-  id: number;
+  /** Public URL identifier — numeric id is never exposed by the backend. */
+  slug: string;
   title: string;
   description?: string;
   price?: number;
   thumbnail?: string;
   grade: GradeEnum;
+  category?: string | null;
+  teacher?: Pick<User, 'slug' | 'name' | 'email'>;
+  videoCount?: number;
+  enrollmentCount?: number;
 }
 
 export interface Enrollment {
   id: number;
-  userId: number;
-  courseId: number;
   isPaid: boolean;
+  paymentDate?: string | null;
+  startedAt?: string;
+  lastAccess?: string | null;
+  createdAt?: string;
 }
 
 export interface EnrollmentStatusResponse {
   enrolled: boolean;
-  courseId: number;
+  enrollment: Enrollment | null;
 }
