@@ -64,3 +64,7 @@ design-ref/
 
 # graphify knowledge-graph outputs (regenerable via the graphify skill)
 graphify-out/
+
+# agent/dev tooling (keep on dev machine, never commit)
+plans/
+*.patch
