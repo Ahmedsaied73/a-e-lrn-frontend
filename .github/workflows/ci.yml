@@ -10,8 +10,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     # Next 13.5 build-time tooling all lives in devDependencies (moved in the
-    # production-readiness round). No .env is committed: PostHog is optional at
-    # runtime (PostHogProvider no-ops without a key) and the app does no
+    # production-readiness round). No .env is committed and the app does no
     # server-side data fetching, so a bare build is green.
     steps:
       - uses: actions/checkout@v4

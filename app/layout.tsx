@@ -6,7 +6,6 @@ import { Footer } from '@/components/footer';
 import { siteConfig } from '@/lib/site-config';
 import { ReduxProvider } from '@/store/provider';
 import { AuthInitializer } from '@/store/auth-initializer';
-import { PostHogProvider } from '@/components/providers/PostHogProvider';
 import { Toaster } from '@/components/ui/toaster';
 
 // Brand typeface — THE single font declaration (see app/brand-theme.css).
@@ -73,14 +72,12 @@ export default function RootLayout({
       <body className={`${brandFont.variable} min-h-screen bg-brand-bg flex flex-col font-sans`}>
         <ReduxProvider>
           <AuthInitializer>
-            <PostHogProvider>
-              <Navbar />
-              <main className="grow pt-16">
-                {children}
-              </main>
-              <Footer />
-              <Toaster />
-            </PostHogProvider>
+            <Navbar />
+            <main className="grow pt-16">
+              {children}
+            </main>
+            <Footer />
+            <Toaster />
           </AuthInitializer>
         </ReduxProvider>
       </body>
