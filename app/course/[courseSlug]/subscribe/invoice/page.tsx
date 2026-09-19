@@ -11,6 +11,8 @@ import { Separator } from '@/components/ui/separator';
 import { fetchCourseBySlug, checkEnrollmentStatus, enrollInCourse } from '@/services/courseService';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
+import { PageTitle } from '@/components/page-title';
+import { courseTitle, PAGE_TITLES } from '@/lib/page-titles';
 
 export default function Page({ params }: { params: { courseSlug: string } }) {
   const router = useRouter();
@@ -123,6 +125,7 @@ export default function Page({ params }: { params: { courseSlug: string } }) {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <PageTitle title={courseTitle(`${PAGE_TITLES.invoice}: ${courseData.title}`)} />
       {/* Back Button */}
       <div className="mb-6">
         <Link 

@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/select';
 import { deleteQuiz, listAllAdminQuizzes } from '@/services/adminQuizService';
 import type { AdminQuiz } from '@/types/admin';
+import { PageTitle } from '@/components/page-title';
+import { adminTitle } from '@/lib/page-titles';
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
@@ -149,6 +151,7 @@ export default function AdminQuizzesPage() {
 
   return (
     <div className="space-y-6">
+      <PageTitle title={adminTitle('الاختبارات')} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-on-surface">الاختبارات</h1>

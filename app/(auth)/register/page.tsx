@@ -11,6 +11,7 @@ import { loginSuccess, selectAuth } from '@/store/slices/authSlice';
 import { registerUser } from '@/services/authService';
 import { setCachedUser } from '@/lib/user-cache';
 import { addNotification, setGlobalLoading } from '@/store/slices/uiSlice';
+import { PAGE_TITLES } from '@/lib/page-titles';
 
 const formSchema = z.object({
   firstName: z.string().min(2, {
@@ -150,7 +151,10 @@ export default function RegisterPage() {
   const errors = form.formState.errors;
 
   return (
-    <div className="-mt-16 grid min-h-dvh bg-brand-bg lg:grid-cols-2">
+    <>
+      {/* Unique page title — React hoists this to <head> (client pages can't export metadata). */}
+      <title>{PAGE_TITLES.register}</title>
+      <div className="-mt-16 grid min-h-dvh bg-brand-bg lg:grid-cols-2">
       <div className="flex items-center justify-center px-6 py-16 lg:order-2">
         <div className="w-full max-w-sm">
           <Link href="/" className="text-lg font-extrabold text-brand-primary">أكاديميا</Link>
@@ -242,5 +246,6 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

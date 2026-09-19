@@ -7,6 +7,9 @@ import type { StartQuizData } from "@/types/quiz";
 import { AppDispatch } from "@/store/store";
 import { selectActiveAttempt, startQuizAttempt } from "@/store/slices/quizSlice";
 import { Loader2 } from "lucide-react";
+import { PageTitle } from "@/components/page-title";
+import { withTeacher } from "@/lib/site-config";
+import { PAGE_TITLES } from "@/lib/page-titles";
 
 interface PageProps {
   params: { courseSlug: string; videoSlug: string };
@@ -71,10 +74,13 @@ export default function QuizRunPage({ params }: PageProps) {
   }
 
   return (
-    <QuizRunner
-      startData={startData}
-      courseSlug={params.courseSlug}
-      videoSlug={params.videoSlug}
-    />
+    <>
+      <PageTitle title={withTeacher(PAGE_TITLES.quizRun)} />
+      <QuizRunner
+        startData={startData}
+        courseSlug={params.courseSlug}
+        videoSlug={params.videoSlug}
+      />
+    </>
   );
 }

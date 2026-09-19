@@ -22,6 +22,9 @@ import {
   resetAssignmentState
 } from '@/store/slices/assignmentSlice';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PageTitle } from '@/components/page-title';
+import { withTeacher } from '@/lib/site-config';
+import { PAGE_TITLES } from '@/lib/page-titles';
 
 // Assignment Results Dialog Component
 interface AssignmentResultsDialogProps {
@@ -283,6 +286,7 @@ export default function AssignmentPage() {
   
   return (
     <div className="container mx-auto py-10 px-4">
+      <PageTitle title={withTeacher(PAGE_TITLES.assignmentSubmit)} />
       <Card className="bg-white border-outline-variant text-on-surface mb-8">
         <CardHeader>
           <CardTitle className="text-center text-xl md:text-2xl">

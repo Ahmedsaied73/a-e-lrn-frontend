@@ -5,6 +5,9 @@ import { useEffect, useState } from 'react';
 import { Reveal } from '@/components/reveal';
 import { getAchievements } from '@/services/achievementsService';
 import type { AchievementsData } from '@/types/quiz';
+import { PageTitle } from '@/components/page-title';
+import { withTeacher } from '@/lib/site-config';
+import { PAGE_TITLES } from '@/lib/page-titles';
 
 function gradeColor(pct: number) {
   if (pct >= 85) return "text-brand-primary";
@@ -69,6 +72,7 @@ export default function UserAchievementsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+      <PageTitle title={withTeacher(PAGE_TITLES.achievements)} />
       <Reveal>
         <h1 className="text-2xl font-extrabold text-brand-text sm:text-3xl">إنجازاتك التعليمية</h1>
         <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-brand-border py-4 text-sm text-brand-muted-strong">

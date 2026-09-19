@@ -26,6 +26,8 @@ import { deleteAdminUser, getAdminUsers, registerStudent, updateAdminUser } from
 import type { AdminCourse, AdminEnrollment, AdminStudentInput, AdminUser } from '@/types/admin';
 import type { GradeEnum } from '@/types/api';
 import { cn } from '@/lib/utils';
+import { PageTitle } from '@/components/page-title';
+import { adminTitle } from '@/lib/page-titles';
 
 const GRADE_LABEL: Record<string, string> = {
   FIRST_SECONDARY: 'الأول الثانوي',
@@ -296,6 +298,7 @@ export default function StudentsPage() {
 
   return (
     <div className="space-y-6">
+      <PageTitle title={adminTitle('الطلاب')} />
       <div className="hidden space-y-6 lg:block">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>

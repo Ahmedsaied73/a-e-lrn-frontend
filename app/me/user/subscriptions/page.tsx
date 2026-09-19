@@ -5,6 +5,9 @@ import { useEffect, useState } from 'react';
 import { Reveal } from '@/components/reveal';
 import { getEnrolledCourses } from '@/services/courseService';
 import type { CourseListItem } from '@/services/courseService';
+import { PageTitle } from '@/components/page-title';
+import { withTeacher } from '@/lib/site-config';
+import { PAGE_TITLES } from '@/lib/page-titles';
 
 export default function UserSubscriptionsPage() {
   const [courses, setCourses] = useState<CourseListItem[]>([]);
@@ -49,6 +52,7 @@ export default function UserSubscriptionsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+      <PageTitle title={withTeacher(PAGE_TITLES.subscriptions)} />
       <Reveal>
         <h1 className="text-2xl font-extrabold text-brand-text sm:text-3xl">اشتراكاتك</h1>
         <p className="mt-2 text-sm text-brand-muted">الدورات التي انضممت إليها، وحالتها الحالية.</p>
