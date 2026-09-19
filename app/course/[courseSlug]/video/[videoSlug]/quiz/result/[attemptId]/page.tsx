@@ -8,6 +8,9 @@ import { fetchQuizResult, fetchQuizAttempts, selectQuizResult, selectQuizAttempt
 import QuizResultSummary from "@/components/quiz/QuizResultSummary";
 import QuizReviewList from "@/components/quiz/QuizReviewList";
 import { Loader2 } from "lucide-react";
+import { PageTitle } from "@/components/page-title";
+import { withTeacher } from "@/lib/site-config";
+import { PAGE_TITLES } from "@/lib/page-titles";
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error) return error.message;
@@ -100,6 +103,7 @@ export default function QuizResultPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-brand-bg pb-12">
+      <PageTitle title={withTeacher(PAGE_TITLES.quizResult)} />
       {/* 1. Summary Card */}
       {isPending ? (
         <QuizResultSummary

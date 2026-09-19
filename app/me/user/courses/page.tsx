@@ -8,6 +8,9 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { getEnrolledCourses } from '@/services/courseService';
 import { CourseListItem } from '@/services/courseService';
+import { PageTitle } from '@/components/page-title';
+import { withTeacher } from '@/lib/site-config';
+import { PAGE_TITLES } from '@/lib/page-titles';
 
 export default function UserCoursesPage() {
   const [courses, setCourses] = useState<CourseListItem[]>([]);
@@ -32,6 +35,7 @@ export default function UserCoursesPage() {
 
   return (
     <div className="account-page">
+      <PageTitle title={withTeacher(PAGE_TITLES.courses)} />
       {/* Header with courses icon */}
       <div className="flex flex-col items-center justify-center mb-8">
         <div className="bg-primary-color rounded-full p-3 mb-2">

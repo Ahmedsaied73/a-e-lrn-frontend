@@ -39,6 +39,9 @@ interface Submission {
 }
 
 import { apiClient } from '@/lib/api-client';
+import { PageTitle } from '@/components/page-title';
+import { withTeacher } from '@/lib/site-config';
+import { PAGE_TITLES } from '@/lib/page-titles';
 
 interface SubmissionsResponse {
   submissionsCount: number;
@@ -280,6 +283,7 @@ export default function AssignmentsPage() {
   // Main render function
   return (
     <div className="account-page">
+      <PageTitle title={withTeacher(PAGE_TITLES.assignments)} />
       <Card className="bg-white border-outline-variant text-on-surface mb-8 shadow-level-2">
         <CardHeader>
           <CardTitle className="text-center">

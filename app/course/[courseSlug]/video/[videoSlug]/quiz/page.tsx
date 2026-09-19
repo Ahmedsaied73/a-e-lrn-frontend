@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import QuizIntroCard from "@/components/quiz/QuizIntroCard";
 
 export const metadata: Metadata = {
-  title: "بدء الاختبار | منصة التعلم الإلكتروني",
+  // Unique title only — the root layout template appends `| ${teacherName}`.
+  title: "بدء الاختبار",
   description: "صفحة بدء اختبار المحاضرة",
 };
 

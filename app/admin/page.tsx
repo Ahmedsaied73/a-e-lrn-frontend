@@ -28,6 +28,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getAdminDashboard } from '@/services/adminDashboardService';
 import type { AdminDashboardData } from '@/types/admin';
+import { PageTitle } from '@/components/page-title';
+import { adminTitle } from '@/lib/page-titles';
 
 function formatDate(value?: string | null): string {
   if (!value) return '—';
@@ -111,6 +113,7 @@ export default function AdminOverviewPage() {
 
   return (
     <>
+      <PageTitle title={adminTitle('نظرة عامة')} />
       <div className="hidden p-6 lg:block lg:p-8">
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">

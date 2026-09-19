@@ -19,6 +19,9 @@ import {
   getPaymentStatus,
   type PaymentStatusState,
 } from '@/services/paymentService';
+import { PageTitle } from '@/components/page-title';
+import { withTeacher } from '@/lib/site-config';
+import { PAGE_TITLES } from '@/lib/page-titles';
 
 const POLL_MS = 3000;
 
@@ -225,13 +228,16 @@ function ResultInner() {
 
 export default function PaymentResultPage() {
   return (
-    <Suspense fallback={
-      <main className="flex min-h-[60vh] items-center justify-center px-4 py-16">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-brand-primary/30 border-t-brand-primary" />
-      </main>
-    }>
-      <ResultInner />
-    </Suspense>
+    <>
+      <PageTitle title={withTeacher(PAGE_TITLES.paymentResult)} />
+      <Suspense fallback={
+        <main className="flex min-h-[60vh] items-center justify-center px-4 py-16">
+          <span className="h-8 w-8 animate-spin rounded-full border-2 border-brand-primary/30 border-t-brand-primary" />
+        </main>
+      }>
+        <ResultInner />
+      </Suspense>
+    </>
   );
 }
 

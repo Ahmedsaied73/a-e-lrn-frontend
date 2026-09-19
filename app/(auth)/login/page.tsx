@@ -12,6 +12,7 @@ import { selectAuth } from '@/store/slices/authSlice';
 import { loginUser } from '@/services/authService';
 import { setCachedUser } from '@/lib/user-cache';
 import { addNotification, setGlobalLoading } from '@/store/slices/uiSlice';
+import { PAGE_TITLES } from '@/lib/page-titles';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -133,7 +134,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="-mt-16 grid min-h-dvh bg-brand-bg lg:grid-cols-2">
+    <>
+      {/* Unique page title — React hoists this to <head> (client pages can't export metadata). */}
+      <title>{PAGE_TITLES.login}</title>
+      <div className="-mt-16 grid min-h-dvh bg-brand-bg lg:grid-cols-2">
       <div className="relative hidden items-center justify-center overflow-hidden bg-brand-ink p-10 lg:flex">
         <div className="hero-glow absolute -inset-24 rounded-full bg-brand-primary/20 blur-3xl" aria-hidden="true" />
         <div className="relative flex flex-col items-center text-center">
@@ -208,5 +212,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

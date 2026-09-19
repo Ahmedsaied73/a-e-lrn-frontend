@@ -24,6 +24,8 @@ import { adminEnrollStudent, adminUnenroll, getAdminEnrollments } from '@/servic
 import { getAdminUsers } from '@/services/adminUsersService';
 import type { AdminCourse, AdminEnrollment, AdminUser } from '@/types/admin';
 import { cn } from '@/lib/utils';
+import { PageTitle } from '@/components/page-title';
+import { adminTitle } from '@/lib/page-titles';
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
@@ -209,6 +211,7 @@ export default function AdminEnrollmentsPage() {
 
   return (
     <div className="space-y-6">
+      <PageTitle title={adminTitle('التسجيلات')} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-on-surface">التسجيلات</h1>

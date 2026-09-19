@@ -19,6 +19,8 @@ import { getAdminAttemptResult, listAllAdminAttempts } from '@/services/adminQui
 import type { AdminGlobalAttempt } from '@/types/admin';
 import type { AttemptStatus, QuizResultData } from '@/types/quiz';
 import { cn } from '@/lib/utils';
+import { PageTitle } from '@/components/page-title';
+import { adminTitle } from '@/lib/page-titles';
 
 const STATUS_OPTIONS: { value: AttemptStatus | 'ALL'; label: string }[] = [
   { value: 'ALL', label: 'كل الحالات' },
@@ -185,6 +187,7 @@ export default function AdminGradingPage() {
 
   return (
     <div className="space-y-6">
+      <PageTitle title={adminTitle('تصحيح المقالي')} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-on-surface">صندوق التصحيح</h1>

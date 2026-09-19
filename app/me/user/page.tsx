@@ -10,6 +10,9 @@ import { selectUser, selectAuth, logout } from '@/store/slices/authSlice';
 import { logoutUser } from '@/services/authService';
 import { getAchievements } from '@/services/achievementsService';
 import type { AchievementsData, AchievementExam } from '@/types/quiz';
+import { PageTitle } from '@/components/page-title';
+import { withTeacher } from '@/lib/site-config';
+import { PAGE_TITLES } from '@/lib/page-titles';
 
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -92,6 +95,7 @@ export default function UserProfilePage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <PageTitle title={withTeacher(PAGE_TITLES.profile)} />
       <Reveal>
         <div className="flex flex-col items-center gap-4 rounded-2xl border border-brand-border bg-brand-surface p-6 text-center sm:flex-row sm:text-start">
           <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-brand-secondary text-xl font-bold text-white">

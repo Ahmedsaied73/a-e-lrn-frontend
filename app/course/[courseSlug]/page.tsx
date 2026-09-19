@@ -10,6 +10,8 @@ import { fetchCourseBySlug } from '@/services/courseService';
 import type { VideoProgress } from '@/services/courseService';
 import { fetchBunnyCourseVideos } from '@/services/bunnyVideoService';
 import type { BunnyVideo } from '@/types/bunny';
+import { PageTitle } from '@/components/page-title';
+import { courseTitle } from '@/lib/page-titles';
 
 const INITIAL_VISIBLE_LESSONS = 6;
 const ARABIC_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -113,6 +115,8 @@ export default function Page({ params }: { params: { courseSlug: string } }) {
 
   return (
     <div className="w-full">
+      {/* Unique tab title per course, set once the name is fetched. */}
+      <PageTitle title={courseTitle(courseData.title)} />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {/* Breadcrumbs */}
         <nav className="mb-6 flex flex-wrap items-center gap-1 text-xs text-brand-muted">

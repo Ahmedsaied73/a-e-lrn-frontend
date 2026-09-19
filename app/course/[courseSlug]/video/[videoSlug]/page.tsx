@@ -11,6 +11,8 @@ import { addNotification } from "@/store/slices/uiSlice";
 import { fetchBunnyPlaybackUrl, BunnyVideoError, fetchBunnyCourseVideos, formatBunnyDuration } from '@/services/bunnyVideoService';
 import type { BunnyPlaybackData, BunnyVideo } from '@/types/bunny';
 import type { QuizGate403 } from '@/types/quiz';
+import { PageTitle } from '@/components/page-title';
+import { videoTitle as composeVideoTitle } from '@/lib/page-titles';
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error) return error.message;
@@ -317,6 +319,8 @@ export default function VideoPage({ params }: { params: { courseSlug: string; vi
 
   return (
     <div className="w-full">
+      {/* Unique tab title: generic while loading, the video's own name once fetched. */}
+      <PageTitle title={composeVideoTitle(videoTitle)} />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {/* Breadcrumbs */}
         <nav className="mb-6 flex flex-wrap items-center gap-1 text-xs text-brand-muted">

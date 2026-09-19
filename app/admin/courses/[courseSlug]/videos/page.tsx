@@ -21,6 +21,8 @@ import {
 } from '@/services/adminVideoService';
 import type { BunnyVideo } from '@/types/bunny';
 import { cn } from '@/lib/utils';
+import { PageTitle } from '@/components/page-title';
+import { adminTitle } from '@/lib/page-titles';
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return '—';
@@ -206,6 +208,7 @@ export default function AdminCourseVideosPage() {
 
   return (
     <div className="space-y-6">
+      <PageTitle title={adminTitle('فيديوهات الدورة')} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <button type="button" onClick={() => router.push('/admin/courses')} className="mb-2 inline-flex items-center gap-1 text-sm text-on-surface-variant transition-colors hover:text-on-surface/80">

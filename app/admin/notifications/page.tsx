@@ -8,6 +8,8 @@ import { broadcastNotification } from "@/services/notificationService";
 import { fetchAllCourses } from "@/services/courseService";
 import type { BroadcastAudience } from "@/types/notifications";
 import type { GradeEnum } from "@/types/api";
+import { PageTitle } from "@/components/page-title";
+import { adminTitle } from "@/lib/page-titles";
 
 const GRADES: { value: GradeEnum; label: string }[] = [
   { value: "FIRST_SECONDARY", label: "الأول الثانوي" },
@@ -87,6 +89,7 @@ export default function AdminNotificationsPage() {
 
   return (
     <div className="space-y-6">
+      <PageTitle title={adminTitle('إشعارات الطلاب')} />
       <div>
         <h1 className="text-2xl font-bold text-on-surface">إشعارات الطلاب</h1>
         <p className="mt-1 text-sm text-on-surface-variant">إرسال إشعار داخل المنصة لشريحة من الطلاب.</p>
