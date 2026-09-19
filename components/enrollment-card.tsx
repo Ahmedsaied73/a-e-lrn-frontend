@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { enrollInCourse } from '@/services/courseService';
+import { createCheckout } from '@/services/paymentService';
+import { ApiError } from '@/lib/errors';
 import { toast } from 'react-hot-toast';
 
 interface EnrollmentCardProps {
@@ -52,6 +54,20 @@ export function EnrollmentCard({
         window.location.reload();
       }
     } catch (err: unknown) {
+      // Paywall: a priced course refuses direct enrollment — start a Paymob
+      // checkout and send the student to the hosted payment page. The backend
+      // redirects back to /payment/result, which polls until it is confirmed.
+      if (err instanceof ApiError && err.status === 402) {
+        try {
+          toast.loading('جاري تحويلك إلى بوابة الدفع الآمنة...', { duration: 4000 });
+          const checkout = await createCheckout(courseSlug);
+          window.location.assign(checkout.checkoutUrl);
+          return; // full-page navigation — no finally cleanup needed
+        } catch {
+          toast.error('تعذر بدء عملية الدفع. حاول مرة أخرى.');
+          return;
+        }
+      }
       toast.error(err instanceof Error ? err.message : 'حدث خطأ أثناء الاشتراك في الكورس');
     } finally {
       setLoading(false);
