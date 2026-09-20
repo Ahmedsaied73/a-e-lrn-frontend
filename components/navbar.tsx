@@ -69,7 +69,7 @@ export function Navbar() {
   return (
     <header className="fixed top-3 inset-x-3 md:inset-x-6 lg:inset-x-12 z-50">
       <div className="relative mx-auto max-w-5xl">
-        <div className="glass-nav pointer-events-none absolute inset-0 rounded-full border border-white/30 bg-brand-surface/60 shadow-lg shadow-brand-text/10 backdrop-blur-xl" aria-hidden="true" />
+        <div className="glass-nav pointer-events-none absolute inset-0 rounded-full border border-white/30 bg-brand-surface/90 shadow-lg shadow-brand-text/10 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/60" aria-hidden="true" />
         <div className="relative z-10 flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
 
         {/* ── Logo ── */}
@@ -198,7 +198,7 @@ export function Navbar() {
       {/* ── Mobile Menu ── */}
       {mobileMenuOpen && isAuthenticated && (
         <nav
-          className="glass-nav mx-auto mt-2 flex max-w-5xl flex-col gap-1 rounded-2xl border border-white/30 bg-brand-surface/60 p-2 shadow-lg backdrop-blur-xl md:hidden"
+          className="glass-nav mx-auto mt-2 flex max-w-5xl flex-col gap-1 rounded-2xl border border-white/30 bg-brand-surface/90 p-2 shadow-lg backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/60 md:hidden"
           dir="rtl"
         >
           {/* User block */}

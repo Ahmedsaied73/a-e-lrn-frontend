@@ -349,9 +349,10 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.09;
+  opacity: 0.14;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
 }
 .glass-nav::after {
   content: "";
@@ -359,6 +360,13 @@
   inset: 0;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 45%);
+}
+[data-theme="dark"] .glass-nav::before {
+  opacity: 0.2;
+  mix-blend-mode: soft-light;
+}
+[data-theme="dark"] .glass-nav::after {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 45%);
 }
 
   /* Safe-area helpers for fixed mobile shell chrome. */
