@@ -67,21 +67,20 @@ export function Navbar() {
   }
 
   return (
-    <header className="fixed top-3 inset-x-3 md:inset-x-6 lg:inset-x-12 z-50">
-      <div className="relative mx-auto max-w-5xl">
-        <div className="glass-nav pointer-events-none absolute inset-0 rounded-full border border-white/30 bg-brand-surface/90 shadow-lg shadow-brand-text/10 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/60" aria-hidden="true" />
-        <div className="relative z-10 flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="fixed inset-x-0 top-0 z-50">
+      <div className="glass-nav border-b border-brand-border/60 bg-brand-surface/90 shadow-[0_8px_30px_-12px_rgb(11_17_25/0.25)] backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/60">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6" dir="rtl">
 
         {/* ── Logo ── */}
-        <Link href="/" className="flex items-center gap-2 text-brand-primary shrink-0">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-primary text-white">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <Link href="/" className="flex items-center gap-2.5 text-brand-primary shrink-0" aria-label="أكاديميا — الرئيسية">
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-brand-primary text-white shadow-sm">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M4 5.5C6.5 4.2 9 4 12 5v14c-3-1-5.5-.8-8 .5V5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
               <path d="M20 5.5C17.5 4.2 15 4 12 5v14c3-1 5.5-.8 8 .5V5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
             </svg>
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="text-lg font-extrabold">
+            <span className="text-lg font-extrabold text-brand-primary">
               أكاديميا
             </span>
             <span className="text-[10px] font-medium text-brand-muted hidden sm:block">
@@ -92,15 +91,16 @@ export function Navbar() {
 
         {/* ── Desktop Nav (authenticated only) ── */}
         {isAuthenticated && (
-          <nav className="hidden items-center gap-1 md:flex" dir="rtl">
+          <nav className="hidden items-center gap-1 md:flex" dir="rtl" aria-label="التنقل الرئيسي">
             {NAV_LINKS.map((link) => {
               const active = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`rounded-md px-3 py-2 text-sm font-medium text-brand-muted-strong transition hover:bg-brand-chip hover:text-brand-primary ${
-                    active ? "text-brand-primary" : ""
+                  aria-current={active ? 'page' : undefined}
+                  className={`rounded-md px-4 py-2 text-[15px] font-semibold transition hover:bg-brand-chip hover:text-brand-primary ${
+                    active ? "text-brand-primary" : "text-brand-muted-strong"
                   }`}
                 >
                   {link.label}
@@ -110,8 +110,8 @@ export function Navbar() {
           </nav>
         )}
 
-        {/* ── Right Controls ── */}
-        <div className="flex items-center gap-2">
+        {/* ── Left Controls ── */}
+        <div className="flex items-center gap-2.5" dir="rtl">
           <ThemeToggle />
           {isAuthenticated ? (
             <>
@@ -185,21 +185,23 @@ export function Navbar() {
               </Link>
               <Link
                 href="/register"
-                className="rounded-full bg-brand-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-primary/90"
+                className="rounded-full bg-brand-primary px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-primary/90"
               >
                 إنشاء حساب
               </Link>
             </>
           )}
         </div>
-      </div>
+        </div>
       </div>
 
       {/* ── Mobile Menu ── */}
       {mobileMenuOpen && isAuthenticated && (
+        <div className="border-b border-brand-border/60 bg-brand-surface/95 backdrop-blur-xl md:hidden">
         <nav
-          className="glass-nav mx-auto mt-2 flex max-w-5xl flex-col gap-1 rounded-2xl border border-white/30 bg-brand-surface/90 p-2 shadow-lg backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/60 md:hidden"
+          className="mx-auto flex w-full max-w-7xl flex-col gap-1 p-2 px-4 sm:px-6"
           dir="rtl"
+          aria-label="قائمة الجوال"
         >
           {/* User block */}
           <div className="flex items-center gap-3 px-2 py-3 border-b border-brand-border mb-2">
@@ -238,6 +240,7 @@ export function Navbar() {
             </div>
           </div>
         </nav>
+        </div>
       )}
     </header>
   );

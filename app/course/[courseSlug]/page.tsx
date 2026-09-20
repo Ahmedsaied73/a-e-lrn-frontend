@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from "next/link";
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { ChevronDown, Lock } from 'lucide-react';
 import { Reveal } from '@/components/reveal';
 import { EnrollmentCard } from '@/components/enrollment-card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import { fetchCourseBySlug } from '@/services/courseService';
 import type { VideoProgress } from '@/services/courseService';
@@ -99,7 +100,27 @@ export default function Page({ params }: { params: { courseSlug: string } }) {
     }
   }, [courseData, bunnyVideos, calculateCourseStats]);
 
-  if (isLoading) return <div className="flex justify-center p-12 text-sm text-brand-muted">جاري التحميل...</div>;
+  if (isLoading) {
+    return (
+      <div className="w-full">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6" aria-busy="true" aria-label="جارٍ تحميل الدورة">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="mt-3 h-4 w-full max-w-lg" />
+          <div className="mt-8 grid gap-5 sm:grid-cols-2">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-4 rounded-xl border border-brand-border bg-brand-surface p-4">
+                <Skeleton className="h-16 w-28 shrink-0" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="mt-2 h-3 w-1/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (error) return <div className="mx-auto mt-6 max-w-md rounded-xl border border-brand-accent/30 bg-brand-accent/10 p-6 text-center text-sm font-medium text-brand-accent">خطأ: {error}</div>;
   if (!courseData) return <div className="p-12 text-center text-sm text-brand-muted">لا توجد بيانات متاحة للكورس</div>;
 
