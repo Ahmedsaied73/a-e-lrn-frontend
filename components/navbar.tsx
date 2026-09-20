@@ -72,7 +72,7 @@ export function Navbar() {
         {/* Grain/blur layer — clipped to the pill and pointer-transparent, so the
             avatar dropdown below can overflow without being cut off. */}
         <div
-          className="glass-nav glass-pill pointer-events-none absolute inset-0 border border-white/40 bg-brand-surface/80 shadow-lg shadow-brand-text/15 backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/60"
+          className="glass-nav glass-pill pointer-events-none absolute inset-0 border border-brand-border/50 bg-brand-surface/70 backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/60"
           aria-hidden="true"
         />
         <div className="relative z-10 flex h-16 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6" dir="rtl">
@@ -208,7 +208,7 @@ export function Navbar() {
 
       {/* ── Mobile Menu ── */}
       {mobileMenuOpen && isAuthenticated && (
-        <div className="glass-nav glass-mobile relative mt-2 mx-3 border border-white/40 bg-brand-surface/90 p-1 shadow-xl shadow-brand-text/20 backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/70 sm:mx-0 md:hidden">
+        <div className="glass-nav glass-mobile relative mt-2 mx-3 border border-brand-border/50 bg-brand-surface/90 p-1 backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/70 sm:mx-0 md:hidden">
         <nav
           className="relative z-10 flex w-full flex-col gap-1 p-2"
           dir="rtl"
