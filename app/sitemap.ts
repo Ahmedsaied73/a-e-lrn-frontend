@@ -19,7 +19,9 @@ function backendBase(): string {
     process.env.BACKEND_INTERNAL_URL ??
     process.env.NEXT_PUBLIC_API_URL ??
     'http://127.0.0.1:3005'
-  );
+    // Same trailing-slash guard as api-client.ts: `${base}/courses`
+    // with base `https://api…/` would 404 as `//courses`.
+  ).replace(/\/+$/, '');
 }
 
 async function fetchCourseIds(): Promise<number[]> {

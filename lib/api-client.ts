@@ -28,8 +28,12 @@ import { clearUserEntries, clearShared } from '@/lib/data-cache';
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3005';
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3005'
+  // A trailing slash in the env value (e.g. https://api.example.com/)
+  // would produce double-slashed paths (`//courses`) which Express
+  // treats as a different route → 404. Strip all trailing slashes once.
+).replace(/\/+$/, '');
 
 export { API_BASE_URL };
 
