@@ -32,10 +32,17 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
 
   return (
     <button
+      type="button"
       onClick={toggle}
+      aria-pressed={isDark}
       aria-label={isDark ? 'التبديل إلى الوضع الفاتح' : 'التبديل إلى الوضع الداكن'}
+      title={isDark ? 'الوضع الفاتح' : 'الوضع الداكن'}
       className={
-        'grid h-9 w-9 place-items-center rounded-full border border-brand-border text-brand-muted-strong transition hover:bg-brand-hover ' +
+        // h-9/w-9 + rounded-full mirrors NotificationBell so the two chips read
+        // as one cluster. Tailwind v4 dropped the default button cursor, so
+        // `cursor-pointer` and the hover/active states are what make it feel
+        // (and read) clickable.
+        'grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-brand-border bg-brand-surface/60 text-brand-muted-strong transition duration-200 hover:border-brand-primary/40 hover:bg-brand-chip hover:text-brand-primary active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40 ' +
         className
       }
     >

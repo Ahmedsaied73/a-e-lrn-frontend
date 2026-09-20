@@ -334,15 +334,16 @@
   }
 }
 
-/* ---- Floating glass navbar (copied verbatim from the reference) ----
-   Translucent blur + faint grain so the glass doesn't look like a flat
-   semi-transparent rectangle. Split into a background layer + a separate
-   unclipped content layer: the grain layer needs overflow hidden, but that
-   would clip dropdown menus if it wrapped the interactive content. */
+/* ---- Floating glass navbar — the texture layers live in ::before/::after
+   and are clipped to the host's own radius. NOTE: no `position` here on
+   purpose — this class is used together with Tailwind's `absolute`/`relative`
+   utilities, and declaring `position` here would win the layer-order fight
+   against them (same specificity, later rule) and silently collapse the
+   layer to zero height. ---- */
 .glass-nav {
-  position: relative;
   isolation: isolate;
   overflow: hidden;
+  border-radius: inherit;
 }
 .glass-nav::before {
   content: "";
@@ -367,6 +368,31 @@
 }
 [data-theme="dark"] .glass-nav::after {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 45%);
+}
+
+/* Absolutely-rounded floating pill variant. Grain pinned to the pill's own
+   border-radius via inherit, so rounded-full + rounded-2xl both clip right. */
+.glass-pill {
+  border-radius: 9999px;
+}
+.glass-pill::before, .glass-pill::after {
+  border-radius: inherit;
+}
+
+/* Mobile menu panel — denser glass + louder grain than the top pill. */
+.glass-mobile {
+  border-radius: 1rem;
+}
+.glass-mobile::before, .glass-mobile::after {
+  border-radius: inherit;
+}
+.glass-mobile::before { opacity: 0.22; }
+.glass-mobile::after {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 55%);
+}
+[data-theme="dark"] .glass-mobile::before { opacity: 0.3; }
+[data-theme="dark"] .glass-mobile::after {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 55%);
 }
 
   /* Safe-area helpers for fixed mobile shell chrome. */

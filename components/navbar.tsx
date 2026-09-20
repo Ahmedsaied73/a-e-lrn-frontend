@@ -67,20 +67,26 @@ export function Navbar() {
   }
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50">
-      <div className="glass-nav border-b border-brand-border/60 bg-brand-surface/90 shadow-[0_8px_30px_-12px_rgb(11_17_25/0.25)] backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/60">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6" dir="rtl">
+    <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-6 lg:px-12">
+      <div className="relative mx-auto max-w-6xl">
+        {/* Grain/blur layer — clipped to the pill and pointer-transparent, so the
+            avatar dropdown below can overflow without being cut off. */}
+        <div
+          className="glass-nav glass-pill pointer-events-none absolute inset-0 border border-white/40 bg-brand-surface/80 shadow-lg shadow-brand-text/15 backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/60"
+          aria-hidden="true"
+        />
+        <div className="relative z-10 flex h-16 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6" dir="rtl">
 
         {/* ── Logo ── */}
         <Link href="/" className="flex items-center gap-2.5 text-brand-primary shrink-0" aria-label="أكاديميا — الرئيسية">
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-brand-primary text-white shadow-sm">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-primary text-white shadow-sm sm:h-10 sm:w-10">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M4 5.5C6.5 4.2 9 4 12 5v14c-3-1-5.5-.8-8 .5V5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
               <path d="M20 5.5C17.5 4.2 15 4 12 5v14c3-1 5.5-.8 8 .5V5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
             </svg>
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="text-lg font-extrabold text-brand-primary">
+            <span className="text-base font-extrabold text-brand-primary sm:text-lg">
               أكاديميا
             </span>
             <span className="text-[10px] font-medium text-brand-muted hidden sm:block">
@@ -111,7 +117,7 @@ export function Navbar() {
         )}
 
         {/* ── Left Controls ── */}
-        <div className="flex items-center gap-2.5" dir="rtl">
+        <div className="relative z-10 flex items-center gap-2.5" dir="rtl">
           <ThemeToggle />
           {isAuthenticated ? (
             <>
@@ -120,9 +126,11 @@ export function Navbar() {
               {/* Avatar Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button
+                  type="button"
                   onClick={() => setDropdownOpen((v) => !v)}
-                  className="grid h-9 w-9 place-items-center rounded-full bg-brand-secondary text-sm font-bold text-white"
+                  className="grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-brand-secondary text-sm font-bold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
                   aria-label="قائمة المستخدم"
+                  aria-expanded={dropdownOpen}
                 >
                   {initials}
                 </button>
@@ -156,8 +164,9 @@ export function Navbar() {
                     </div>
                     <div className="border-t border-brand-border mt-1 pt-1">
                       <button
+                        type="button"
                         onClick={handleLogout}
-                        className="mt-1 block w-full rounded-lg px-3 py-2 text-start text-sm font-medium text-brand-accent hover:bg-red-50"
+                        className="mt-1 block w-full cursor-pointer rounded-lg px-3 py-2 text-start text-sm font-medium text-brand-accent hover:bg-red-50"
                       >
                         تسجيل الخروج
                       </button>
@@ -168,9 +177,11 @@ export function Navbar() {
 
               {/* Mobile hamburger */}
               <button
+                type="button"
                 onClick={() => setMobileMenuOpen((v) => !v)}
-                className="grid h-9 w-9 place-items-center rounded-md border border-brand-border text-brand-muted-strong md:hidden"
-                aria-label="القائمة"
+                className="grid h-11 w-11 cursor-pointer place-items-center rounded-full border border-brand-border bg-brand-surface/60 text-brand-muted-strong transition hover:border-brand-primary/40 hover:bg-brand-chip hover:text-brand-primary active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40 md:hidden"
+                aria-label={mobileMenuOpen ? "إغلاق القائمة" : "القائمة"}
+                aria-expanded={mobileMenuOpen}
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -179,13 +190,13 @@ export function Navbar() {
             <>
               <Link
                 href="/login"
-                className="rounded-md px-3 py-2 text-sm font-medium text-brand-muted-strong transition hover:bg-brand-chip hover:text-brand-primary"
+                className="whitespace-nowrap rounded-md px-2 py-2 text-[13px] font-medium text-brand-muted-strong transition hover:bg-brand-chip hover:text-brand-primary sm:px-3 sm:text-sm"
               >
                 سجل دخولك
               </Link>
               <Link
                 href="/register"
-                className="rounded-full bg-brand-primary px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-primary/90"
+                className="whitespace-nowrap rounded-full bg-brand-primary px-3.5 py-2 text-[13px] font-bold text-white transition hover:bg-brand-primary/90 sm:px-5 sm:text-sm"
               >
                 إنشاء حساب
               </Link>
@@ -197,9 +208,9 @@ export function Navbar() {
 
       {/* ── Mobile Menu ── */}
       {mobileMenuOpen && isAuthenticated && (
-        <div className="border-b border-brand-border/60 bg-brand-surface/95 backdrop-blur-xl md:hidden">
+        <div className="glass-nav glass-mobile relative mt-2 mx-3 border border-white/40 bg-brand-surface/90 p-1 shadow-xl shadow-brand-text/20 backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-brand-surface/70 sm:mx-0 md:hidden">
         <nav
-          className="mx-auto flex w-full max-w-7xl flex-col gap-1 p-2 px-4 sm:px-6"
+          className="relative z-10 flex w-full flex-col gap-1 p-2"
           dir="rtl"
           aria-label="قائمة الجوال"
         >
@@ -227,8 +238,9 @@ export function Navbar() {
             ))}
             <div className="border-t border-brand-border mt-2 pt-2">
               <button
+                type="button"
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-brand-accent rounded-lg hover:bg-red-50 transition-colors text-start"
+                className="w-full flex cursor-pointer items-center gap-2 px-3 py-2 text-sm font-medium text-brand-accent rounded-lg hover:bg-red-50 transition-colors text-start"
               >
                 <LogOut className="w-4 h-4" />
                 تسجيل الخروج
