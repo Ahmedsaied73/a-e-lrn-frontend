@@ -13,7 +13,21 @@
  */
 export const siteConfig = {
   /** Canonical public origin. Server-only (sitemap, metadataBase, JSON-LD). */
-  url: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+  url: (() => {
+    const raw = (process.env.FRONTEND_URL ?? '').trim() || 'http://localhost:3000';
+    try {
+      // Must be a full origin incl. protocol, e.g. https://my-app.vercel.app.
+      // A bare word like "anonymousTeacher" throws ERR_INVALID_URL and kills
+      // `next build` at "Collecting page data" (root layout metadataBase).
+      return new URL(raw).origin;
+    } catch {
+      if (process.env.NODE_ENV === 'production') {
+        // eslint-disable-next-line no-console
+        console.warn(`[site-config] Invalid FRONTEND_URL=${JSON.stringify(raw)} — falling back to http://localhost:3000. Set it to https://<your-app>.vercel.app`);
+      }
+      return 'http://localhost:3000';
+    }
+  })(),
 
   /** Primary brand. Students search for this name — it anchors every title. */
   teacherName:
