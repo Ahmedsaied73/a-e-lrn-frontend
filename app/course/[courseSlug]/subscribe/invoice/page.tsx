@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { fetchCourseBySlug, checkEnrollmentStatus, enrollInCourse } from '@/services/courseService';
+import { createCheckout } from '@/services/paymentService';
+import { ApiError } from '@/lib/errors';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { PageTitle } from '@/components/page-title';
@@ -113,7 +115,20 @@ export default function Page({ params }: { params: { courseSlug: string } }) {
         router.push(`/course/${params.courseSlug}`);
       }, 1500);
     } catch (error: any) {
-      toast.error(error.message || 'حدث خطأ أثناء الاشتراك في الكورس');
+      // Paywall: priced courses refuse direct enroll → start Paymob checkout.
+      // Mirrors enrollment-card.tsx:60-64; never treat a raw enroll as paid.
+      if (error instanceof ApiError && error.status === 402) {
+        try {
+          toast.loading('جاري تحويلك إلى بوابة الدفع الآمنة...', { duration: 4000 });
+          const checkout = await createCheckout(params.courseSlug);
+          window.location.assign(checkout.checkoutUrl);
+          return;
+        } catch {
+          toast.error('تعذر بدء عملية الدفع. حاول مرة أخرى.');
+        }
+      } else {
+        toast.error(error.message || 'حدث خطأ أثناء الاشتراك في الكورس');
+      }
     } finally {
       setEnrollmentLoading(false);
     }
