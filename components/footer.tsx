@@ -31,7 +31,7 @@ const SOCIALS = [
   },
   {
     label: "فيسبوك",
-    href: "#",
+    href: "https://www.facebook.com/ahmed.o.saied.2025",
     path: "M14 8.5h2.5V5.7c-.4-.1-1.6-.2-3-.2-3 0-5 1.8-5 5.1v2.6H5.8v3.2h2.7V22h3.3v-5.6h2.7l.4-3.2h-3.1v-2.2c0-.9.3-1.5 1.7-1.5Z",
   },
   {
@@ -104,7 +104,7 @@ export function Footer() {
               <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-[#25d366]">
                 <path d="M20.52 3.449C18.245 1.173 15.195 0 12.045 0 5.463 0 .104 5.373.104 12.017c0 2.118.547 4.183 1.589 5.997L0 24l6.138-1.61a11.944 11.944 0 005.897 1.506h.005c6.578 0 11.937-5.374 11.937-12.018 0-3.211-1.247-6.23-3.457-8.429zM12.045 22.007h-.004a9.913 9.913 0 01-5.051-1.38l-.362-.215-3.753.985.999-3.655-.235-.374a9.96 9.96 0 01-1.524-5.319c0-5.513 4.481-9.998 9.994-9.998 2.668 0 5.177 1.04 7.064 2.929a9.97 9.97 0 012.924 7.075c-.002 5.515-4.483 9.952-9.952 9.952zm5.473-7.462c-.3-.15-1.776-.876-2.051-.977-.275-.1-.475-.15-.674.15-.2.3-.774.976-.949 1.176-.175.2-.349.225-.649.075-.3-.15-1.267-.467-2.413-1.49-.892-.795-1.494-1.777-1.67-2.077-.175-.3-.018-.462.131-.61.134-.134.3-.35.449-.524.15-.175.2-.3.3-.499.1-.2.05-.374-.025-.524-.075-.15-.674-1.626-.924-2.226-.243-.585-.49-.505-.674-.514-.174-.009-.374-.011-.574-.011-.2 0-.524.075-.799.374-.275.3-1.049 1.025-1.049 2.5s1.074 2.9 1.224 3.1c.15.2 2.113 3.227 5.12 4.525.717.309 1.276.494 1.712.632.72.228 1.374.196 1.892.119.577-.086 1.776-.726 2.026-1.426.25-.7.25-1.3.175-1.426-.074-.127-.274-.2-.574-.35z" />
               </svg>
-              <span className="font-semibold text-[15px] text-white" dir="ltr">01115956226</span>
+              <span className="font-semibold text-[15px] text-white" dir="ltr">01023498242</span>
               <span className="text-[14px] text-white/70">:تواصل معنا</span>
             </Link>
           </div>
@@ -159,8 +159,19 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-3 pt-6 text-xs text-white/40 sm:flex-row">
-          <p>&lt; Developed By &gt; Ahmed Saied &lt; All Copy Rights Reserved ©2025 &gt;</p>
+        <div className="flex flex-col items-center justify-between gap-3 pt-6 text-[15px] text-white/40 sm:flex-row">
+          <p>
+            &lt; Developed By &gt;{" "}
+            <a
+              href="https://www.linkedin.com/in/ahmed-saied-999997416/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-brand-secondary transition hover:underline"
+            >
+              Ahmed Saied
+            </a>{" "}
+            &lt; All Copy Rights Reserved ©2026 &gt;
+          </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-white/60 transition hover:border-brand-primary hover:text-white"
