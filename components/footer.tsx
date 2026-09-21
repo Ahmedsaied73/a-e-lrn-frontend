@@ -96,7 +96,7 @@ export function Footer() {
               ))}
             </div>
             <Link
-              href="https://wa.me/201115956226"
+              href="https://wa.me/201023498242"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-5 inline-flex items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 transition hover:border-brand-primary"
