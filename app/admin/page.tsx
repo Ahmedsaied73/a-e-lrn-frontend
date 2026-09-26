@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
-import { StatCard } from '@/components/admin/StatCard';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,21 +50,73 @@ function SectionCard({
   className?: string;
 }) {
   return (
-    <Card className={className}>
-      <CardHeader className="flex flex-row items-center gap-2 space-y-0 px-5 py-4">
-        <Icon className="h-4 w-4 text-on-surface-variant" aria-hidden="true" />
-        <CardTitle className="text-sm font-semibold text-on-surface">{title}</CardTitle>
+    <Card className={cn('rounded-2xl border-brand-border bg-brand-surface shadow-none', className)}>
+      <CardHeader className="flex flex-row items-center gap-2 space-y-0 border-b border-brand-border px-5 py-4">
+        <Icon className="h-4 w-4 text-brand-primary" aria-hidden="true" />
+        <CardTitle className="text-sm font-bold text-brand-text">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="px-5 pb-5">{children}</CardContent>
+      <CardContent className="px-5 py-4">{children}</CardContent>
     </Card>
   );
 }
 
 function SkeletonStat() {
   return (
-    <div className="rounded-xl border border-outline-variant/70 bg-card p-4">
-      <Skeleton className="h-4 w-24 bg-muted" />
-      <Skeleton className="mt-2 h-8 w-16 bg-muted" />
+    <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+      <div className="h-1 w-full bg-brand-chip" aria-hidden="true" />
+      <div className="p-5">
+        <Skeleton className="h-3 w-24 bg-brand-chip" />
+        <Skeleton className="mt-2.5 h-8 w-16 bg-brand-chip" />
+      </div>
+    </div>
+  );
+}
+
+/** The design's highlight card: accent bar on top, label / big value / trend line. */
+function MetricCard({
+  label,
+  value,
+  icon: Icon,
+  hint,
+  tone = 'default',
+}: {
+  label: string;
+  value: number | string;
+  icon: React.ComponentType<{ className?: string }>;
+  hint?: string;
+  tone?: 'default' | 'success' | 'warning' | 'danger';
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface transition-colors duration-200 hover:border-brand-border-strong">
+      <div
+        className={cn(
+          'h-1 w-full',
+          tone === 'success' && 'bg-emerald-500',
+          tone === 'warning' && 'bg-brand-accent',
+          tone === 'danger' && 'bg-brand-accent',
+          tone === 'default' && 'bg-brand-primary',
+        )}
+        aria-hidden="true"
+      />
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-xs font-semibold text-brand-muted">{label}</p>
+          <span className="shrink-0 rounded-lg bg-brand-primary/10 p-1.5 text-brand-primary">
+            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+          </span>
+        </div>
+        <p
+          className={cn(
+            'mt-1.5 text-3xl font-extrabold tabular-nums text-brand-text',
+            tone === 'success' && 'text-emerald-600',
+            tone === 'warning' && 'text-brand-accent',
+            tone === 'danger' && 'text-brand-accent',
+          )}
+        >
+          {value}
+        </p>
+        {hint && <p className="mt-2 truncate text-xs leading-relaxed text-brand-muted-strong">{hint}</p>}
+      </div>
     </div>
   );
 }
@@ -111,145 +162,150 @@ export default function AdminOverviewPage() {
     ? Object.values(data.counts.attempts).reduce((a, b) => a + b, 0)
     : 0;
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'صباح الخير' : hour < 18 ? 'مساء الخير' : 'مساء النور';
+
   return (
     <>
       <PageTitle title={adminTitle('نظرة عامة')} />
-      <div className="hidden p-6 lg:block lg:p-8">
+      <div className="mx-auto hidden max-w-6xl px-4 py-6 sm:px-8 sm:py-8 lg:block">
       {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-on-surface">نظرة عامة</h1>
-          <p className="mt-1 text-[13px] text-on-surface-variant">ملخص لحالة المنصة الآن</p>
+          <h1 className="text-2xl font-extrabold text-brand-text">{greeting}</h1>
+          <p className="mt-1.5 text-sm text-brand-muted">ملخص لحالة المنصة الآن — {data?.counts.students ?? 0} طالب مسجّل.</p>
         </div>
         {!loading && !error && (
-          <div className="flex items-center gap-2 rounded-full border border-outline-variant/70 bg-white px-3 py-1.5 text-xs font-medium text-on-surface-variant">
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-[11px] font-bold text-emerald-700">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
             </span>
             بيانات مباشرة
-          </div>
+          </span>
         )}
       </div>
 
       {error ? (
-        <Card className="mx-auto mt-10 max-w-md border-red-200">
+        <Card className="mx-auto mt-10 max-w-md rounded-2xl border border-brand-accent/30 bg-brand-surface shadow-none">
           <CardContent className="flex flex-col items-center gap-4 px-6 py-8 text-center">
-            <AlertTriangle className="h-8 w-8 text-error" aria-hidden="true" />
-            <p className="text-sm font-medium text-on-surface-variant">تعذر تحميل بيانات لوحة التحكم.</p>
-            <Button variant="outline" onClick={load}>
+            <AlertTriangle className="h-8 w-8 text-brand-accent" aria-hidden="true" />
+            <p className="text-sm font-medium text-brand-muted-strong">تعذر تحميل بيانات لوحة التحكم.</p>
+            <Button
+              variant="outline"
+              className="rounded-full border-brand-border bg-brand-surface px-4 py-2 text-sm font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text"
+              onClick={load}
+            >
               إعادة المحاولة
             </Button>
           </CardContent>
         </Card>
       ) : (
         <>
-          {/* KPI Grid */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          {/* KPI Grid — the design's highlight cards */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {loading ? (
               <>
-                {Array.from({ length: 12 }).map((_, i) => (
+                {Array.from({ length: 9 }).map((_, i) => (
                   <SkeletonStat key={i} />
                 ))}
               </>
             ) : (
               <>
-                <StatCard label="الطلاب" value={data!.counts.students} icon={Users} />
-                <StatCard
-                  label="طلاب جدد (7 أيام)"
-                  value={data!.counts.newStudentsLast7d}
-                  icon={UserPlus}
-                  tone="success"
-                />
-                <StatCard label="الدورات" value={data!.counts.courses} icon={BookOpen} />
-                <StatCard label="الاشتراكات" value={data!.counts.enrollments} icon={GraduationCap} />
-                <StatCard label="الاختبارات" value={data!.counts.quizzes} icon={ListChecks} />
-                <StatCard
+                <MetricCard label="الطلاب" value={data!.counts.students} icon={Users} hint={`${data!.counts.newStudentsLast7d} طالب جديد خلال 7 أيام`} />
+                <MetricCard label="الدورات" value={data!.counts.courses} icon={BookOpen} />
+                <MetricCard label="الاشتراكات" value={data!.counts.enrollments} icon={GraduationCap} />
+                <MetricCard
                   label="الفيديوهات الجاهزة"
                   value={`${data!.counts.videos.READY ?? 0}/${data!.counts.videos.total}`}
                   icon={Film}
-                  hint={data!.counts.videos.FAILED ? `${data!.counts.videos.FAILED} فشل` : undefined}
+                  hint={data!.counts.videos.FAILED ? `${data!.counts.videos.FAILED} فشل` : 'كل الفيديوهات جاهزة'}
                   tone={data!.counts.videos.FAILED ? 'danger' : 'default'}
                 />
-                <StatCard label="محاولات الاختبار" value={attemptCount} icon={ClipboardCheck} />
-                <StatCard
+                <MetricCard label="الاختبارات" value={data!.counts.quizzes} icon={ListChecks} />
+                <MetricCard label="محاولات الاختبار" value={attemptCount} icon={ClipboardCheck} />
+                <MetricCard
                   label="بانتظار التصحيح"
                   value={data!.counts.attempts.GRADING}
                   icon={FileCheck2}
                   tone="warning"
                 />
-                <StatCard
+                <MetricCard
                   label="واجبات بانتظار المراجعة"
                   value={data!.counts.submissionsPending}
                   icon={Clock}
                   tone="warning"
                 />
+                <MetricCard label="طلاب جدد (7 أيام)" value={data!.counts.newStudentsLast7d} icon={UserPlus} tone="success" />
               </>
             )}
           </div>
 
           {/* Quick actions */}
-          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            {QUICK_ACTIONS.map((action) => (
-              <Link
-                key={action.label}
-                href={action.href}
-                className="group flex items-center gap-3 rounded-xl border border-outline-variant/70 bg-white p-4 transition-shadow duration-200 hover:border-primary-light hover:shadow-level-2"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e8f2ff] text-primary-color transition-colors duration-200 group-hover:bg-primary-color group-hover:text-white">
-                  <action.icon className="h-4 w-4" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-on-surface">{action.label}</p>
-                  <p className="truncate text-[11px] text-on-surface-variant">{action.desc}</p>
-                </div>
-              </Link>
-            ))}
+          <div className="mt-8">
+            <p className="mb-3 text-base font-bold text-brand-text">إجراءات سريعة</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {QUICK_ACTIONS.map((action) => (
+                <Link
+                  key={action.label}
+                  href={action.href}
+                  className="group flex items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface px-5 py-4 transition-colors duration-200 hover:border-brand-border-strong hover:bg-brand-hover"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary transition-colors duration-200 group-hover:bg-brand-primary group-hover:text-white">
+                    <action.icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-brand-text">{action.label}</p>
+                    <p className="truncate text-xs text-brand-muted">{action.desc}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Alerts */}
           <SectionCard
             title="تنبيهات التشغيل"
             icon={AlertTriangle}
-            className="mt-6 border-outline-variant/70 bg-white"
+            className="mt-6"
           >
             {loading ? (
               <div className="space-y-2">
-                <Skeleton className="h-12 w-full bg-muted" />
-                <Skeleton className="h-12 w-full bg-muted" />
+                <Skeleton className="h-12 w-full bg-brand-chip" />
+                <Skeleton className="h-12 w-full bg-brand-chip" />
               </div>
             ) : !data!.alerts.hasIssues && data!.alerts.essaysPendingGrading.length === 0 ? (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] font-medium text-emerald-700">
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] font-medium text-emerald-700">
                 <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                 لا توجد مشاكل حالياً — كل شيء يعمل.
               </div>
             ) : (
-              <ul className="divide-y divide-outline-variant/50">
+              <ul className="divide-y divide-brand-border">
                 {data!.alerts.failedVideos.map((v) => (
                   <li key={v.id} className="flex items-start justify-between gap-3 py-2.5 text-[13px]">
-                    <div className="flex min-w-0 items-center gap-2 font-medium text-red-700">
+                    <div className="flex min-w-0 items-center gap-2 font-semibold text-brand-accent">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                       <span className="truncate">فيديو فشل معالجته: {v.title}</span>
                     </div>
-                    <span className="shrink-0 text-xs text-on-surface-variant/70">{v.failureReason || 'بدون سبب'}</span>
+                    <span className="shrink-0 text-xs text-brand-muted">{v.failureReason || 'بدون سبب'}</span>
                   </li>
                 ))}
                 {data!.alerts.stuckProcessingVideos.map((v) => (
                   <li key={v.id} className="flex items-start justify-between gap-3 py-2.5 text-[13px]">
-                    <div className="flex min-w-0 items-center gap-2 font-medium text-amber-700">
+                    <div className="flex min-w-0 items-center gap-2 font-semibold text-brand-muted-strong">
                       <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                       <span className="truncate">عالق في المعالجة: {v.title}</span>
                     </div>
-                    <span className="shrink-0 text-xs text-on-surface-variant/70">منذ {v.stuckMinutes} دقيقة</span>
+                    <span className="shrink-0 text-xs text-brand-muted">منذ {v.stuckMinutes} دقيقة</span>
                   </li>
                 ))}
                 {data!.alerts.essaysPendingGrading.length > 0 && (
-                  <li className="flex items-center justify-between gap-3 py-2.5 text-[13px] text-on-surface-variant">
+                  <li className="flex items-center justify-between gap-3 py-2.5 text-[13px] text-brand-muted-strong">
                     <div className="flex min-w-0 items-center gap-2">
-                      <FileCheck2 className="h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden="true" />
+                      <FileCheck2 className="h-3.5 w-3.5 shrink-0 text-brand-accent" aria-hidden="true" />
                       <span className="truncate">مقالي بانتظار التصحيح</span>
                     </div>
-                    <span className="shrink-0 text-xs text-on-surface-variant/70">{data!.alerts.essaysPendingGrading.length} محاولة</span>
+                    <span className="shrink-0 text-xs text-brand-muted">{data!.alerts.essaysPendingGrading.length} محاولة</span>
                   </li>
                 )}
               </ul>
@@ -261,17 +317,17 @@ export default function AdminOverviewPage() {
             <SectionCard
               title="أحدث محاولات المقالي بانتظار التصحيح"
               icon={FileCheck2}
-              className="mt-6 border-outline-variant/70 bg-white"
+              className="mt-6"
             >
-              <ul className="divide-y divide-outline-variant/50">
+              <ul className="divide-y divide-brand-border">
                 {data!.alerts.essaysPendingGrading.slice(0, 4).map((a) => (
                   <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-[13px]">
-                    <span className="truncate font-medium text-on-surface">
+                    <span className="truncate font-semibold text-brand-text">
                       {a.user.name}
-                      <span className="font-normal text-on-surface-variant"> — {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}</span>
+                      <span className="font-normal text-brand-muted"> — {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}</span>
                     </span>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="text-xs text-on-surface-variant/70">
+                      <span className="text-xs text-brand-muted">
                         {a.submittedAt ? formatDate(a.submittedAt) : formatDate(a.startedAt)}
                       </span>
                       <StatusBadge status={a.status} />
@@ -283,50 +339,50 @@ export default function AdminOverviewPage() {
           )}
 
           {/* Recent activity */}
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <SectionCard title="أحدث المستخدمين" icon={Users} className="border-outline-variant/70 bg-white">
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            <SectionCard title="أحدث المستخدمين" icon={Users}>
               {loading ? (
-                <Skeleton className="h-24 w-full bg-muted" />
+                <Skeleton className="h-24 w-full bg-brand-chip" />
               ) : (
-                <ul className="divide-y divide-outline-variant/50">
+                <ul className="divide-y divide-brand-border">
                   {data!.recent.users.map((u) => (
                     <li key={u.id} className="flex items-center justify-between gap-2 py-2.5 text-[13px]">
-                      <span className="truncate font-medium text-on-surface">{u.name}</span>
-                      <span className="shrink-0 text-xs text-on-surface-variant/70">{formatDate(u.createdAt)}</span>
+                      <span className="truncate font-semibold text-brand-text">{u.name}</span>
+                      <span className="shrink-0 text-xs text-brand-muted">{formatDate(u.createdAt)}</span>
                     </li>
                   ))}
                 </ul>
               )}
             </SectionCard>
 
-            <SectionCard title="أحدث الاشتراكات" icon={GraduationCap} className="border-outline-variant/70 bg-white">
+            <SectionCard title="أحدث الاشتراكات" icon={GraduationCap}>
               {loading ? (
-                <Skeleton className="h-24 w-full bg-muted" />
+                <Skeleton className="h-24 w-full bg-brand-chip" />
               ) : (
-                <ul className="divide-y divide-outline-variant/50">
+                <ul className="divide-y divide-brand-border">
                   {data!.recent.enrollments.map((e) => (
                     <li key={e.id} className="flex items-center justify-between gap-2 py-2.5 text-[13px]">
-                      <span className="truncate font-medium text-on-surface">
+                      <span className="truncate font-semibold text-brand-text">
                         {e.user.name}
-                        <span className="font-normal text-on-surface-variant"> — {e.course.title}</span>
+                        <span className="font-normal text-brand-muted"> — {e.course.title}</span>
                       </span>
-                      <span className="shrink-0 text-xs text-on-surface-variant/70">{formatDate(e.createdAt)}</span>
+                      <span className="shrink-0 text-xs text-brand-muted">{formatDate(e.createdAt)}</span>
                     </li>
                   ))}
                 </ul>
               )}
             </SectionCard>
 
-            <SectionCard title="آخر المحاولات" icon={ClipboardCheck} className="border-outline-variant/70 bg-white">
+            <SectionCard title="آخر المحاولات" icon={ClipboardCheck}>
               {loading ? (
-                <Skeleton className="h-24 w-full bg-muted" />
+                <Skeleton className="h-24 w-full bg-brand-chip" />
               ) : (
-                <ul className="divide-y divide-outline-variant/50">
+                <ul className="divide-y divide-brand-border">
                   {data!.recent.attempts.map((a) => (
                     <li key={a.id} className="flex items-center justify-between gap-2 py-2.5 text-[13px]">
-                      <span className="truncate font-medium text-on-surface">
+                      <span className="truncate font-semibold text-brand-text">
                         {a.user.name}
-                        <span className="font-normal text-on-surface-variant"> — {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}</span>
+                        <span className="font-normal text-brand-muted"> — {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}</span>
                       </span>
                       <StatusBadge status={a.status} />
                     </li>
@@ -341,17 +397,17 @@ export default function AdminOverviewPage() {
 
       {/* ── Mobile (lg:hidden) — matches the Academic Precision mobile frame ── */}
       <div className="lg:hidden">
-        <div className="space-y-4 px-4 pb-8 pt-3">
+        <div className="mx-auto max-w-6xl space-y-4 px-4 pb-8 pt-5">
           {/* Greeting + live pulse */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-bold text-on-surface">مرحباً بك</h1>
-              <p className="mt-0.5 text-xs text-on-surface-variant">إليك ملخص المنصة الآن</p>
+              <h1 className="text-lg font-extrabold text-brand-text">{greeting}</h1>
+              <p className="mt-0.5 text-xs text-brand-muted">إليك ملخص المنصة الآن</p>
             </div>
             {!loading && !error && (
-              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-secondary-fixed px-2.5 py-1 text-[10px] font-semibold text-on-secondary-fixed-variant">
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 </span>
                 بيانات مباشرة
@@ -362,14 +418,14 @@ export default function AdminOverviewPage() {
           {/* Health banner */}
           {!error &&
             (loading ? (
-              <Skeleton className="h-12 w-full rounded-2xl bg-muted" />
+              <Skeleton className="h-12 w-full rounded-2xl bg-brand-chip" />
             ) : data!.alerts.hasIssues || data!.alerts.essaysPendingGrading.length > 0 ? (
-              <div className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-700">
+              <div className="flex items-center gap-2 rounded-2xl border border-brand-accent/30 bg-brand-accent/10 px-4 py-3 text-xs font-semibold text-brand-accent">
                 <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
                 {data!.alerts.failedVideos.length + data!.alerts.stuckProcessingVideos.length} فيديو بحاجة إلى انتباه
               </div>
             ) : (
-              <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-700">
+              <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700">
                 <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
                 كل شيء يعمل — لا توجد مشاكل حالياً
               </div>
@@ -377,24 +433,24 @@ export default function AdminOverviewPage() {
 
           {/* Hero stat */}
           {loading ? (
-            <Skeleton className="h-36 w-full rounded-2xl bg-muted" />
+            <Skeleton className="h-36 w-full rounded-2xl bg-brand-chip" />
           ) : (
-            <div className="relative overflow-hidden rounded-2xl bg-primary-color p-5 text-on-primary">
-              <div className="absolute -left-6 -top-8 h-28 w-28 rounded-full bg-white/10" aria-hidden="true" />
-              <div className="absolute -bottom-10 -right-4 h-24 w-24 rounded-full bg-white/5" aria-hidden="true" />
+            <div className="relative overflow-hidden rounded-2xl bg-brand-primary p-5 text-white">
+              <div className="absolute -start-6 -top-8 h-28 w-28 rounded-full bg-white/10" aria-hidden="true" />
+              <div className="absolute -bottom-10 -end-4 h-24 w-24 rounded-full bg-white/5" aria-hidden="true" />
               <div className="relative">
-                <p className="text-xs font-medium text-on-primary/80">المحتوى الجاهز للمشاهدة</p>
+                <p className="text-xs font-semibold text-white/80">المحتوى الجاهز للمشاهدة</p>
                 <div className="mt-2 flex items-end gap-1">
                   <span className="text-[44px] font-extrabold leading-none tracking-tight">
                     {data!.counts.videos.READY ?? 0}
                   </span>
-                  <span className="mb-1 text-base font-semibold text-on-primary/80">
+                  <span className="mb-1 text-base font-semibold text-white/80">
                     / {data!.counts.videos.total}
                   </span>
                 </div>
                 <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/25">
                   <div
-                    className="h-full rounded-full bg-on-primary"
+                    className="h-full rounded-full bg-white"
                     style={{
                       width: `${
                         data!.counts.videos.total
@@ -404,7 +460,7 @@ export default function AdminOverviewPage() {
                     }}
                   />
                 </div>
-                <p className="mt-2 text-[11px] text-on-primary/80">
+                <p className="mt-2 text-[11px] text-white/80">
                   {data!.counts.videos.FAILED
                     ? `فشل معالجة ${data!.counts.videos.FAILED} — أعد الرفع`
                     : 'جميع المحاضرات جاهزة للمشاهدة'}
@@ -417,10 +473,10 @@ export default function AdminOverviewPage() {
           <div className="grid grid-cols-2 gap-3">
             {(
               [
-                { label: 'الطلاب', value: data?.counts.students, icon: Users, chip: 'bg-primary-fixed text-on-primary-fixed-variant' },
-                { label: 'الدورات', value: data?.counts.courses, icon: BookOpen, chip: 'bg-secondary-fixed text-on-secondary-fixed-variant' },
-                { label: 'الاشتراكات', value: data?.counts.enrollments, icon: GraduationCap, chip: 'bg-tertiary-fixed text-on-tertiary-fixed-variant' },
-                { label: 'بانتظار التصحيح', value: data?.counts.attempts.GRADING, icon: ClipboardCheck, chip: 'bg-error-container text-on-error-container' },
+                { label: 'الطلاب', value: data?.counts.students, icon: Users, chip: 'bg-brand-primary/10 text-brand-primary' },
+                { label: 'الدورات', value: data?.counts.courses, icon: BookOpen, chip: 'bg-brand-secondary/15 text-brand-muted-strong' },
+                { label: 'الاشتراكات', value: data?.counts.enrollments, icon: GraduationCap, chip: 'bg-brand-primary/10 text-brand-primary' },
+                { label: 'بانتظار التصحيح', value: data?.counts.attempts.GRADING, icon: ClipboardCheck, chip: 'bg-brand-accent/10 text-brand-accent' },
               ] as {
                 label: string;
                 value: number | undefined;
@@ -430,14 +486,14 @@ export default function AdminOverviewPage() {
             ).map((k) => (
               <div
                 key={k.label}
-                className="flex items-center gap-3 rounded-2xl border border-outline-variant/70 bg-surface-container-lowest p-4"
+                className="flex items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4"
               >
                 <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', k.chip)}>
                   <k.icon className="h-[18px] w-[18px]" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[11px] text-on-surface-variant">{k.label}</p>
-                  <p className="text-lg font-bold leading-tight text-on-surface">{loading ? '…' : (k.value ?? 0)}</p>
+                  <p className="truncate text-[11px] text-brand-muted">{k.label}</p>
+                  <p className="text-lg font-bold leading-tight text-brand-text">{loading ? '…' : (k.value ?? 0)}</p>
                 </div>
               </div>
             ))}
@@ -445,15 +501,15 @@ export default function AdminOverviewPage() {
 
           {/* Quick actions */}
           <div>
-            <h2 className="mb-2 px-1 text-sm font-bold text-on-surface">إجراءات سريعة</h2>
+            <h2 className="mb-2 px-1 text-sm font-bold text-brand-text">إجراءات سريعة</h2>
             <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
               {QUICK_ACTIONS.slice(0, 4).map((action) => (
                 <Link key={action.label} href={action.href} className="snap-start">
-                  <div className="flex w-[150px] flex-col items-start gap-2 rounded-2xl border border-outline-variant/70 bg-surface-container-lowest p-3.5 transition-transform active:scale-[0.98]">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e8f2ff] text-primary-color">
+                  <div className="flex w-[150px] flex-col items-start gap-2 rounded-2xl border border-brand-border bg-brand-surface p-3.5 transition-transform active:scale-[0.98]">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary">
                       <action.icon className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-xs font-bold text-on-surface">{action.label}</span>
+                    <span className="text-xs font-bold text-brand-text">{action.label}</span>
                   </div>
                 </Link>
               ))}
@@ -461,29 +517,29 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Recent students */}
-          <section className="overflow-hidden rounded-2xl border border-outline-variant/70 bg-surface-container-lowest">
-            <header className="flex items-center justify-between border-b border-outline-variant/40 px-4 py-3">
-              <h2 className="flex items-center gap-2 text-sm font-bold text-on-surface">
-                <Users className="h-4 w-4 text-on-surface-variant" aria-hidden="true" />
+          <section className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+            <header className="flex items-center justify-between border-b border-brand-border px-4 py-3">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-brand-text">
+                <Users className="h-4 w-4 text-brand-primary" aria-hidden="true" />
                 أحدث الطلاب
               </h2>
-              <Link href="/admin/students" className="text-xs font-semibold text-[#0057c0]">
+              <Link href="/admin/students" className="text-xs font-bold text-brand-primary hover:underline">
                 عرض الكل
               </Link>
             </header>
-            <ul className="divide-y divide-outline-variant/40">
+            <ul className="divide-y divide-brand-border">
               {loading ? (
-                <Skeleton className="m-4 h-14 w-[calc(100%-2rem)] bg-muted" />
+                <Skeleton className="m-4 h-14 w-[calc(100%-2rem)] bg-brand-chip" />
               ) : (
                 data!.recent.users.slice(0, 3).map((u) => (
                   <li key={u.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-xs font-bold text-on-primary-fixed-variant">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-xs font-bold text-brand-primary">
                         {u.name.trim().charAt(0)}
                       </span>
-                      <span className="truncate text-xs font-semibold text-on-surface">{u.name}</span>
+                      <span className="truncate text-xs font-semibold text-brand-text">{u.name}</span>
                     </div>
-                    <span className="shrink-0 text-[10px] text-on-surface-variant/70">{formatDate(u.createdAt)}</span>
+                    <span className="shrink-0 text-[10px] text-brand-muted">{formatDate(u.createdAt)}</span>
                   </li>
                 ))
               )}
@@ -491,32 +547,32 @@ export default function AdminOverviewPage() {
           </section>
 
           {/* Recent subscriptions */}
-          <section className="overflow-hidden rounded-2xl border border-outline-variant/70 bg-surface-container-lowest">
-            <header className="flex items-center justify-between border-b border-outline-variant/40 px-4 py-3">
-              <h2 className="flex items-center gap-2 text-sm font-bold text-on-surface">
-                <GraduationCap className="h-4 w-4 text-on-surface-variant" aria-hidden="true" />
+          <section className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+            <header className="flex items-center justify-between border-b border-brand-border px-4 py-3">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-brand-text">
+                <GraduationCap className="h-4 w-4 text-brand-primary" aria-hidden="true" />
                 أحدث الاشتراكات
               </h2>
-              <Link href="/admin/students" className="text-xs font-semibold text-[#0057c0]">
+              <Link href="/admin/students" className="text-xs font-bold text-brand-primary hover:underline">
                 عرض الكل
               </Link>
             </header>
-            <ul className="divide-y divide-outline-variant/40">
+            <ul className="divide-y divide-brand-border">
               {loading ? (
-                <Skeleton className="m-4 h-14 w-[calc(100%-2rem)] bg-muted" />
+                <Skeleton className="m-4 h-14 w-[calc(100%-2rem)] bg-brand-chip" />
               ) : (
                 data!.recent.enrollments.slice(0, 3).map((e) => (
                   <li key={e.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-fixed text-xs font-bold text-on-secondary-fixed-variant">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-secondary/15 text-xs font-bold text-brand-muted-strong">
                         {e.user.name.trim().charAt(0)}
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold text-on-surface">{e.user.name}</p>
-                        <p className="truncate text-[10px] text-on-surface-variant">{e.course.title}</p>
+                        <p className="truncate text-xs font-semibold text-brand-text">{e.user.name}</p>
+                        <p className="truncate text-[10px] text-brand-muted">{e.course.title}</p>
                       </div>
                     </div>
-                    <span className="shrink-0 text-[10px] text-on-surface-variant/70">{formatDate(e.createdAt)}</span>
+                    <span className="shrink-0 text-[10px] text-brand-muted">{formatDate(e.createdAt)}</span>
                   </li>
                 ))
               )}
@@ -524,29 +580,29 @@ export default function AdminOverviewPage() {
           </section>
 
           {/* Recent attempts */}
-          <section className="overflow-hidden rounded-2xl border border-outline-variant/70 bg-surface-container-lowest">
-            <header className="flex items-center justify-between border-b border-outline-variant/40 px-4 py-3">
-              <h2 className="flex items-center gap-2 text-sm font-bold text-on-surface">
-                <ClipboardCheck className="h-4 w-4 text-on-surface-variant" aria-hidden="true" />
+          <section className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+            <header className="flex items-center justify-between border-b border-brand-border px-4 py-3">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-brand-text">
+                <ClipboardCheck className="h-4 w-4 text-brand-primary" aria-hidden="true" />
                 آخر المحاولات
               </h2>
-              <Link href="/admin/grading" className="text-xs font-semibold text-[#0057c0]">
+              <Link href="/admin/grading" className="text-xs font-bold text-brand-primary hover:underline">
                 عرض الكل
               </Link>
             </header>
-            <ul className="divide-y divide-outline-variant/40">
+            <ul className="divide-y divide-brand-border">
               {loading ? (
-                <Skeleton className="m-4 h-14 w-[calc(100%-2rem)] bg-muted" />
+                <Skeleton className="m-4 h-14 w-[calc(100%-2rem)] bg-brand-chip" />
               ) : (
                 data!.recent.attempts.slice(0, 3).map((a) => (
                   <li key={a.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-error-container text-xs font-bold text-on-error-container">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-accent/10 text-xs font-bold text-brand-accent">
                         {a.user.name.trim().charAt(0)}
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold text-on-surface">{a.user.name}</p>
-                        <p className="truncate text-[10px] text-on-surface-variant">
+                        <p className="truncate text-xs font-semibold text-brand-text">{a.user.name}</p>
+                        <p className="truncate text-[10px] text-brand-muted">
                           {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}
                         </p>
                       </div>
@@ -559,11 +615,11 @@ export default function AdminOverviewPage() {
           </section>
 
           {/* Motivation micro-card */}
-          <div className="flex items-center gap-3 rounded-2xl bg-primary-fixed/70 px-4 py-3.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-color text-on-primary">
+          <div className="flex items-center gap-3 rounded-2xl bg-brand-primary/10 px-4 py-3.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-primary text-white">
               <Rocket className="h-4 w-4" aria-hidden="true" />
             </span>
-            <p className="text-xs font-semibold leading-relaxed text-on-primary-fixed">
+            <p className="text-xs font-semibold leading-relaxed text-brand-muted-strong">
               واصل التقدم — أنت تبني مستقبل طلابك خطوة بخطوة
             </p>
           </div>

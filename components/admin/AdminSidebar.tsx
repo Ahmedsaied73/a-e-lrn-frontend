@@ -13,6 +13,7 @@ import {
   ExternalLink,
   LogOut,
   Bell,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppSelector } from '@/store/hooks';
@@ -39,6 +40,15 @@ const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: R
       { href: '/admin/quizzes', label: 'الاختبارات', icon: ListChecks },
       { href: '/admin/grading', label: 'تصحيح المقالي', icon: FileCheck2 },
     ],
+  },
+  {
+    // Group label + item label taken from the design's sidebar nav grouping
+    // ("الذكاء الاصطناعي" / "المساعد الإداري"). The design's rewritten sidebar
+    // is NOT ported — this reuses the existing item markup above (lucide icon,
+    // 13px, rounded-lg, #e8f2ff active pill), and lucide replaces the design's
+    // icon-less rows because every existing item here has an icon.
+    label: 'الذكاء الاصطناعي',
+    items: [{ href: '/admin/agent', label: 'المساعد الإداري', icon: Sparkles }],
   },
 ];
 

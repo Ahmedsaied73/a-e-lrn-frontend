@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 import { DataTable } from '@/components/admin/DataTable';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -69,50 +68,50 @@ export default function AdminQuizzesPage() {
       {
         accessorKey: 'title',
         header: 'الاختبار',
-        cell: ({ row }) => <span className="font-semibold text-on-surface">{row.original.title}</span>,
+        cell: ({ row }) => <span className="font-semibold text-brand-text">{row.original.title}</span>,
       },
-      { accessorKey: 'videoTitle', header: 'الفيديو', cell: ({ row }) => <span className="text-on-surface-variant">{row.original.videoTitle || '—'}</span> },
-      { accessorKey: 'courseTitle', header: 'المقرر', cell: ({ row }) => <span className="text-on-surface-variant">{row.original.courseTitle}</span> },
+      { accessorKey: 'videoTitle', header: 'الفيديو', cell: ({ row }) => <span className="text-brand-muted-strong">{row.original.videoTitle || '—'}</span> },
+      { accessorKey: 'courseTitle', header: 'المقرر', cell: ({ row }) => <span className="text-brand-muted-strong">{row.original.courseTitle}</span> },
       {
         accessorKey: 'timeLimitSec',
         header: 'المدة',
-        cell: ({ row }) => <span className="text-on-surface-variant">{row.original.timeLimitSec ? `${Math.round(row.original.timeLimitSec / 60)} د` : '—'}</span>,
+        cell: ({ row }) => <span className="whitespace-nowrap text-brand-muted">{row.original.timeLimitSec ? `${Math.round(row.original.timeLimitSec / 60)} د` : '—'}</span>,
       },
       {
         accessorKey: 'passingScore',
         header: 'النجاح',
-        cell: ({ row }) => <span className="text-on-surface-variant">{row.original.passingScore}%</span>,
+        cell: ({ row }) => <span className="whitespace-nowrap text-brand-muted">{row.original.passingScore}%</span>,
       },
-      { accessorKey: 'totalAttempts', header: 'محاولات', cell: ({ row }) => <span className="text-on-surface-variant">{row.original.totalAttempts}</span> },
+      { accessorKey: 'totalAttempts', header: 'محاولات', cell: ({ row }) => <span className="whitespace-nowrap text-brand-muted">{row.original.totalAttempts}</span> },
       {
         accessorKey: 'pendingGrading',
         header: 'بانتظار التصحيح',
         cell: ({ row }) => (
           row.original.pendingGrading > 0 ? (
-            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+            <span className="rounded-full bg-brand-accent/10 px-2.5 py-1 text-xs font-bold text-brand-accent">
               {row.original.pendingGrading}
             </span>
           ) : (
-            <span className="text-on-surface-variant/70">—</span>
+            <span className="text-brand-muted">—</span>
           )
         ),
       },
-      { accessorKey: 'updatedAt', header: 'آخر تحديث', cell: ({ row }) => <span className="text-on-surface-variant">{formatDate(row.original.updatedAt)}</span> },
+      { accessorKey: 'updatedAt', header: 'آخر تحديث', cell: ({ row }) => <span className="whitespace-nowrap text-brand-muted">{formatDate(row.original.updatedAt)}</span> },
       {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
           <div className="flex justify-end gap-1.5">
-            <button type="button" title="طابور التصحيح" onClick={() => router.push(`/admin/quizzes/quiz/${row.original.slug}/attempts`)} className="rounded-lg border border-emerald-200 p-2 text-emerald-600 transition-colors duration-150 hover:border-emerald-400 hover:bg-emerald-50">
+            <button type="button" title="طابور التصحيح" onClick={() => router.push(`/admin/quizzes/quiz/${row.original.slug}/attempts`)} className="rounded-full border border-brand-primary/25 p-2 text-brand-primary transition-colors duration-150 hover:bg-brand-primary hover:text-white">
               <ClipboardList className="h-3.5 w-3.5" />
             </button>
-            <button type="button" title="الوصول والاستثناءات" onClick={() => router.push(`/admin/quizzes/${row.original.videoSlug}/access`)} className="rounded-lg border border-sky-200 p-2 text-sky-700 transition-colors duration-150 hover:border-sky-400 hover:bg-sky-50">
+            <button type="button" title="الوصول والاستثناءات" onClick={() => router.push(`/admin/quizzes/${row.original.videoSlug}/access`)} className="rounded-full border border-brand-secondary/40 p-2 text-brand-secondary transition-colors duration-150 hover:bg-brand-secondary hover:text-white">
               <Lock className="h-3.5 w-3.5" />
             </button>
-            <button type="button" title="إنشاء / تعديل" onClick={() => router.push(`/admin/quizzes/${row.original.videoSlug}`)} className="rounded-lg border border-outline-variant p-2 text-on-surface-variant transition-colors duration-150 hover:border-primary-color hover:text-[#0057c0]">
+            <button type="button" title="إنشاء / تعديل" onClick={() => router.push(`/admin/quizzes/${row.original.videoSlug}`)} className="rounded-full border border-brand-border p-2 text-brand-muted-strong transition-colors duration-150 hover:bg-brand-hover hover:text-brand-primary">
               <FileQuestion className="h-3.5 w-3.5" />
             </button>
-            <button type="button" title="حذف" onClick={() => setDeleting(row.original)} className="rounded-lg border border-red-200 p-2 text-red-700 transition-colors duration-150 hover:border-red-400 hover:bg-red-50">
+            <button type="button" title="حذف" onClick={() => setDeleting(row.original)} className="rounded-full border border-brand-accent/30 p-2 text-brand-accent transition-colors duration-150 hover:bg-brand-accent hover:text-white">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -150,69 +149,89 @@ export default function AdminQuizzesPage() {
   const rangeLabel = total === 0 ? '0' : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)}`;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-8 sm:py-8">
       <PageTitle title={adminTitle('الاختبارات')} />
+
+      {/* Section header — eyebrow / heading / sub-copy, then the page action. */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-on-surface">الاختبارات</h1>
-          <p className="mt-1 text-sm text-on-surface-variant">جميع الاختبارات المرتبطة بالفيديوهات — {total} اختبار.</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-brand-primary">التقييم والامتحانات</p>
+          <h1 className="mt-1 text-xl font-extrabold text-brand-text">الاختبارات</h1>
+          <p className="mt-1 text-sm text-brand-muted">جميع الاختبارات المرتبطة بالفيديوهات — {total} اختبار.</p>
         </div>
-        <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-primary-color hover:text-[#0057c0]" onClick={() => void load()}>
-          <RefreshCw className="mr-0 h-4 w-4" />
+        <Button
+          variant="outline"
+          className="rounded-full border-brand-border bg-brand-surface px-4 py-2 text-sm font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text"
+          onClick={() => void load()}
+        >
+          <RefreshCw className="h-4 w-4" />
           تحديث
         </Button>
       </div>
 
-      <Card className="border-outline-variant/70 bg-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base text-on-surface/80">بحث</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant/70" />
-                <Input
-                  dir="rtl"
-                  placeholder="ابحث باسم الاختبار أو الفيديو أو المقرر..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-                  className="border-outline-variant bg-white pr-9 text-on-surface placeholder:text-on-surface-variant/70 focus:border-emerald-500/70 focus:ring-2 focus:ring-primary-color/20"
-                />
-              </div>
-            </div>
-            <Button className="bg-primary-color text-white hover:bg-[#0057c0]" onClick={applySearch}>
-              بحث
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filter bar — the design's rounded-full search field + solid pill action. */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative w-full max-w-sm">
+          <Search className="pointer-events-none absolute end-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
+          <Input
+            dir="rtl"
+            placeholder="ابحث باسم الاختبار أو الفيديو أو المقرر..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
+            className="rounded-full border-brand-border bg-brand-surface pe-10 text-brand-text placeholder:text-brand-muted focus:border-brand-primary focus-visible:ring-brand-primary/30"
+          />
+        </div>
+        <Button
+          className="rounded-full bg-brand-primary px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-brand-primary/90"
+          onClick={applySearch}
+        >
+          بحث
+        </Button>
+      </div>
 
-      {error && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm font-semibold text-red-700">{error}</p>}
+      {error && (
+        <p role="alert" className="rounded-xl border border-brand-accent/30 bg-brand-accent/10 px-4 py-3 text-sm font-semibold text-brand-accent">
+          {error}
+        </p>
+      )}
 
-      <DataTable table={table} columns={columns} loading={loading} emptyLabel="لا توجد اختبارات مطابقة." />
+      <DataTable table={table} columns={columns} loading={loading} emptyLabel="لا توجد اختبارات مطابقة." variant="brand" />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-on-surface-variant">
+        <p className="text-xs text-brand-muted">
           عرض {rangeLabel} من {total}
         </p>
         <div className="flex items-center gap-2">
           <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
-            <SelectTrigger className="w-28 border-outline-variant bg-white text-on-surface">
+            <SelectTrigger className="h-9 w-28 rounded-full border-brand-border bg-brand-surface text-xs font-semibold text-brand-muted-strong">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-outline-variant bg-card text-on-surface">
-              {[10, 15, 25, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} / صفحة</SelectItem>)}
+            <SelectContent className="rounded-xl border-brand-border bg-brand-surface text-brand-text">
+              {[10, 15, 25, 50].map((n) => (
+                <SelectItem key={n} value={String(n)} className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">
+                  {n} / صفحة
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-primary-color hover:text-[#0057c0]" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button
+            variant="outline"
+            className="h-9 rounded-full border-brand-border bg-brand-surface px-3.5 text-xs font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text"
+            disabled={page <= 1 || loading}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
             السابق
           </Button>
-          <span className="rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-sm text-on-surface-variant">
+          <span className="rounded-full border border-brand-border bg-brand-surface px-3 py-1.5 text-xs font-semibold text-brand-muted-strong">
             صفحة {page} / {Math.max(1, totalPages)}
           </span>
-          <Button variant="outline" className="border-outline-variant text-on-surface-variant hover:border-primary-color hover:text-[#0057c0]" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+          <Button
+            variant="outline"
+            className="h-9 rounded-full border-brand-border bg-brand-surface px-3.5 text-xs font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text"
+            disabled={page >= totalPages || loading}
+            onClick={() => setPage((p) => p + 1)}
+          >
             التالي
           </Button>
         </div>
@@ -226,6 +245,7 @@ export default function AdminQuizzesPage() {
         busy={deleteBusy}
         onOpenChange={(open) => { if (!open) setDeleting(null); }}
         onConfirm={() => void confirmDelete()}
+        variant="brand"
       />
     </div>
   );

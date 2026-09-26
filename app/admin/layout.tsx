@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { selectAuth } from '@/store/slices/authSlice';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminMobileHeader, AdminMobileNav } from '@/components/admin/MobileShell';
+import { AgentLauncher } from '@/components/admin/AgentLauncher';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -39,6 +40,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <main className="pb-24 lg:pb-0">{children}</main>
         <AdminMobileNav />
       </div>
+      {/* Floating admin agent (FAB + panel), ported from the design's admin.tsx,
+          which mounts it as the last child of the admin shell root. It is
+          fixed-position, so it lives outside the content column. */}
+      <AgentLauncher />
     </div>
   );
 }
