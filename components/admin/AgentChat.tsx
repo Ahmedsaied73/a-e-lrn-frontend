@@ -26,6 +26,14 @@ interface ChatMessage {
     toolName: string;
     expiresAt: string;
     decided: 'APPROVED' | 'REJECTED' | null;
+    /**
+     * The user question that produced this approval, kept so approving can
+     * re-send it. The backend SPENDS an approval on a subsequent turn
+     * (`agent:message { approvalId }`) — it never runs the action as part of the
+     * decision — so without this the grant sat APPROVED and nothing happened
+     * until the admin happened to ask the same thing again.
+     */
+    question: string;
   };
 }
 
@@ -138,6 +146,30 @@ export function AgentChat({ compact = false, onStatusChange }: AgentChatProps = 
   const [now, setNow] = useState(() => Date.now());
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const seqRef = useRef(0);
+  /**
+   * The most recent question the admin asked. An approval is granted against the
+   * turn that raised it, and the backend executes it on a later turn that
+   * carries the approvalId, so the auto-resend needs the original wording. Held
+   * in a ref (not state) because it is read inside a socket callback that must
+   * not be re-created on every keystroke.
+   */
+  const lastUserQuestion = useRef('');
+  /**
+   * Approvals already spent, so a re-render or an impatient double-click cannot
+   * replay the same grant twice. The server rejects a replay anyway, but a
+   * visible failure for a click the admin believes was one click is worse than
+   * doing nothing.
+   */
+  const lastSpentApproval = useRef<number | null>(null);
+  /**
+   * The live thread, mirrored into a ref so the socket callbacks can read the
+   * current messages without being re-created on every render (which would tear
+   * down and re-handshake the socket on each keystroke).
+   */
+  const logRef = useRef<ChatMessage[]>([]);
+  useEffect(() => {
+    logRef.current = log;
+  }, [log]);
 
   const push = useCallback((message: Omit<ChatMessage, 'id'>) => {
     seqRef.current += 1;
@@ -189,6 +221,9 @@ export function AgentChat({ compact = false, onStatusChange }: AgentChatProps = 
               toolName: requested.toolName,
               expiresAt: requested.expiresAt,
               decided: null,
+              // Captured from the thread: the last thing the admin said is the
+              // request this approval answers.
+              question: lastUserQuestion.current,
             },
           });
         }
@@ -204,7 +239,27 @@ export function AgentChat({ compact = false, onStatusChange }: AgentChatProps = 
       endTurn();
       push({ role: 'agent', text: agentErrorMessage(error), tone: 'error' });
     },
-    onDecision: (payload) => markDecision(payload.approvalId, payload.status),
+    onDecision: (payload) => {
+      markDecision(payload.approvalId, payload.status);
+      // The decision only RECORDS the grant; the action runs on a later turn that
+      // carries the approvalId. The resend is driven here rather than in decide()
+      // so it happens only once the server has confirmed APPROVED — spending a
+      // grant the server rejected would fail the replay and read as a broken
+      // button to the admin.
+      if (payload.status === 'APPROVED') {
+        const target = logRef.current.find(
+          (m) => m.approval && m.approval.approvalId === payload.approvalId,
+        );
+        if (target?.approval) {
+          // Guarded against a replay: a second `agent:decision` for the same
+          // grant must not spend it twice.
+          if (lastSpentApproval.current === payload.approvalId) return;
+          lastSpentApproval.current = payload.approvalId;
+          setThinking(false);
+          send(target.approval.question, payload.approvalId);
+        }
+      }
+    },
   });
 
   const pendingApproval = useMemo(
@@ -223,12 +278,15 @@ export function AgentChat({ compact = false, onStatusChange }: AgentChatProps = 
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [log, thinking, progress]);
 
-  function send(text: string) {
+  function send(text: string, approvalId?: number) {
     const msg = text.trim();
     if (!msg || thinking) return;
     // Refused (not buffered) while offline, so nothing is echoed that never left.
-    if (!sendMessage({ question: msg, conversationId })) return;
-    push({ role: 'admin', text: msg });
+    if (!sendMessage({ question: msg, conversationId, approvalId })) return;
+    lastUserQuestion.current = msg;
+    // The auto-resend replays the admin's own request to SPEND an approval, so it
+    // is not echoed as a second bubble — the thread should read as one request.
+    if (approvalId === undefined) push({ role: 'admin', text: msg });
     setInput('');
     setThinking(true);
     setProgress(null);
@@ -237,7 +295,13 @@ export function AgentChat({ compact = false, onStatusChange }: AgentChatProps = 
   function decide(approvalId: number, approved: boolean) {
     if (!submitDecision(approvalId, approved)) {
       push({ role: 'agent', text: SOCKET_ERROR_MESSAGES.HANDLER_FAILED, tone: 'error' });
+      return;
     }
+    // NOTE: approving does NOT resend from here. The backend only RECORDS the
+    // grant on `agent:decide`; the action executes on a LATER turn that carries
+    // the approvalId. The resend therefore lives in `onDecision`, so it can only
+    // fire after the server has actually confirmed APPROVED — spending a grant
+    // the server might still reject would surface as a broken button.
   }
 
   return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@/store/slices/authSlice';
@@ -11,6 +11,10 @@ import { AgentLauncher } from '@/components/admin/AgentLauncher';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, initialized, user } = useSelector(selectAuth);
+  // Design chrome state: the design's admin.tsx owns `open` and passes it to
+  // AdminSidebar. Next.js equivalent is local layout state passed the same way.
+
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     if (!initialized) return;
@@ -33,9 +37,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     // -mt-16 reclaims the global <main> pt-16 so the console fills the viewport.
-    <div className="-mt-16 flex min-h-screen bg-[#f7f9fc]">
-      <AdminSidebar />
+    <div className="-mt-16 flex min-h-dvh bg-[#f7f9fc]" dir="rtl">
+      <AdminSidebar mobileOpen={mobileNavOpen} onCloseMobile={() => setMobileNavOpen(false)} />
       <div className="min-w-0 flex-1 overflow-hidden pt-16 lg:pt-0">
+        {/* Literal design mobile header: sticky top-0 z-30 hamburger + title.
+            The existing safe-area fixed MobileShell header/nav stay mounted
+            below; this row is the design's in-flow chrome, not a replacement. */}
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-brand-border bg-brand-surface px-4 py-3 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="القائمة"
+            aria-expanded={mobileNavOpen}
+            aria-controls="admin-mobile-drawer"
+            className="grid h-9 w-9 place-items-center rounded-lg border border-brand-border text-brand-muted-strong transition-colors hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
+          </button>
+          <span className="text-sm font-extrabold text-brand-text">لوحة التحكم</span>
+        </header>
         <AdminMobileHeader />
         <main className="pb-24 lg:pb-0">{children}</main>
         <AdminMobileNav />

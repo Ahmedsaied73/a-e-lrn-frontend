@@ -5,6 +5,23 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
+  webpack: (config) => {
+    // `ws` — reached through socket.io-client -> engine.io-client, i.e. the admin
+    // agent's live channel — tries to load two OPTIONAL native accelerators,
+    // `bufferutil` and `utf-8-validate`. When npm skips them (they are optional, and
+    // some install policies skip native build scripts), ws's CommonJS path degrades
+    // gracefully on its own — but its ESM wrapper imports them statically, so the
+    // Next bundler fails with "Module not found: Can't resolve 'utf-8-validate'".
+    // `false` tells webpack "this module is optional", which is exactly what npm
+    // already declared. The browser never needs either one: engine.io-client uses the
+    // WebSocket API directly and only reaches for `ws` in the Node transport.
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      bufferutil: false,
+      'utf-8-validate': false,
+    };
+    return config;
+  },
   images: {
     // Next.js image optimisation re-enabled.
     //
