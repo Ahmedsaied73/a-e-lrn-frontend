@@ -1,13 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getCoreRowModel, type ColumnDef, useReactTable } from '@tanstack/react-table';
-import { BookOpen, ChevronDown, ChevronsUpDown, ChevronUp, Pencil, Plus, RefreshCw, Search, Trash2, UserPlus, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Pencil, Plus, Trash2, BookOpen, XCircle } from 'lucide-react';
 
-import { DataTable } from '@/components/admin/DataTable';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
-import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,7 +21,6 @@ import { adminEnrollStudent, adminUnenroll, getAdminEnrollments } from '@/servic
 import { deleteAdminUser, getAdminUsers, registerStudent, updateAdminUser } from '@/services/adminUsersService';
 import type { AdminCourse, AdminEnrollment, AdminStudentInput, AdminUser } from '@/types/admin';
 import type { GradeEnum } from '@/types/api';
-import { cn } from '@/lib/utils';
 import { PageTitle } from '@/components/page-title';
 import { adminTitle } from '@/lib/page-titles';
 
@@ -34,47 +30,40 @@ const GRADE_LABEL: Record<string, string> = {
   THIRD_SECONDARY: 'الثالث الثانوي',
 };
 
-const ROLE_LABEL: Record<string, string> = {
-  STUDENT: 'طالب',
-  ADMIN: 'مشرف',
+const GRADE_REV_MAP: Record<string, GradeEnum> = {
+  'الأول الثانوي': 'FIRST_SECONDARY',
+  'الثاني الثانوي': 'SECOND_SECONDARY',
+  'الثالث الثانوي': 'THIRD_SECONDARY',
 };
 
-function formatDate(value: string | null | undefined): string {
-  if (!value) return '—';
-  return new Date(value).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
+function formatLastSeen(lastLogin: string | null | undefined, createdAt: string): string {
+  const target = lastLogin || createdAt;
+  if (!target) return '—';
+  const d = new Date(target);
+  if (Number.isNaN(d.getTime())) return '—';
+
+  const diffMs = Date.now() - d.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  if (diffHours < 1) return 'الآن';
+  if (diffHours < 24) return `منذ ${diffHours.toLocaleString('ar-EG')} ساعة`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return 'أمس';
+  if (diffDays < 7) return `منذ ${diffDays.toLocaleString('ar-EG')} أيام`;
+  return d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
 }
 
-function SortableHeader({ label, sortKey, sort, onSort }: { label: string; sortKey: string; sort: string; onSort: (key: string) => void }) {
-  const active = sort.replace(/^-/, '') === sortKey;
-  const dir = sort.startsWith('-') ? 'desc' : 'asc';
-  return (
-    <button
-      type="button"
-      onClick={() => onSort(sortKey)}
-      className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold text-brand-muted transition-colors hover:bg-brand-chip hover:text-brand-primary"
-    >
-      {label}
-      {active ? (dir === 'desc' ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />) : <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />}
-    </button>
-  );
-}
-
-export default function StudentsPage() {
+export default function AdminStudentsPage() {
   const [rows, setRows] = useState<AdminUser[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize] = useState(16);
   const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState('');
-  const [role, setRole] = useState<'STUDENT' | 'ADMIN' | 'ALL'>('STUDENT');
-  const [grade, setGrade] = useState<GradeEnum | ''>('');
-  const [sort, setSort] = useState('-createdAt');
+  const [gradeFilter, setGradeFilter] = useState('الكل');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [mobileActions, setMobileActions] = useState<string | null>(null);
-
+  // Edit student dialog
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
@@ -82,7 +71,7 @@ export default function StudentsPage() {
   const [editPhone, setEditPhone] = useState('');
   const [editBusy, setEditBusy] = useState(false);
 
-  // add-student dialog (reuses POST /auth/register — always STUDENT)
+  // Add student dialog
   const [addOpen, setAddOpen] = useState(false);
   const [addForm, setAddForm] = useState<AdminStudentInput>({
     name: '',
@@ -93,654 +82,560 @@ export default function StudentsPage() {
   });
   const [addBusy, setAddBusy] = useState(false);
 
-  // per-student courses dialog (enroll / unenroll)
+  // Delete student dialog
+  const [deleting, setDeleting] = useState<AdminUser | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+
+  // Per-student courses dialog (enroll / unenroll)
   const [courseUser, setCourseUser] = useState<AdminUser | null>(null);
   const [courseRows, setCourseRows] = useState<AdminEnrollment[]>([]);
   const [courseLoading, setCourseLoading] = useState(false);
   const [allCourses, setAllCourses] = useState<AdminCourse[]>([]);
-  const [newCourseId, setNewCourseId] = useState('');
-  const [courseBusy, setCourseBusy] = useState(false);
-
-  const [deleting, setDeleting] = useState<AdminUser | null>(null);
-  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [selectedCourseSlug, setSelectedCourseSlug] = useState('');
+  const [enrollBusy, setEnrollBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      const mappedGrade = gradeFilter !== 'الكل' ? GRADE_REV_MAP[gradeFilter] : undefined;
       const res = await getAdminUsers({
         page,
         limit: pageSize,
-        role: role === 'ALL' ? undefined : role,
-        grade: grade || undefined,
-        search: search || undefined,
-        sort: sort || undefined,
+        role: 'STUDENT',
+        grade: mappedGrade || undefined,
+        search: search.trim() || undefined,
       });
       setRows(res.data);
       setTotal(res.meta.total);
       setTotalPages(res.meta.totalPages);
-      if (page > res.meta.totalPages) setPage(Math.max(1, res.meta.totalPages));
     } catch {
-      setError('تعذر تحميل البيانات. يرجى المحاولة مرة أخرى.');
+      setError('تعذر تحميل بيانات الطلاب.');
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, role, grade, search, sort]);
+  }, [page, pageSize, gradeFilter, search]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const onSortChange = (key: string) => {
-    const active = sort.replace(/^-/, '') === key;
-    setSort(active && sort.startsWith('-') ? key : `-${key}`);
-  };
-
-  const columns = useMemo<ColumnDef<AdminUser>[]>(
-    () => [
-      { accessorKey: 'slug', header: 'الرقم', size: 70 },
-      {
-        accessorKey: 'name',
-        header: () => <SortableHeader label="الاسم" sortKey="name" sort={sort} onSort={onSortChange} />,
-        cell: ({ row }) => <span className="font-bold text-brand-text">{row.original.name || '—'}</span>,
-      },
-      { accessorKey: 'email', header: 'البريد الإلكتروني', cell: ({ row }) => <span dir="ltr" className="text-brand-muted-strong">{row.original.email}</span> },
-      {
-        accessorKey: 'grade',
-        header: 'الصف',
-        cell: ({ row }) => <span className="whitespace-nowrap text-brand-muted">{row.original.grade ? GRADE_LABEL[row.original.grade] ?? row.original.grade : '—'}</span>,
-      },
-      {
-        accessorKey: 'role',
-        header: 'النوع',
-        cell: ({ row }) => (
-          <span className={cn('whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold', row.original.role === 'ADMIN' ? 'bg-brand-primary/10 text-brand-primary' : 'bg-brand-chip text-brand-muted-strong')}>
-            {ROLE_LABEL[row.original.role] ?? row.original.role}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'lastLoginAt',
-        header: 'آخر دخول',
-        cell: ({ row }) => <span className="whitespace-nowrap text-brand-muted">{formatDate(row.original.lastLoginAt)}</span>,
-      },
-      {
-        accessorKey: 'createdAt',
-        header: () => <SortableHeader label="تاريخ الإنشاء" sortKey="createdAt" sort={sort} onSort={onSortChange} />,
-        cell: ({ row }) => <span className="whitespace-nowrap text-brand-muted">{new Date(row.original.createdAt).toLocaleDateString('ar-EG')}</span>,
-      },
-      {
-        id: 'actions',
-        header: '',
-        cell: ({ row }) => (
-          <div className="flex justify-end gap-1.5">
-            <button type="button" title="المقررات" onClick={() => { setCourseUser(row.original); setNewCourseId(''); void loadCourseRows(row.original.slug); }} className="rounded-full border border-brand-primary/25 p-2 text-brand-primary transition-colors duration-150 hover:bg-brand-primary hover:text-white">
-              <BookOpen className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" title="تعديل" onClick={() => { setEditing(row.original); setEditName(row.original.name || ''); setEditEmail(row.original.email); setEditGrade((row.original.grade as GradeEnum | null) ?? ''); setEditPhone(row.original.phoneNumber || ''); }} className="rounded-full border border-brand-border p-2 text-brand-muted-strong transition-colors duration-150 hover:bg-brand-hover hover:text-brand-primary">
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" title="حذف" onClick={() => setDeleting(row.original)} className="rounded-full border border-brand-accent/30 p-2 text-brand-accent transition-colors duration-150 hover:bg-brand-accent hover:text-white">
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ),
-      },
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sort],
-  );
-
-  // Server owns ordering (via `sort`); tanstack only renders rows/core.
-  const table = useReactTable({
-    data: rows,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  const applySearch = () => { setSearch(searchInput.trim()); setPage(1); };
-
-  const saveEdit = async () => {
-    if (!editing) return;
-    setEditBusy(true);
-    try {
-      const updated = await updateAdminUser(editing.slug, {
-        name: editName,
-        email: editEmail,
-        grade: editGrade || undefined,
-        phoneNumber: editPhone,
-      });
-      setRows((current) => current.map((r) => (r.slug === editing.slug ? { ...r, ...updated } : r)));
-      toast.success('تم تحديث بيانات الطالب.');
-      setEditing(null);
-    } catch {
-      toast.error('فشل تحديث البيانات.');
-    } finally {
-      setEditBusy(false);
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addForm.name.trim() || !addForm.email.trim() || !addForm.password.trim() || !addForm.grade) {
+      toast.error('يرجى ملء جميع الحقول المطلوبة.');
+      return;
     }
-  };
-
-  const doAddStudent = async () => {
     setAddBusy(true);
     try {
-      const added = await registerStudent(addForm);
-      toast.success(`تم إنشاء حساب "${added.name || added.email}".`);
+      await registerStudent(addForm);
+      toast.success('تمت إضافة الطالب بنجاح.');
       setAddOpen(false);
-      setAddForm({ name: '', email: '', password: '', phoneNumber: '', grade: 'FIRST_SECONDARY' });
-      setPage(1);
+      setAddForm({
+        name: '',
+        email: '',
+        password: '',
+        phoneNumber: '',
+        grade: 'FIRST_SECONDARY',
+      });
       void load();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'فشل إنشاء الحساب.');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'فشل إضافة الطالب.');
     } finally {
       setAddBusy(false);
     }
   };
 
-  const loadCourseRows = async (userSlug: string) => {
-    setCourseLoading(true);
+  const handleEditOpen = (u: AdminUser) => {
+    setEditing(u);
+    setEditName(u.name);
+    setEditEmail(u.email);
+    setEditGrade((u.grade as GradeEnum) || '');
+    setEditPhone(u.phoneNumber || '');
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    setEditBusy(true);
     try {
-      const [enr, courses] = await Promise.all([
-        getAdminEnrollments({ userSlug, limit: 100 }),
-        getAdminCourses({ limit: 100 }),
-      ]);
-      setCourseRows(enr.data);
-      setAllCourses(courses.data);
-    } catch {
-      toast.error('تعذر تحميل مقررات الطالب.');
+      await updateAdminUser(editing.slug, {
+        name: editName.trim(),
+        email: editEmail.trim(),
+        grade: editGrade || undefined,
+        phoneNumber: editPhone.trim() || undefined,
+      });
+      toast.success('تم تحديث بيانات الطالب.');
+      setEditing(null);
+      void load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'فشل تحديث بيانات الطالب.');
     } finally {
-      setCourseLoading(false);
+      setEditBusy(false);
     }
   };
 
-  const doEnroll = async () => {
-    if (!courseUser || !newCourseId) return;
-    setCourseBusy(true);
-    try {
-      await adminEnrollStudent(courseUser.slug, newCourseId);
-      toast.success('تم تسجيل الطالب في المقرر.');
-      setNewCourseId('');
-      await loadCourseRows(courseUser.slug);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'فشل تسجيل الطالب.');
-    } finally {
-      setCourseBusy(false);
-    }
-  };
-
-  const doUnenroll = async (enrollment: AdminEnrollment) => {
-    setCourseBusy(true);
-    try {
-      await adminUnenroll(enrollment.id);
-      toast.success('تم إلغاء التسجيل.');
-      if (courseUser) await loadCourseRows(courseUser.slug);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'فشل إلغاء التسجيل.');
-    } finally {
-      setCourseBusy(false);
-    }
-  };
-
-  const confirmDelete = async () => {
+  const handleDelete = async () => {
     if (!deleting) return;
     setDeleteBusy(true);
     try {
       await deleteAdminUser(deleting.slug);
-      toast.success('تم حذف الطالب.');
+      toast.success('تم حذف الطالب بنجاح.');
       setDeleting(null);
-      if (rows.length === 1 && page > 1) setPage((p) => p - 1);
-      else void load();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'تعذر حذف الطالب.');
-      setDeleting(null);
+      void load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'فشل حذف الطالب.');
     } finally {
       setDeleteBusy(false);
     }
   };
 
-  const rangeLabel = total === 0 ? '0' : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)}`;
+  const openCourseManager = async (u: AdminUser) => {
+    setCourseUser(u);
+    setCourseLoading(true);
+    setSelectedCourseSlug('');
+    try {
+      const [enrollRes, coursesRes] = await Promise.all([
+        getAdminEnrollments({ userSlug: u.slug, limit: 100 }),
+        getAdminCourses({ limit: 100 }),
+      ]);
+      setCourseRows(enrollRes.data);
+      setAllCourses(coursesRes.data);
+    } catch {
+      toast.error('تعذر تحميل بيانات اشتراكات الطالب.');
+    } finally {
+      setCourseLoading(false);
+    }
+  };
+
+  const handleEnroll = async () => {
+    if (!courseUser || !selectedCourseSlug) return;
+    setEnrollBusy(true);
+    try {
+      await adminEnrollStudent(courseUser.slug, selectedCourseSlug);
+      toast.success('تم تسجيل الطالب في الدورة بنجاح.');
+      setSelectedCourseSlug('');
+      const enrollRes = await getAdminEnrollments({ userSlug: courseUser.slug, limit: 100 });
+      setCourseRows(enrollRes.data);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'فشل تسجيل الطالب.');
+    } finally {
+      setEnrollBusy(false);
+    }
+  };
+
+  const handleUnenroll = async (enrollmentId: number) => {
+    try {
+      await adminUnenroll(enrollmentId);
+      toast.success('تم إلغاء الاشتراك بنجاح.');
+      if (courseUser) {
+        const enrollRes = await getAdminEnrollments({ userSlug: courseUser.slug, limit: 100 });
+        setCourseRows(enrollRes.data);
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'فشل إلغاء الاشتراك.');
+    }
+  };
 
   return (
-    <div className="space-y-6">
+    <>
       <PageTitle title={adminTitle('الطلاب')} />
-      <div className="mx-auto hidden max-w-6xl space-y-5 lg:block">
-        {/* Section header — eyebrow / heading / sub-copy, then the page actions. */}
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
+        {/* Header matching design */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-brand-primary">الحسابات والصلاحيات</p>
-            <h1 className="mt-1 text-xl font-extrabold text-brand-text">الطلاب</h1>
-            <p className="mt-1 text-sm text-brand-muted">إدارة حسابات الطلاب والمشرفين — {total} مستخدم.</p>
+            <h1 className="text-xl font-extrabold text-brand-text">الطلاب</h1>
+            <p className="mt-1 text-sm text-brand-muted">
+              {total.toLocaleString('ar-EG')} طالب مسجل على المنصة
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="rounded-full border-brand-border bg-brand-surface px-4 py-2 text-sm font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text"
-              onClick={() => void load()}
-            >
-              <RefreshCw className="me-1.5 h-4 w-4" />
-              تحديث
-            </Button>
-            <Button
-              className="rounded-full bg-brand-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-brand-primary/90"
-              onClick={() => setAddOpen(true)}
-            >
-              <UserPlus className="me-1.5 h-4 w-4" />
-              إضافة طالب
-            </Button>
-          </div>
-        </div>
-
-        {/* Filter bar — the design's rounded-full search field + solid pill action. */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="relative w-full max-w-sm">
-            <Search className="pointer-events-none absolute end-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
-            <Input
-              dir="rtl"
-              placeholder="ابحث بالاسم أو البريد الإلكتروني..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-              className="rounded-full border-brand-border bg-brand-surface pe-10 text-brand-text placeholder:text-brand-muted focus:border-brand-primary focus-visible:ring-brand-primary/30"
-            />
-          </div>
-          <Select value={role} onValueChange={(v) => { setRole(v as typeof role); setPage(1); }}>
-            <SelectTrigger className="h-10 w-40 rounded-full border-brand-border bg-brand-surface text-sm font-semibold text-brand-muted-strong">
-              <SelectValue placeholder="النوع" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-brand-border bg-brand-surface text-brand-text">
-              <SelectItem value="ALL" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">الكل</SelectItem>
-              <SelectItem value="STUDENT" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">طالب</SelectItem>
-              <SelectItem value="ADMIN" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">مشرف</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={grade} onValueChange={(v) => { setGrade(v === 'ALL' ? '' : (v as GradeEnum)); setPage(1); }}>
-            <SelectTrigger className="h-10 w-40 rounded-full border-brand-border bg-brand-surface text-sm font-semibold text-brand-muted-strong">
-              <SelectValue placeholder="كل الصفوف" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-brand-border bg-brand-surface text-brand-text">
-              <SelectItem value="ALL" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">كل الصفوف</SelectItem>
-              <SelectItem value="FIRST_SECONDARY" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">الأول الثانوي</SelectItem>
-              <SelectItem value="SECOND_SECONDARY" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">الثاني الثانوي</SelectItem>
-              <SelectItem value="THIRD_SECONDARY" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">الثالث الثانوي</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            className="h-10 rounded-full bg-brand-primary px-5 text-sm font-bold text-white transition-colors hover:bg-brand-primary/90"
-            onClick={applySearch}
+          <button
+            type="button"
+            onClick={() => setAddOpen(true)}
+            className="rounded-full bg-brand-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
           >
-            بحث
-          </Button>
+            + إضافة طالب
+          </button>
         </div>
 
+        {/* Search & Grade Filter Buttons matching design */}
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <input
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder="ابحث بالاسم أو البريد…"
+            className="w-full max-w-xs rounded-full border border-brand-border bg-brand-surface px-4 py-2 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-1 focus:ring-brand-primary"
+          />
+          {['الكل', 'الأول الثانوي', 'الثاني الثانوي', 'الثالث الثانوي'].map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => {
+                setGradeFilter(g);
+                setPage(1);
+              }}
+              className={
+                'rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ' +
+                (gradeFilter === g
+                  ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                  : 'border-brand-border bg-brand-surface text-brand-muted-strong hover:bg-brand-hover')
+              }
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+
+        {/* Error alert */}
         {error && (
-          <p role="alert" className="rounded-xl border border-brand-accent/30 bg-brand-accent/10 px-4 py-3 text-sm font-semibold text-brand-accent">
+          <div className="mt-4 rounded-xl border border-brand-accent/30 bg-brand-accent/10 p-4 text-xs font-semibold text-brand-accent">
             {error}
-          </p>
+          </div>
         )}
 
-        <DataTable table={table} columns={columns} loading={loading} emptyLabel="لا يوجد مستخدمون مطابقون." variant="brand" />
+        {/* Student Cards Grid matching design */}
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border border-brand-border bg-brand-surface p-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-11 w-11 rounded-full bg-brand-chip" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-28 bg-brand-chip" />
+                    <Skeleton className="h-3 w-40 bg-brand-chip" />
+                  </div>
+                </div>
+                <Skeleton className="mt-4 h-2 w-full bg-brand-chip" />
+              </div>
+            ))
+          ) : rows.length === 0 ? (
+            <p className="col-span-full py-12 text-center text-sm text-brand-muted">
+              لا يوجد طلاب مطابقين لبحثك.
+            </p>
+          ) : (
+            rows.map((s) => {
+              const gradeText = s.grade ? GRADE_LABEL[s.grade] || s.grade : '—';
+              const lastSeenText = formatLastSeen(s.lastLoginAt, s.createdAt);
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-brand-muted">
-            عرض {rangeLabel} من {total}
-          </p>
-          <div className="flex items-center gap-2">
-            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
-              <SelectTrigger className="h-9 w-28 rounded-full border-brand-border bg-brand-surface text-xs font-semibold text-brand-muted-strong">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border-brand-border bg-brand-surface text-brand-text">
-                {[10, 15, 25, 50].map((n) => (
-                  <SelectItem key={n} value={String(n)} className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">
-                    {n} / صفحة
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              className="h-9 rounded-full border-brand-border bg-brand-surface px-3.5 text-xs font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text"
-              disabled={page <= 1 || loading}
+              return (
+                <div key={s.id} className="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-sm transition hover:border-brand-primary/30">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-secondary/20 text-sm font-bold text-brand-secondary">
+                      {s.name.slice(0, 1) || 'ط'}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-brand-text">{s.name}</p>
+                      <p className="truncate text-xs text-brand-muted">{s.email}</p>
+                      {s.phoneNumber && (
+                        <p className="truncate text-[11px] text-brand-muted-strong" dir="ltr">{s.phoneNumber}</p>
+                      )}
+                    </div>
+                    <span className="whitespace-nowrap rounded-full bg-brand-chip px-2.5 py-1 text-xs font-semibold text-brand-muted-strong">
+                      {gradeText}
+                    </span>
+                  </div>
+
+                  <div className="mt-3.5 flex items-center justify-between border-t border-brand-border pt-3 text-xs text-brand-muted">
+                    <span>آخر ظهور: {lastSeenText}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openCourseManager(s)}
+                        className="inline-flex items-center gap-1 font-bold text-brand-primary hover:underline"
+                        title="إدارة الدورات"
+                      >
+                        <BookOpen className="h-3.5 w-3.5" />
+                        الدورات
+                      </button>
+                      <span className="text-brand-border">•</span>
+                      <button
+                        type="button"
+                        onClick={() => handleEditOpen(s)}
+                        className="font-bold text-brand-muted-strong hover:text-brand-primary hover:underline"
+                        title="تعديل البيانات"
+                      >
+                        تعديل
+                      </button>
+                      <span className="text-brand-border">•</span>
+                      <button
+                        type="button"
+                        onClick={() => setDeleting(s)}
+                        className="font-bold text-brand-accent hover:underline"
+                        title="حذف الطالب"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="rounded-full border border-brand-border bg-brand-surface px-3 py-1.5 text-xs font-semibold text-brand-text disabled:opacity-40"
             >
               السابق
-            </Button>
-            <span className="rounded-full border border-brand-border bg-brand-surface px-3 py-1.5 text-xs font-semibold text-brand-muted-strong">
-              صفحة {page} / {Math.max(1, totalPages)}
+            </button>
+            <span className="text-xs text-brand-muted">
+              صفحة {page} من {totalPages}
             </span>
-            <Button
-              variant="outline"
-              className="h-9 rounded-full border-brand-border bg-brand-surface px-3.5 text-xs font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text"
-              disabled={page >= totalPages || loading}
-              onClick={() => setPage((p) => p + 1)}
+            <button
+              type="button"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="rounded-full border border-brand-border bg-brand-surface px-3 py-1.5 text-xs font-semibold text-brand-text disabled:opacity-40"
             >
               التالي
-            </Button>
+            </button>
           </div>
-        </div>
-      </div>
+        )}
+      </main>
 
-      {/* ── Mobile (lg:hidden) — matches the Academic Precision students frame ── */}
-      <div className="lg:hidden">
-        <div className="space-y-4 px-4 pb-8 pt-1">
-          <div className="flex items-center justify-between">
+      {/* Add Student Dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="sm:max-w-md bg-brand-surface border-brand-border">
+          <DialogHeader>
+            <DialogTitle className="text-brand-text font-bold">إضافة طالب جديد</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddSubmit} className="space-y-4 pt-2">
             <div>
-              <h1 className="text-lg font-extrabold text-brand-text">الطلاب</h1>
-              <p className="mt-0.5 text-xs text-brand-muted">إدارة حسابات الطلاب والمشرفين</p>
+              <Label className="text-xs font-semibold text-brand-text">الاسم الكامل *</Label>
+              <Input
+                value={addForm.name}
+                onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="أحمد محمد"
+                required
+                className="mt-1 bg-brand-bg border-brand-border"
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void load()}
-                aria-label="تحديث"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-brand-border bg-brand-surface text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text active:scale-95"
+            <div>
+              <Label className="text-xs font-semibold text-brand-text">البريد الإلكتروني *</Label>
+              <Input
+                type="email"
+                value={addForm.email}
+                onChange={(e) => setAddForm((f) => ({ ...f, email: e.target.value }))}
+                placeholder="student@example.com"
+                required
+                className="mt-1 bg-brand-bg border-brand-border"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold text-brand-text">كلمة المرور المؤقتة *</Label>
+              <Input
+                type="password"
+                value={addForm.password}
+                onChange={(e) => setAddForm((f) => ({ ...f, password: e.target.value }))}
+                placeholder="••••••••"
+                required
+                className="mt-1 bg-brand-bg border-brand-border"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold text-brand-text">المرحلة الدراسية *</Label>
+              <Select
+                value={addForm.grade}
+                onValueChange={(val) => setAddForm((f) => ({ ...f, grade: val as GradeEnum }))}
               >
-                <RefreshCw className="h-4 w-4" />
+                <SelectTrigger className="mt-1 bg-brand-bg border-brand-border">
+                  <SelectValue placeholder="اختر المرحلة" />
+                </SelectTrigger>
+                <SelectContent className="bg-brand-surface border-brand-border">
+                  <SelectItem value="FIRST_SECONDARY">الأول الثانوي</SelectItem>
+                  <SelectItem value="SECOND_SECONDARY">الثاني الثانوي</SelectItem>
+                  <SelectItem value="THIRD_SECONDARY">الثالث الثانوي</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs font-semibold text-brand-text">رقم الهاتف (اختياري)</Label>
+              <Input
+                type="tel"
+                value={addForm.phoneNumber || ''}
+                onChange={(e) => setAddForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+                placeholder="010XXXXXXXX"
+                className="mt-1 bg-brand-bg border-brand-border"
+                dir="ltr"
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:justify-start pt-2">
+              <button
+                type="submit"
+                disabled={addBusy}
+                className="rounded-full bg-brand-primary px-5 py-2 text-xs font-bold text-white transition hover:bg-brand-primary/90 disabled:opacity-50"
+              >
+                {addBusy ? 'جارٍ الإضافة...' : 'إضافة الطالب'}
               </button>
               <button
                 type="button"
-                onClick={() => setAddOpen(true)}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-brand-primary px-4 text-xs font-bold text-white transition-colors hover:bg-brand-primary/90 active:scale-95"
+                onClick={() => setAddOpen(false)}
+                className="rounded-full border border-brand-border px-4 py-2 text-xs font-semibold text-brand-muted-strong hover:bg-brand-hover"
               >
-                <UserPlus className="h-4 w-4" />
-                إضافة
+                إلغاء
               </button>
-            </div>
-          </div>
-
-          <div className="relative">
-            <Search className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
-            <input
-              dir="rtl"
-              placeholder="ابحث بالاسم أو البريد الإلكتروني..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') applySearch(); }}
-              className="w-full rounded-full border border-brand-border bg-brand-surface py-2.5 ps-3 pe-9 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-primary focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary/30"
-            />
-          </div>
-
-          <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1">
-            {(['ALL', 'STUDENT', 'ADMIN'] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => { setRole(r); setPage(1); }}
-                className={cn(
-                  'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
-                  role === r ? 'bg-brand-primary text-white' : 'border border-brand-border bg-brand-surface text-brand-muted-strong hover:bg-brand-hover',
-                )}
-              >
-                {r === 'ALL' ? 'الكل' : ROLE_LABEL[r]}
-              </button>
-            ))}
-            <span className="h-5 w-px shrink-0 bg-brand-border" aria-hidden="true" />
-            {(['', 'FIRST_SECONDARY', 'SECOND_SECONDARY', 'THIRD_SECONDARY'] as const).map((g) => (
-              <button
-                key={g || 'all-grade'}
-                type="button"
-                onClick={() => { setGrade(g as GradeEnum); setPage(1); }}
-                className={cn(
-                  'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
-                  grade === g ? 'border border-brand-primary bg-brand-primary/10 text-brand-primary' : 'border border-brand-border bg-brand-surface text-brand-muted-strong hover:bg-brand-hover',
-                )}
-              >
-                {g ? GRADE_LABEL[g] : 'كل الصفوف'}
-              </button>
-            ))}
-          </div>
-
-          {error && <p role="alert" className="rounded-2xl border border-brand-accent/30 bg-brand-accent/10 p-3 text-xs font-semibold text-brand-accent">{error}</p>}
-
-          {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-2xl bg-brand-chip" />
-              ))}
-            </div>
-          ) : rows.length === 0 ? (
-            <p className="py-10 text-center text-sm text-brand-muted">لا يوجد مستخدمون مطابقون.</p>
-          ) : (
-            <ul className="divide-y divide-brand-border/70 overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
-              {rows.map((u) => (
-                <li key={u.slug}>
-                  <button
-                    type="button"
-                    onClick={() => setMobileActions(mobileActions === u.slug ? null : u.slug)}
-                    className="flex w-full items-center justify-between gap-2 px-4 py-3 text-start"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-secondary/25 text-sm font-bold text-brand-secondary">
-                        {u.name.trim().charAt(0)}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-brand-text">{u.name || '—'}</p>
-                        <p dir="ltr" className="truncate text-end text-[11px] text-brand-muted-strong">{u.email}</p>
-                        <p className="mt-0.5 text-[10px] text-brand-muted">
-                          {u.grade ? GRADE_LABEL[u.grade] ?? u.grade : '—'}
-                          <span className="mx-1">·</span>
-                          آخر دخول {formatDate(u.lastLoginAt)}
-                        </p>
-                      </div>
-                    </div>
-                    <span className={cn('shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold', u.role === 'ADMIN' ? 'bg-brand-primary/10 text-brand-primary' : 'bg-brand-chip text-brand-muted-strong')}>
-                      {ROLE_LABEL[u.role] ?? u.role}
-                    </span>
-                  </button>
-                  {mobileActions === u.slug && (
-                    <div className="flex items-center gap-2 bg-brand-chip px-4 py-2.5">
-                      <button
-                        type="button"
-                        onClick={() => { setCourseUser(u); setNewCourseId(''); void loadCourseRows(u.slug); }}
-                        className="flex items-center gap-1.5 rounded-full border border-brand-primary/25 px-3 py-1.5 text-[11px] font-semibold text-brand-primary"
-                      >
-                        <BookOpen className="h-3.5 w-3.5" /> المقررات
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setEditing(u); setEditName(u.name || ''); setEditEmail(u.email); setEditGrade((u.grade as GradeEnum | null) ?? ''); setEditPhone(u.phoneNumber || ''); }}
-                        className="flex items-center gap-1.5 rounded-full border border-brand-border px-3 py-1.5 text-[11px] font-semibold text-brand-muted-strong"
-                      >
-                        <Pencil className="h-3.5 w-3.5" /> تعديل
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleting(u)}
-                        className="flex items-center gap-1.5 rounded-full border border-brand-accent/30 px-3 py-1.5 text-[11px] font-semibold text-brand-accent"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> حذف
-                      </button>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <p className="text-[11px] text-brand-muted">عرض {rangeLabel} من {total}</p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={page <= 1 || loading}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="flex h-9 items-center rounded-full border border-brand-border bg-brand-surface px-3 text-xs font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover disabled:opacity-40"
-              >
-                السابق
-              </button>
-              <span className="rounded-full border border-brand-border bg-brand-surface px-3 py-1.5 text-xs font-semibold text-brand-muted-strong">
-                {page} / {Math.max(1, totalPages)}
-              </span>
-              <button
-                type="button"
-                disabled={page >= totalPages || loading}
-                onClick={() => setPage((p) => p + 1)}
-                className="flex h-9 items-center rounded-full border border-brand-border bg-brand-surface px-3 text-xs font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover disabled:opacity-40"
-              >
-                التالي
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <Dialog open={addOpen} onOpenChange={(open) => { if (!open && !addBusy) setAddOpen(false); }}>
-        <DialogContent className="rounded-2xl border-brand-border bg-brand-surface text-brand-text">
-          <DialogHeader>
-            <DialogTitle className="text-brand-text">إضافة طالب جديد</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="add-name" className="text-brand-muted-strong">الاسم *</Label>
-              <Input id="add-name" dir="rtl" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} className="border-brand-border bg-brand-surface text-brand-text placeholder:text-brand-muted focus:border-brand-primary focus-visible:ring-brand-primary/30" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="add-email" className="text-brand-muted-strong">البريد الإلكتروني *</Label>
-              <Input id="add-email" dir="ltr" type="email" value={addForm.email} onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} className="border-brand-border bg-brand-surface text-brand-text placeholder:text-brand-muted focus:border-brand-primary focus-visible:ring-brand-primary/30" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="add-password" className="text-brand-muted-strong">كلمة المرور *</Label>
-              <Input id="add-password" dir="ltr" type="password" value={addForm.password} onChange={(e) => setAddForm({ ...addForm, password: e.target.value })} className="border-brand-border bg-brand-surface text-brand-text placeholder:text-brand-muted focus:border-brand-primary focus-visible:ring-brand-primary/30" />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="add-phone" className="text-brand-muted-strong">رقم الهاتف</Label>
-                <Input id="add-phone" dir="ltr" value={addForm.phoneNumber} onChange={(e) => setAddForm({ ...addForm, phoneNumber: e.target.value })} className="border-brand-border bg-brand-surface text-brand-text placeholder:text-brand-muted focus:border-brand-primary focus-visible:ring-brand-primary/30" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-brand-muted-strong">الصف *</Label>
-                <Select value={addForm.grade} onValueChange={(v) => setAddForm({ ...addForm, grade: v as GradeEnum })}>
-                  <SelectTrigger className="border-brand-border bg-brand-surface text-brand-text">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-brand-border bg-brand-surface text-brand-text">
-                    <SelectItem value="FIRST_SECONDARY" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">الأول الثانوي</SelectItem>
-                    <SelectItem value="SECOND_SECONDARY" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">الثاني الثانوي</SelectItem>
-                    <SelectItem value="THIRD_SECONDARY" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">الثالث الثانوي</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" className="rounded-full border-brand-border bg-brand-surface px-4 py-2.5 text-sm font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text" onClick={() => setAddOpen(false)} disabled={addBusy}>إلغاء</Button>
-            <Button className="rounded-full bg-brand-primary px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-primary/90" onClick={() => void doAddStudent()} disabled={addBusy || !addForm.name.trim() || !addForm.email.trim() || addForm.password.length < 6}>
-              {addBusy ? 'جارٍ الإنشاء...' : 'إنشاء الحساب'}
-            </Button>
-          </DialogFooter>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) setEditing(null); }}>
-        <DialogContent className="rounded-2xl border-brand-border bg-brand-surface text-brand-text">
+      {/* Edit Student Dialog */}
+      <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
+        <DialogContent className="sm:max-w-md bg-brand-surface border-brand-border">
           <DialogHeader>
-            <DialogTitle className="text-brand-text">تعديل بيانات الطالب</DialogTitle>
+            <DialogTitle className="text-brand-text font-bold">تعديل بيانات الطالب</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="edit-name" className="text-brand-muted-strong">الاسم</Label>
-              <Input id="edit-name" dir="rtl" value={editName} onChange={(e) => setEditName(e.target.value)} className="border-brand-border bg-brand-surface text-brand-text placeholder:text-brand-muted focus:border-brand-primary focus-visible:ring-brand-primary/30" />
+          <form onSubmit={handleEditSubmit} className="space-y-4 pt-2">
+            <div>
+              <Label className="text-xs font-semibold text-brand-text">الاسم الكامل</Label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                required
+                className="mt-1 bg-brand-bg border-brand-border"
+              />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="edit-email" className="text-brand-muted-strong">البريد الإلكتروني</Label>
-              <Input id="edit-email" dir="ltr" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="border-brand-border bg-brand-surface text-brand-text placeholder:text-brand-muted focus:border-brand-primary focus-visible:ring-brand-primary/30" />
+            <div>
+              <Label className="text-xs font-semibold text-brand-text">البريد الإلكتروني</Label>
+              <Input
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                required
+                className="mt-1 bg-brand-bg border-brand-border"
+              />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-brand-muted-strong">الصف</Label>
-                <Select value={editGrade || 'ALL'} onValueChange={(v) => setEditGrade(v === 'ALL' ? '' : (v as GradeEnum))}>
-                  <SelectTrigger className="border-brand-border bg-brand-surface text-brand-text">
-                    <SelectValue placeholder="بدون تغيير" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-brand-border bg-brand-surface text-brand-text">
-                    <SelectItem value="ALL" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">بدون تغيير</SelectItem>
-                    <SelectItem value="FIRST_SECONDARY" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">الأول الثانوي</SelectItem>
-                    <SelectItem value="SECOND_SECONDARY" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">الثاني الثانوي</SelectItem>
-                    <SelectItem value="THIRD_SECONDARY" className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">الثالث الثانوي</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="edit-phone" className="text-brand-muted-strong">رقم الهاتف</Label>
-                <Input id="edit-phone" dir="ltr" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="border-brand-border bg-brand-surface text-brand-text placeholder:text-brand-muted focus:border-brand-primary focus-visible:ring-brand-primary/30" />
-              </div>
+            <div>
+              <Label className="text-xs font-semibold text-brand-text">المرحلة الدراسية</Label>
+              <Select
+                value={editGrade}
+                onValueChange={(val) => setEditGrade(val as GradeEnum)}
+              >
+                <SelectTrigger className="mt-1 bg-brand-bg border-brand-border">
+                  <SelectValue placeholder="اختر المرحلة" />
+                </SelectTrigger>
+                <SelectContent className="bg-brand-surface border-brand-border">
+                  <SelectItem value="FIRST_SECONDARY">الأول الثانوي</SelectItem>
+                  <SelectItem value="SECOND_SECONDARY">الثاني الثانوي</SelectItem>
+                  <SelectItem value="THIRD_SECONDARY">الثالث الثانوي</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" className="rounded-full border-brand-border bg-brand-surface px-4 py-2.5 text-sm font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text" onClick={() => setEditing(null)} disabled={editBusy}>إلغاء</Button>
-            <Button className="rounded-full bg-brand-primary px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-primary/90" onClick={() => void saveEdit()} disabled={editBusy || !editName.trim() || !editEmail.trim()}>
-              {editBusy ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
-            </Button>
-          </DialogFooter>
+            <div>
+              <Label className="text-xs font-semibold text-brand-text">رقم الهاتف</Label>
+              <Input
+                type="tel"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                className="mt-1 bg-brand-bg border-brand-border"
+                dir="ltr"
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:justify-start pt-2">
+              <button
+                type="submit"
+                disabled={editBusy}
+                className="rounded-full bg-brand-primary px-5 py-2 text-xs font-bold text-white transition hover:bg-brand-primary/90 disabled:opacity-50"
+              >
+                {editBusy ? 'جارٍ الحفظ...' : 'حفظ التعديلات'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(null)}
+                className="rounded-full border border-brand-border px-4 py-2 text-xs font-semibold text-brand-muted-strong hover:bg-brand-hover"
+              >
+                إلغاء
+              </button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
-      {/* per-student courses */}
-      <Dialog open={courseUser !== null} onOpenChange={(open) => { if (!open && !courseBusy) { setCourseUser(null); setCourseRows([]); } }}>
-        <DialogContent className="rounded-2xl border-brand-border bg-brand-surface text-brand-text">
+      {/* Delete Student Confirmation */}
+      <ConfirmDialog
+        open={Boolean(deleting)}
+        title="تأكيد حذف الطالب"
+        description={`هل أنت متأكد من حذف الطالب "${deleting?.name}"؟ سيتم حذف جميع تسجيلاته ودرجاته نهائياً.`}
+        confirmLabel="حذف الطالب"
+        busy={deleteBusy}
+        variant="brand"
+        onConfirm={handleDelete}
+        onOpenChange={(open) => !open && setDeleting(null)}
+      />
+
+      {/* Per-student courses dialog */}
+      <Dialog open={Boolean(courseUser)} onOpenChange={(open) => !open && setCourseUser(null)}>
+        <DialogContent className="max-w-lg bg-brand-surface border-brand-border">
           <DialogHeader>
-            <DialogTitle className="text-brand-text">مقررات {courseUser?.name || courseUser?.email}</DialogTitle>
+            <DialogTitle className="text-brand-text font-bold">
+              دورات الطالب: {courseUser?.name}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            {courseLoading ? (
-              <p className="py-6 text-center text-sm text-brand-muted">جارٍ التحميل...</p>
-            ) : courseRows.length === 0 ? (
-              <p className="py-4 text-center text-sm text-brand-muted">لا يوجد تسجيل في أي مقرر بعد.</p>
-            ) : (
-              <div className="max-h-64 space-y-2 overflow-y-auto">
-                {courseRows.map((enr) => (
-                  <div key={enr.id} className="flex items-center gap-2 rounded-xl border border-brand-border bg-brand-chip p-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-brand-text">{enr.course.title}</p>
-                      <p className="mt-0.5 text-[11px] text-brand-muted">
-                        التقدم: {Math.round(enr.progress * 100)}% · {enr.isPaid ? 'مدفوع' : 'غير مدفوع'}
-                        {enr.isCompleted ? ' · مكتمل' : ''}
-                      </p>
-                    </div>
-                    <button type="button" title="إلغاء التسجيل" disabled={courseBusy} onClick={() => void doUnenroll(enr)} className="rounded-full border border-brand-accent/30 p-2 text-brand-accent transition-colors duration-150 hover:bg-brand-accent hover:text-white disabled:opacity-40">
-                      <XCircle className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <Label className="text-brand-muted-strong">تسجيل في مقرر</Label>
-              <div className="flex items-center gap-2">
-                <Select value={newCourseId} onValueChange={setNewCourseId}>
-                  <SelectTrigger className="flex-1 border-brand-border bg-brand-surface text-brand-text">
-                    <SelectValue placeholder="اختر المقرر" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72 rounded-xl border-brand-border bg-brand-surface text-brand-text">
-                    {allCourses.map((course) => (
-                      <SelectItem key={course.slug} value={course.slug} className="rounded-lg text-brand-text focus:bg-brand-hover focus:text-brand-text">
-                        {course.title}
+          <div className="space-y-4 pt-2">
+            {/* Quick enroll */}
+            <div className="flex gap-2">
+              <Select value={selectedCourseSlug} onValueChange={setSelectedCourseSlug}>
+                <SelectTrigger className="flex-1 bg-brand-bg border-brand-border">
+                  <SelectValue placeholder="اختر دورة لتسجيل الطالب فيها" />
+                </SelectTrigger>
+                <SelectContent className="bg-brand-surface border-brand-border">
+                  {allCourses
+                    .filter((c) => !courseRows.some((er) => er.course.slug === c.slug))
+                    .map((c) => (
+                      <SelectItem key={c.slug} value={c.slug}>
+                        {c.title}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-                <Button className="rounded-full bg-brand-primary px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-primary/90" onClick={() => void doEnroll()} disabled={courseBusy || !newCourseId}>
-                  <Plus className="me-1.5 h-4 w-4" />
-                  تسجيل
-                </Button>
-              </div>
+                </SelectContent>
+              </Select>
+              <button
+                type="button"
+                disabled={!selectedCourseSlug || enrollBusy}
+                onClick={handleEnroll}
+                className="rounded-full bg-brand-primary px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-primary/90 disabled:opacity-50"
+              >
+                تسجيل
+              </button>
+            </div>
+
+            {/* Current enrollments */}
+            <div className="max-h-60 overflow-y-auto divide-y divide-brand-border rounded-xl border border-brand-border bg-brand-bg p-2">
+              {courseLoading ? (
+                <p className="py-4 text-center text-xs text-brand-muted">جارٍ تحميل الدورات...</p>
+              ) : courseRows.length === 0 ? (
+                <p className="py-4 text-center text-xs text-brand-muted">الطالب غير مسجل في أي دورة حالياً.</p>
+              ) : (
+                courseRows.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between py-2 px-1">
+                    <div>
+                      <p className="text-xs font-bold text-brand-text">{r.course.title}</p>
+                      <p className="text-[11px] text-brand-muted">
+                        التقدم: {r.progress != null ? `${r.progress}%` : '—'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleUnenroll(r.id)}
+                      className="text-xs font-bold text-brand-accent hover:underline"
+                    >
+                      إلغاء الاشتراك
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" className="rounded-full border-brand-border bg-brand-surface px-4 py-2.5 text-sm font-semibold text-brand-muted-strong transition-colors hover:bg-brand-hover hover:text-brand-text" onClick={() => { setCourseUser(null); setCourseRows([]); }} disabled={courseBusy}>إغلاق</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <ConfirmDialog
-        open={deleting !== null}
-        title="حذف الطالب"
-        description={`هل أنت متأكد من حذف "${deleting?.name || deleting?.email}"؟ سيتم حذف تقدمه واشتراكاته ومحاولاته نهائيًا. لا يمكن التراجع عن هذه الخطوة.`}
-        confirmLabel="حذف نهائيًا"
-        busy={deleteBusy}
-        onOpenChange={(open) => { if (!open) setDeleting(null); }}
-        onConfirm={() => void confirmDelete()}
-        variant="brand"
-      />
-    </div>
+    </>
   );
 }
