@@ -7,6 +7,7 @@
  */
 
 import { apiClient } from "@/lib/api-client";
+import { cached, clearShared, sharedKey } from "@/lib/data-cache";
 import type {
   AdminEnrollment,
   AdminEnrollmentFilters,
@@ -32,25 +33,32 @@ function toQuery(filters: AdminEnrollmentFilters): string {
 export async function getAdminEnrollments(
   filters: AdminEnrollmentFilters = {},
 ): Promise<AdminEnrollmentListResponse> {
-  return apiClient.getFull<AdminEnrollmentListResponse>(
-    `/admin/enrollments${toQuery(filters)}`,
-  );
+  const query = toQuery(filters);
+  return cached(sharedKey(`/admin/enrollments${query}`), 60_000, async () => {
+    return apiClient.getFull<AdminEnrollmentListResponse>(
+      `/admin/enrollments${query}`,
+    );
+  });
 }
 
 export async function adminEnrollStudent(
   userSlug: string,
   courseSlug: string,
 ): Promise<{ enrollment: { id: number } }> {
-  return apiClient.post<{ enrollment: { id: number } }>(
+  const result = await apiClient.post<{ enrollment: { id: number } }>(
     `/admin/enrollments`,
     { userSlug, courseSlug },
   );
+  clearShared();
+  return result;
 }
 
 export async function adminUnenroll(
   enrollmentId: number,
 ): Promise<{ success: boolean; message: string }> {
-  return apiClient.delete<{ success: boolean; message: string }>(
+  const result = await apiClient.delete<{ success: boolean; message: string }>(
     `/admin/enrollments/${enrollmentId}`,
   );
+  clearShared();
+  return result;
 }

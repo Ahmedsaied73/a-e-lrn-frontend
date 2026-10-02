@@ -7,7 +7,10 @@ import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
 
 import { useAgentSocket } from '@/hooks/useAgentSocket';
-import type { AgentConnectionStatus, AgentSocketError, AgentSocketErrorCode } from '@/types/agent';
+import { AgentConversationsBar } from '@/components/admin/AgentConversationsBar';
+import { listAgentConversations, getAgentMessages } from '@/services/agentService';
+import { MessageSquare } from 'lucide-react';
+import type { AgentConnectionStatus, AgentConversation, AgentSocketError, AgentSocketErrorCode } from '@/types/agent';
 
 /**
  * A row in the thread. Extends the design's `AgentMessage` from
@@ -191,12 +194,54 @@ export function AgentChat({ compact = false, onStatusChange }: AgentChatProps = 
     );
   }, []);
 
-  const { status, isConnected, sendMessage, submitDecision } = useAgentSocket({
+  const [conversations, setConversations] = useState<AgentConversation[]>([]);
+  const [loadingConversations, setLoadingConversations] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const fetchConversationsList = useCallback(async () => {
+    setLoadingConversations(true);
+    try {
+      const list = await listAgentConversations();
+      setConversations(list);
+    } catch {
+      // fallback silent
+    } finally {
+      setLoadingConversations(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!compact) {
+      void fetchConversationsList();
+    }
+  }, [compact, fetchConversationsList]);
+
+  const { status, isConnected, sendMessage, loadConversations, loadHistory, submitDecision } = useAgentSocket({
     onConnectionChange: (next) => {
       onStatusChange?.(next);
       // A drop mid-turn leaves the server working with nobody listening; stop
       // the dots so the thread does not claim it is still thinking.
-      if (next !== 'connected') endTurn();
+      if (next !== 'connected') {
+        endTurn();
+      } else if (!compact) {
+        loadConversations();
+      }
+    },
+    onConversations: (payload) => {
+      setConversations(payload.conversations);
+      setLoadingConversations(false);
+    },
+    onHistory: (payload) => {
+      const converted: ChatMessage[] = payload.messages
+        .filter((m) => m.role === 'USER' || m.role === 'ASSISTANT' || m.role === 'ERROR')
+        .map((m) => ({
+          id: `hist_${m.id}`,
+          role: m.role === 'USER' ? ('admin' as const) : ('agent' as const),
+          text: m.content || '',
+          tone: m.role === 'ERROR' ? ('error' as const) : undefined,
+        }));
+      setLog(converted.length > 0 ? converted : [agentIntro]);
+      setConversationId(payload.conversationId);
     },
     onProgress: (event) => {
       if (event.type === 'thinking') setProgress(event.status || null);
@@ -211,6 +256,9 @@ export function AgentChat({ compact = false, onStatusChange }: AgentChatProps = 
         // first turn is persisted, and null means "start a fresh one".
         setConversationId(result.conversationId);
         if (result.answer.trim()) push({ role: 'agent', text: result.answer });
+        if (!compact) {
+          loadConversations();
+        }
         const requested = 'approvalRequested' in result.detail ? result.detail.approvalRequested : null;
         if (requested) {
           push({
@@ -262,6 +310,44 @@ export function AgentChat({ compact = false, onStatusChange }: AgentChatProps = 
     },
   });
 
+  const handleSelectConversation = useCallback(
+    async (id: number) => {
+      setConversationId(id);
+      setIsMobileOpen(false);
+      setThinking(true);
+      setProgress('جارٍ تحميل المحادثة…');
+
+      const sent = loadHistory(id);
+      if (!sent) {
+        try {
+          const msgs = await getAgentMessages(id);
+          const converted: ChatMessage[] = msgs
+            .filter((m) => m.role === 'USER' || m.role === 'ASSISTANT' || m.role === 'ERROR')
+            .map((m) => ({
+              id: `hist_${m.id}`,
+              role: m.role === 'USER' ? ('admin' as const) : ('agent' as const),
+              text: m.content || '',
+              tone: m.role === 'ERROR' ? ('error' as const) : undefined,
+            }));
+          setLog(converted.length > 0 ? converted : [agentIntro]);
+        } catch {
+          push({ role: 'agent', text: 'تعذّر تحميل سجل المحادثة.', tone: 'error' });
+        } finally {
+          endTurn();
+        }
+      } else {
+        endTurn();
+      }
+    },
+    [loadHistory, push, endTurn],
+  );
+
+  const handleNewConversation = useCallback(() => {
+    setConversationId(null);
+    setLog([agentIntro]);
+    setIsMobileOpen(false);
+  }, []);
+
   const pendingApproval = useMemo(
     () => log.find((m) => m.approval && m.approval.decided === null) ?? null,
     [log],
@@ -304,8 +390,33 @@ export function AgentChat({ compact = false, onStatusChange }: AgentChatProps = 
     // the server might still reject would surface as a broken button.
   }
 
-  return (
-    <div className="flex h-full flex-col">
+  const chatContent = (
+    <div className="flex h-full flex-col min-w-0 flex-1">
+      {!compact && (
+        <div className="flex items-center justify-between border-b border-brand-border bg-brand-bg/40 px-4 py-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={() => setIsMobileOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-brand-border bg-brand-surface px-2.5 py-1 text-xs font-bold text-brand-text hover:bg-brand-chip lg:hidden shrink-0"
+            >
+              <MessageSquare className="h-3.5 w-3.5 text-brand-primary" />
+              <span>المحادثات ({conversations.length})</span>
+            </button>
+            <span className="truncate text-xs font-bold text-brand-text">
+              {conversationId
+                ? conversations.find((c) => c.id === conversationId)?.title || `محادثة #${conversationId}`
+                : 'محادثة جديدة'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={'inline-block h-2 w-2 rounded-full ' + (isConnected ? 'bg-emerald-500' : 'bg-amber-500')} />
+            <span className="hidden text-[11px] text-brand-muted sm:inline">
+              {isConnected ? 'متصل' : 'جارٍ الاتصال'}
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
         {log.map((m) => (
           <div key={m.id} className={"flex " + (m.role === 'admin' ? 'justify-end' : 'justify-start')}>
@@ -412,6 +523,25 @@ export function AgentChat({ compact = false, onStatusChange }: AgentChatProps = 
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="-scale-x-100"><path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
       </form>
+    </div>
+  );
+
+  if (compact) {
+    return chatContent;
+  }
+
+  return (
+    <div className="flex h-full w-full overflow-hidden bg-brand-surface">
+      <AgentConversationsBar
+        conversations={conversations}
+        activeId={conversationId}
+        loading={loadingConversations}
+        onSelectConversation={handleSelectConversation}
+        onNewConversation={handleNewConversation}
+        isOpenMobile={isMobileOpen}
+        onCloseMobile={() => setIsMobileOpen(false)}
+      />
+      {chatContent}
     </div>
   );
 }

@@ -8,6 +8,7 @@
  */
 
 import { apiClient } from '@/lib/api-client';
+import { cached, clearShared, sharedKey } from '@/lib/data-cache';
 import type {
   AdminStudentInput,
   AdminUser,
@@ -28,11 +29,15 @@ function toQuery(filters: AdminUserFilters): string {
 }
 
 export async function getAdminUsers(filters: AdminUserFilters = {}): Promise<AdminUserListResponse> {
-  return apiClient.getFull<AdminUserListResponse>(`/user${toQuery(filters)}`);
+  const query = toQuery(filters);
+  return cached(sharedKey(`/admin/users${query}`), 60_000, async () => {
+    return apiClient.getFull<AdminUserListResponse>(`/user${query}`);
+  });
 }
 
 export async function registerStudent(body: AdminStudentInput): Promise<AdminUser> {
   const res = await apiClient.post<{ user: AdminUser }>('/auth/register', body);
+  clearShared();
   return res.user;
 }
 
@@ -40,9 +45,13 @@ export async function updateAdminUser(
   userSlug: string,
   body: { name?: string; email?: string; grade?: string; phoneNumber?: string },
 ): Promise<AdminUser> {
-  return apiClient.put<AdminUser>(`/user/${userSlug}`, body);
+  const updated = await apiClient.put<AdminUser>(`/user/${userSlug}`, body);
+  clearShared();
+  return updated;
 }
 
 export async function deleteAdminUser(userSlug: string): Promise<{ success: boolean; message: string }> {
-  return apiClient.delete<{ success: boolean; message: string }>(`/user/${userSlug}`);
+  const result = await apiClient.delete<{ success: boolean; message: string }>(`/user/${userSlug}`);
+  clearShared();
+  return result;
 }

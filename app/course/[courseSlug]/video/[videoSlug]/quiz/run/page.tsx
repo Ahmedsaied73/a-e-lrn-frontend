@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import QuizRunner from "@/components/quiz/QuizRunner";
 import type { StartQuizData } from "@/types/quiz";
 import { AppDispatch } from "@/store/store";
-import { selectActiveAttempt, startQuizAttempt } from "@/store/slices/quizSlice";
+import { selectActiveAttempt, selectSubmitResult, startQuizAttempt } from "@/store/slices/quizSlice";
 import { Loader2 } from "lucide-react";
 import { PageTitle } from "@/components/page-title";
 import { withTeacher } from "@/lib/site-config";
@@ -27,17 +27,26 @@ function getErrorMessage(error: unknown, fallback: string): string {
 export default function QuizRunPage({ params }: PageProps) {
   const dispatch = useDispatch<AppDispatch>();
   const activeAttempt = useSelector(selectActiveAttempt);
+  const submitResult = useSelector(selectSubmitResult);
   const [startData, setStartData] = useState<StartQuizData | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
+    // If we already loaded/started an attempt on this mount, or if a submission occurred, do not run again
+    if (hasLoadedRef.current || submitResult) return;
+    hasLoadedRef.current = true;
     let cancelled = false;
 
     const loadAttempt = async () => {
       setErrorMsg(null);
 
       const existingAttempt = activeAttempt;
-      if (existingAttempt && String(existingAttempt.quiz.videoSlug) === String(params.videoSlug)) {
+      if (
+        existingAttempt &&
+        String(existingAttempt.quiz.videoSlug) === String(params.videoSlug) &&
+        existingAttempt.status === "IN_PROGRESS"
+      ) {
         setStartData(existingAttempt);
         return;
       }
@@ -54,7 +63,10 @@ export default function QuizRunPage({ params }: PageProps) {
     return () => {
       cancelled = true;
     };
-  }, [activeAttempt, dispatch, params.videoSlug]);
+    // activeAttempt and submitResult are intentionally omitted so completing a quiz
+    // and clearing activeAttempt does not inadvertently start a new attempt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, params.videoSlug]);
 
   if (!startData && !errorMsg) {
     return (

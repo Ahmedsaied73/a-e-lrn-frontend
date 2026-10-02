@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api-client";
+import { cached, clearShared, sharedKey } from "@/lib/data-cache";
 import type {
   AdminGlobalAttempt,
   AdminGlobalAttemptFilters,
@@ -19,7 +20,9 @@ export async function upsertQuiz(
   videoSlug: string,
   input: UpsertQuizInput,
 ): Promise<StudentSafeQuiz> {
-  return apiClient.post<StudentSafeQuiz>(`/quizzes/videos/${videoSlug}`, input);
+  const result = await apiClient.post<StudentSafeQuiz>(`/quizzes/videos/${videoSlug}`, input);
+  clearShared();
+  return result;
 }
 
 export async function listQuizAttempts(
@@ -39,11 +42,14 @@ export async function gradeQuizAttempt(
   attemptId: number | string,
   input: GradeAttemptInput,
 ): Promise<AdminQuizAttempt> {
-  return apiClient.put<AdminQuizAttempt>(`/quizzes/attempts/${attemptId}/grade`, input);
+  const result = await apiClient.put<AdminQuizAttempt>(`/quizzes/attempts/${attemptId}/grade`, input);
+  clearShared();
+  return result;
 }
 
 export async function resetQuizAttempt(attemptId: number | string): Promise<void> {
   await apiClient.post(`/quizzes/attempts/${attemptId}/reset`, {});
+  clearShared();
 }
 
 export async function listAllAdminQuizzes(
@@ -55,9 +61,10 @@ export async function listAllAdminQuizzes(
   if (filters.search && filters.search.trim())
     params.set("search", filters.search.trim());
   const qs = params.toString();
-  return apiClient.getFull<AdminQuizListResponse>(
-    `/admin/quizzes${qs ? `?${qs}` : ""}`,
-  );
+  const path = `/admin/quizzes${qs ? `?${qs}` : ""}`;
+  return cached(sharedKey(path), 60_000, async () => {
+    return apiClient.getFull<AdminQuizListResponse>(path);
+  });
 }
 
 export async function listAllAdminAttempts(
@@ -70,17 +77,20 @@ export async function listAllAdminAttempts(
   if (filters.search && filters.search.trim())
     params.set("search", filters.search.trim());
   const qs = params.toString();
-  return apiClient.getFull<AdminGlobalAttemptListResponse>(
-    `/admin/attempts${qs ? `?${qs}` : ""}`,
-  );
+  const path = `/admin/attempts${qs ? `?${qs}` : ""}`;
+  return cached(sharedKey(path), 60_000, async () => {
+    return apiClient.getFull<AdminGlobalAttemptListResponse>(path);
+  });
 }
 
 export async function deleteQuiz(
   quizSlug: string,
 ): Promise<{ success: boolean; message: string }> {
-  return apiClient.delete<{ success: boolean; message: string }>(
+  const result = await apiClient.delete<{ success: boolean; message: string }>(
     `/quizzes/${quizSlug}`,
   );
+  clearShared();
+  return result;
 }
 
 /**

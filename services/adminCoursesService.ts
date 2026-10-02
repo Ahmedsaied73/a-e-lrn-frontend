@@ -8,7 +8,7 @@
  */
 
 import { apiClient } from '@/lib/api-client';
-import { clearShared } from '@/lib/data-cache';
+import { cached, clearShared, sharedKey } from '@/lib/data-cache';
 import type {
   AdminCourse,
   AdminCourseFilters,
@@ -26,7 +26,10 @@ function toQuery(filters: AdminCourseFilters): string {
 }
 
 export async function getAdminCourses(filters: AdminCourseFilters = {}): Promise<AdminCourseListResponse> {
-  return apiClient.getFull<AdminCourseListResponse>(`/courses${toQuery(filters)}`);
+  const query = toQuery(filters);
+  return cached(sharedKey(`/admin/courses${query}`), 180_000, async () => {
+    return apiClient.getFull<AdminCourseListResponse>(`/courses${query}`);
+  });
 }
 
 export async function createAdminCourse(body: AdminCourseInput): Promise<AdminCourse> {

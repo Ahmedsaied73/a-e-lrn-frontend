@@ -113,10 +113,10 @@ function extractData<T>(raw: unknown): T {
  * Response: `{ success, data: CourseListItem[], meta }` (new envelope)
  */
 export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage> {
-  // Shared 90s cache: the catalog is identical for every visitor. Matches the
+  // Shared 180s cache: the catalog is identical for every visitor. Matches the
   // backend courses-list TTL; admin course mutations clear it (see
   // adminCoursesService) so the console never serves a stale catalog.
-  return cached(sharedKey(`/courses?page=${page}&limit=${limit}`), 90_000, async () => {
+  return cached(sharedKey(`/courses?page=${page}&limit=${limit}`), 180_000, async () => {
     const raw = await apiClient.get<{ success: boolean; data: CourseListItem[]; meta: PaginationMeta } | CourseListItem[]>(
       `/courses?page=${page}&limit=${limit}`,
     );
@@ -145,10 +145,10 @@ export async function fetchAllCourses(page = 1, limit = 20): Promise<CoursesPage
  * requests to initialize.
  */
 export async function fetchCourseBySlug(courseSlug: string): Promise<CourseDetail> {
-  // User-scoped 60s cache: the aggregate embeds the viewer's own enrollment +
+  // User-scoped 120s cache: the aggregate embeds the viewer's own enrollment +
   // progress. Matches the backend video-list TTL; progress/enrollment flips
   // drop this key explicitly (see markVideoCompleted / enrollInCourse).
-  return cached(userKey(`/courses/${courseSlug}`), 60_000, async () => {
+  return cached(userKey(`/courses/${courseSlug}`), 120_000, async () => {
     const raw = await apiClient.get<unknown>(`/courses/${courseSlug}`);
     const payload = extractData<{
       course: CourseListItem & Record<string, unknown>;
@@ -202,10 +202,10 @@ export async function enrollInCourse(courseSlug: string): Promise<EnrollmentResu
  * — this unwraps the nested course objects into a flat CourseListItem[].
  */
 export async function getEnrolledCourses(): Promise<CourseListItem[]> {
-  // User-scoped 30s cache: per-viewer list rendered on three profile pages.
+  // User-scoped 60s cache: per-viewer list rendered on three profile pages.
   // Short TTL because enroll/unenroll flips it; enrollInCourse also drops it
   // explicitly, so the post-enroll profile refresh is exact, not TTL-bound.
-  return cached(userKey('/courses/enrolled'), 30_000, async () => {
+  return cached(userKey('/courses/enrolled'), 60_000, async () => {
     const raw = await apiClient.get<unknown>('/courses/enrolled');
     const data = extractData<EnrolledCourseEntry[]>(raw);
 
