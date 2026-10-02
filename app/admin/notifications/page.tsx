@@ -88,43 +88,43 @@ export default function AdminNotificationsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-8 space-y-6">
       <PageTitle title={adminTitle('إشعارات الطلاب')} />
       <div>
-        <h1 className="text-2xl font-bold text-on-surface">إشعارات الطلاب</h1>
-        <p className="mt-1 text-sm text-on-surface-variant">إرسال إشعار داخل المنصة لشريحة من الطلاب.</p>
+        <h1 className="text-xl font-extrabold text-brand-text">إشعارات الطلاب</h1>
+        <p className="mt-1 text-sm text-brand-muted">إرسال إشعار داخل المنصة لشريحة من الطلاب.</p>
       </div>
 
-      <form onSubmit={(e) => void handleSend(e)} className="rounded-xl border border-outline-variant/70 bg-card p-6">
+      <form onSubmit={(e) => void handleSend(e)} className="rounded-2xl border border-brand-border bg-brand-surface p-6">
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">العنوان *
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثال: تم نشر محاضرة جديدة" className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
+          <label className="sm:col-span-2 text-sm font-semibold text-brand-text">العنوان *
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثال: تم نشر محاضرة جديدة" className="mt-1 w-full rounded-xl border border-brand-border bg-brand-surface px-4 py-2 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-primary outline-none" />
           </label>
-          <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">الرسالة (اختياري)
-            <textarea value={body} onChange={(e) => setBody(e.target.value)} className="mt-1 min-h-24 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
+          <label className="sm:col-span-2 text-sm font-semibold text-brand-text">الرسالة (اختياري)
+            <textarea value={body} onChange={(e) => setBody(e.target.value)} className="mt-1 min-h-24 w-full rounded-xl border border-brand-border bg-brand-surface px-4 py-2 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-primary outline-none" />
           </label>
-          <label className="sm:col-span-2 text-sm font-semibold text-on-surface/80">رابط داخلي (اختياري، مثال: /course/abc123def456)
-            <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} dir="ltr" placeholder="/course/abc123def456" className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20" />
+          <label className="sm:col-span-2 text-sm font-semibold text-brand-text">رابط داخلي (اختياري، مثال: /course/abc123def456)
+            <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} dir="ltr" placeholder="/course/abc123def456" className="mt-1 w-full rounded-xl border border-brand-border bg-brand-surface px-4 py-2 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-primary outline-none" />
           </label>
-          <div className="sm:col-span-2 text-sm font-semibold text-on-surface/80">الجمهور
-            <div className="mt-1 flex flex-wrap gap-4 text-sm font-normal">
-              <label className="inline-flex items-center gap-1.5">
-                <input type="radio" name="audience" checked={audienceKind === "all"} onChange={() => setAudienceKind("all")} className="h-4 w-4 accent-primary-color" />
+          <div className="sm:col-span-2 text-sm font-semibold text-brand-text">الجمهور
+            <div className="mt-1 flex flex-wrap gap-4 text-sm font-normal text-brand-muted-strong">
+              <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="audience" checked={audienceKind === "all"} onChange={() => setAudienceKind("all")} className="h-4 w-4 accent-brand-primary" />
                 كل الطلاب
               </label>
-              <label className="inline-flex items-center gap-1.5">
-                <input type="radio" name="audience" checked={audienceKind === "course"} onChange={() => setAudienceKind("course")} className="h-4 w-4 accent-primary-color" />
+              <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="audience" checked={audienceKind === "course"} onChange={() => setAudienceKind("course")} className="h-4 w-4 accent-brand-primary" />
                 دورة محددة
               </label>
-              <label className="inline-flex items-center gap-1.5">
-                <input type="radio" name="audience" checked={audienceKind === "grade"} onChange={() => setAudienceKind("grade")} className="h-4 w-4 accent-primary-color" />
+              <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="audience" checked={audienceKind === "grade"} onChange={() => setAudienceKind("grade")} className="h-4 w-4 accent-brand-primary" />
                 صف دراسي
               </label>
             </div>
           </div>
           {audienceKind === "course" && (
-            <label className="text-sm font-semibold text-on-surface/80">الدورة
-              <select value={courseSlug} onChange={(e) => setCourseSlug(e.target.value)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20">
+            <label className="text-sm font-semibold text-brand-text">الدورة
+              <select value={courseSlug} onChange={(e) => setCourseSlug(e.target.value)} className="mt-1 w-full rounded-xl border border-brand-border bg-brand-surface px-4 py-2 text-sm text-brand-text focus:border-brand-primary outline-none">
                 <option value="">اختر الدورة...</option>
                 {courses.map((c) => (
                   <option key={c.slug} value={c.slug}>{c.title}</option>
@@ -133,8 +133,8 @@ export default function AdminNotificationsPage() {
             </label>
           )}
           {audienceKind === "grade" && (
-            <label className="text-sm font-semibold text-on-surface/80">الصف
-              <select value={grade} onChange={(e) => setGrade(e.target.value as GradeEnum)} className="mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm text-on-surface focus:border-primary-color focus:outline-hidden focus:ring-2 focus:ring-primary-color/20">
+            <label className="text-sm font-semibold text-brand-text">الصف
+              <select value={grade} onChange={(e) => setGrade(e.target.value as GradeEnum)} className="mt-1 w-full rounded-xl border border-brand-border bg-brand-surface px-4 py-2 text-sm text-brand-text focus:border-brand-primary outline-none">
                 {GRADES.map((g) => (
                   <option key={g.value} value={g.value}>{g.label}</option>
                 ))}
@@ -143,13 +143,13 @@ export default function AdminNotificationsPage() {
           )}
         </div>
 
-        {error && <p role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
-        {result && <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">{result}</p>}
+        {error && <p role="alert" className="mt-4 rounded-xl border border-brand-accent/30 bg-brand-accent/10 p-3 text-sm font-semibold text-brand-accent">{error}</p>}
+        {result && <p className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-600 dark:text-emerald-400">{result}</p>}
 
         <button
           type="submit"
           disabled={busy || !title.trim()}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-color px-5 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0057c0] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-5 inline-flex items-center gap-2 rounded-full bg-brand-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Send className="h-4 w-4" />
           {busy ? "جاري الإرسال..." : "إرسال الإشعار"}
