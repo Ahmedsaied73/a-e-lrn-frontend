@@ -10,7 +10,8 @@ import { AppDispatch } from "@/store/store";
 import { addNotification } from "@/store/slices/uiSlice";
 import { fetchBunnyPlaybackUrl, BunnyVideoError, fetchBunnyCourseVideos, formatBunnyDuration } from '@/services/bunnyVideoService';
 import type { BunnyPlaybackData, BunnyVideo } from '@/types/bunny';
-import type { QuizGate403 } from '@/types/quiz';
+import type { QuizGate403, QuizMeta } from '@/types/quiz';
+import { getQuizMeta } from '@/services/quizService';
 import { PageTitle } from '@/components/page-title';
 import { videoTitle as composeVideoTitle } from '@/lib/page-titles';
 
@@ -37,6 +38,7 @@ export default function VideoPage({ params }: { params: { courseSlug: string; vi
   const [isNotEnrolled, setIsNotEnrolled] = useState(false);
   const [isNotReady, setIsNotReady] = useState(false);
   const [quizGate, setQuizGate] = useState<QuizGate403 | null>(null);
+  const [quizMeta, setQuizMeta] = useState<QuizMeta | null>(null);
 
   // Video completion states
   const [completingVideo, setCompletingVideo] = useState(false);
@@ -53,6 +55,7 @@ export default function VideoPage({ params }: { params: { courseSlug: string; vi
       setIsNotEnrolled(false);
       setIsNotReady(false);
       setQuizGate(null);
+      setQuizMeta(null);
       setBunnyVideo(null);
       setPlaybackData(null);
 
@@ -151,6 +154,19 @@ export default function VideoPage({ params }: { params: { courseSlug: string; vi
 
     checkVideoCompletion();
   }, [bunnyVideo]);
+
+  useEffect(() => {
+    if (!bunnyVideo?.slug) return;
+    let mounted = true;
+    getQuizMeta(bunnyVideo.slug)
+      .then((data) => {
+        if (mounted) setQuizMeta(data);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, [bunnyVideo?.slug]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 4. Handle Video Completion
@@ -316,6 +332,8 @@ export default function VideoPage({ params }: { params: { courseSlug: string; vi
     : null;
   const canTrackProgress = bunnyVideo != null && !isNotEnrolled && !quizGate;
   const quizHref = bunnyVideo ? `/course/${params.courseSlug}/video/${bunnyVideo.slug}/quiz` : undefined;
+  const isQuizPassed = !!(quizMeta?.exists && quizMeta.passed);
+  const isQuizFailed = !!(quizMeta?.exists && quizMeta.attempted && !quizMeta.passed && (quizMeta.bestScore !== null || !quizMeta.inProgressAttempt));
 
   return (
     <div className="w-full">
@@ -402,12 +420,27 @@ export default function VideoPage({ params }: { params: { courseSlug: string; vi
                     href={quizHref}
                     className="flex items-start gap-3 rounded-lg px-2.5 py-3 transition hover:bg-brand-bg"
                   >
-                    <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-chip text-xs font-bold text-brand-muted">
-                      ٢
+                    <span
+                      className={
+                        "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold " +
+                        (isQuizPassed
+                          ? "bg-emerald-100 text-emerald-600"
+                          : isQuizFailed
+                            ? "bg-red-100 text-red-600"
+                            : "bg-brand-chip text-brand-muted")
+                      }
+                    >
+                      {isQuizPassed ? "✓" : isQuizFailed ? "✕" : "٢"}
                     </span>
                     <span className="flex-1">
                       <span className="block text-sm font-semibold text-brand-text">الاختبار القصير</span>
-                      <span className="mt-0.5 block text-xs text-brand-muted">انتقل إلى صفحة الاختبار للبدء</span>
+                      <span className="mt-0.5 block text-xs text-brand-muted">
+                        {isQuizPassed
+                          ? `تم الاجتياز بنجاح${quizMeta?.bestScore != null ? ` · النتيجة: ${quizMeta.bestScore}٪` : ""}`
+                          : isQuizFailed
+                            ? `لم يتم الاجتياز${quizMeta?.bestScore != null ? ` · النتيجة: ${quizMeta.bestScore}٪` : ""}`
+                            : "انتقل إلى صفحة الاختبار للبدء"}
+                      </span>
                     </span>
                   </Link>
                 ) : (
