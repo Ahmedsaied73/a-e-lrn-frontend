@@ -26,12 +26,12 @@ function formatCount(value: number): string {
 
 function HighlightSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+    <div className="overflow-hidden rounded-xl sm:rounded-2xl border border-brand-border bg-brand-surface shadow-xs">
       <div className="h-1 w-full bg-brand-chip" aria-hidden="true" />
-      <div className="p-4 sm:p-5">
-        <Skeleton className="h-3 w-24 bg-brand-chip" />
-        <Skeleton className="mt-2.5 h-8 w-20 bg-brand-chip" />
-        <Skeleton className="mt-2 h-3 w-32 bg-brand-chip" />
+      <div className="p-3 sm:p-5">
+        <Skeleton className="h-3 w-20 sm:w-24 bg-brand-chip" />
+        <Skeleton className="mt-2 sm:mt-2.5 h-6 sm:h-8 w-16 sm:w-20 bg-brand-chip" />
+        <Skeleton className="mt-1.5 sm:mt-2 h-2.5 sm:h-3 w-28 sm:w-32 bg-brand-chip" />
       </div>
     </div>
   );
@@ -85,7 +85,7 @@ export default function AdminOverviewPage() {
           <p className="mt-1.5 text-sm text-brand-muted">دي حالة منصتك النهاردة — بالبنط العريض، مفيش حاجة محتاجة قلق.</p>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3" aria-busy={loading} aria-live="polite">
+        <div className="mt-4 sm:mt-6 grid gap-2.5 sm:gap-4 sm:grid-cols-3" aria-busy={loading} aria-live="polite">
           {loading || !data ? (
             <>
               <HighlightSkeleton />
@@ -94,28 +94,28 @@ export default function AdminOverviewPage() {
             </>
           ) : (
             <>
-              <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+              <div className="overflow-hidden rounded-xl sm:rounded-2xl border border-brand-border bg-brand-surface shadow-xs">
                 <div className="h-1 w-full bg-emerald-500" aria-hidden="true" />
-                <div className="p-4 sm:p-5">
-                  <p className="text-xs font-semibold text-brand-muted">طلابك بيكبروا</p>
-                  <p className="mt-1.5 text-2xl font-extrabold sm:text-3xl tabular-nums text-brand-text">
+                <div className="p-3 sm:p-5">
+                  <p className="text-[11px] sm:text-xs font-semibold text-brand-muted">طلابك بيكبروا</p>
+                  <p className="mt-1 sm:mt-1.5 text-xl font-extrabold sm:text-3xl tabular-nums text-brand-text">
                     {formatCount(data.counts.students)}
                   </p>
-                  <p className="mt-2 text-xs leading-relaxed text-brand-muted-strong">
+                  <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-xs leading-relaxed text-brand-muted-strong">
                     {data.counts.newStudentsLast7d > 0
                       ? `+${formatCount(data.counts.newStudentsLast7d)} طالب جديد الأسبوع ده`
                       : 'إجمالي الطلاب المسجلين في المنصة'}
                   </p>
                 </div>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+              <div className="overflow-hidden rounded-xl sm:rounded-2xl border border-brand-border bg-brand-surface shadow-xs">
                 <div className="h-1 w-full bg-emerald-500" aria-hidden="true" />
-                <div className="p-4 sm:p-5">
-                  <p className="text-xs font-semibold text-brand-muted">الفيديوهات الجاهزة للعرض</p>
-                  <p className="mt-1.5 text-2xl font-extrabold sm:text-3xl tabular-nums text-brand-text">
+                <div className="p-3 sm:p-5">
+                  <p className="text-[11px] sm:text-xs font-semibold text-brand-muted">الفيديوهات الجاهزة للعرض</p>
+                  <p className="mt-1 sm:mt-1.5 text-xl font-extrabold sm:text-3xl tabular-nums text-brand-text">
                     {formatCount(readyVideos)}/{formatCount(totalVideos)}
                   </p>
-                  <p className="mt-2 text-xs leading-relaxed text-brand-muted-strong">
+                  <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-xs leading-relaxed text-brand-muted-strong">
                     {failedCount > 0
                       ? `${formatCount(failedCount)} فيديو فشل — محتاج إعادة الرفع`
                       : totalVideos > 0 && readyVideos === totalVideos
@@ -124,14 +124,14 @@ export default function AdminOverviewPage() {
                   </p>
                 </div>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+              <div className="overflow-hidden rounded-xl sm:rounded-2xl border border-brand-border bg-brand-surface shadow-xs">
                 <div className="h-1 w-full bg-brand-accent" aria-hidden="true" />
-                <div className="p-4 sm:p-5">
-                  <p className="text-xs font-semibold text-brand-muted">بانتظار تصحيحك</p>
-                  <p className="mt-1.5 text-2xl font-extrabold sm:text-3xl tabular-nums text-brand-text">
+                <div className="p-3 sm:p-5">
+                  <p className="text-[11px] sm:text-xs font-semibold text-brand-muted">بانتظار تصحيحك</p>
+                  <p className="mt-1 sm:mt-1.5 text-xl font-extrabold sm:text-3xl tabular-nums text-brand-text">
                     {formatCount(gradingCount)} محاولات
                   </p>
-                  <p className="mt-2 text-xs leading-relaxed text-brand-muted-strong">
+                  <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-xs leading-relaxed text-brand-muted-strong">
                     {gradingCount > 0
                       ? `أقدمها ${formatDate(oldestPending?.submittedAt ?? oldestPending?.startedAt ?? null)} — محتاجة اهتمامك`
                       : 'لا توجد محاولات معلقة — كل شيء مصحح'}
@@ -174,12 +174,12 @@ export default function AdminOverviewPage() {
                   </>
                 ) : (
                   <>
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-border bg-brand-surface px-5 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-brand-border bg-brand-surface p-3.5 sm:px-5 sm:py-4">
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-brand-text">
+                        <p className="text-xs sm:text-sm font-bold text-brand-text">
                           {formatCount(gradingCount)} محاولات مقالية جاهزة للاعتماد
                         </p>
-                        <p className="mt-0.5 truncate text-xs text-brand-muted">
+                        <p className="mt-0.5 truncate text-[11px] sm:text-xs text-brand-muted">
                           {pendingEssays.length > 0
                             ? `أحدثها ${pendingEssays[0].user.name}`
                             : 'لا توجد محاولات معلقة الآن'}
@@ -187,37 +187,37 @@ export default function AdminOverviewPage() {
                       </div>
                       <Link
                         href="/admin/grading"
-                        className="inline-flex min-h-[44px] items-center whitespace-nowrap rounded-full bg-brand-primary/10 px-4 py-2 text-xs font-bold text-brand-primary transition motion-reduce:transition-none hover:bg-brand-primary hover:text-white"
+                        className="inline-flex min-h-[38px] sm:min-h-[44px] items-center whitespace-nowrap rounded-full bg-brand-primary/10 px-3.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-brand-primary transition motion-reduce:transition-none hover:bg-brand-primary hover:text-white"
                       >
                         افتح صندوق التصحيح
                       </Link>
                     </div>
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-border bg-brand-surface px-5 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-brand-border bg-brand-surface p-3.5 sm:px-5 sm:py-4">
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-brand-text">
+                        <p className="text-xs sm:text-sm font-bold text-brand-text">
                           {formatCount(videoAttention)} فيديوهات محتاجة انتباه
                         </p>
-                        <p className="mt-0.5 truncate text-xs text-brand-muted">
+                        <p className="mt-0.5 truncate text-[11px] sm:text-xs text-brand-muted">
                           {failedCount > 0 ? 'فشل المعالجة — أعد الرفع من الدورات' : 'كل الفيديوهات جاهزة للعرض'}
                         </p>
                       </div>
                       <Link
                         href="/admin/courses"
-                        className="inline-flex min-h-[44px] items-center whitespace-nowrap rounded-full bg-brand-primary/10 px-4 py-2 text-xs font-bold text-brand-primary transition motion-reduce:transition-none hover:bg-brand-primary hover:text-white"
+                        className="inline-flex min-h-[38px] sm:min-h-[44px] items-center whitespace-nowrap rounded-full bg-brand-primary/10 px-3.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-brand-primary transition motion-reduce:transition-none hover:bg-brand-primary hover:text-white"
                       >
                         عرض الدورات
                       </Link>
                     </div>
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-border bg-brand-surface px-5 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-brand-border bg-brand-surface p-3.5 sm:px-5 sm:py-4">
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-brand-text">
+                        <p className="text-xs sm:text-sm font-bold text-brand-text">
                           {formatCount(submissionsPending)} بانتظار المراجعة
                         </p>
-                        <p className="mt-0.5 truncate text-xs text-brand-muted">تسليمات بانتظار مراجعتك</p>
+                        <p className="mt-0.5 truncate text-[11px] sm:text-xs text-brand-muted">تسليمات بانتظار مراجعتك</p>
                       </div>
                       <Link
                         href="/admin/courses"
-                        className="inline-flex min-h-[44px] items-center whitespace-nowrap rounded-full bg-brand-primary/10 px-4 py-2 text-xs font-bold text-brand-primary transition motion-reduce:transition-none hover:bg-brand-primary hover:text-white"
+                        className="inline-flex min-h-[38px] sm:min-h-[44px] items-center whitespace-nowrap rounded-full bg-brand-primary/10 px-3.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-brand-primary transition motion-reduce:transition-none hover:bg-brand-primary hover:text-white"
                       >
                         مراجعة الواجب
                       </Link>
@@ -226,40 +226,40 @@ export default function AdminOverviewPage() {
                 )}
               </div>
 
-              <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl bg-gradient-to-l from-brand-primary/10 via-brand-secondary/5 to-transparent px-5 py-4">
+              <div className="mt-4 sm:mt-6 flex items-center justify-between gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-gradient-to-l from-brand-primary/10 via-brand-secondary/5 to-transparent p-3.5 sm:px-5 sm:py-4">
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-brand-text">محتاج تنجز حاجة بسرعة؟</p>
-                  <p className="mt-0.5 text-xs text-brand-muted">قول للمساعد الإداري اللي عايزه بالكلام العادي.</p>
+                  <p className="text-xs sm:text-sm font-bold text-brand-text">محتاج تنجز حاجة بسرعة؟</p>
+                  <p className="mt-0.5 text-[11px] sm:text-xs text-brand-muted">قول للمساعد الإداري اللي عايزه بالكلام العادي.</p>
                 </div>
                 <Link
                   href="/admin/agent"
-                  className="inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap rounded-full bg-brand-primary px-4 py-2 text-xs font-bold text-white transition motion-reduce:transition-none hover:bg-brand-primary/90"
+                  className="inline-flex min-h-[38px] sm:min-h-[44px] shrink-0 items-center whitespace-nowrap rounded-full bg-brand-primary px-3.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-white transition motion-reduce:transition-none hover:bg-brand-primary/90"
                 >
                   اتكلم مع المساعد
                 </Link>
               </div>
             </div>
             <div>
-              <p className="mb-3 text-base font-bold text-brand-text">آخر المقالي المنتظر</p>
-              <div className="divide-y divide-brand-border rounded-2xl border border-brand-border bg-brand-surface">
+              <p className="mb-2.5 sm:mb-3 text-sm sm:text-base font-bold text-brand-text">آخر المقالي المنتظر</p>
+              <div className="divide-y divide-brand-border rounded-xl sm:rounded-2xl border border-brand-border bg-brand-surface">
                 {loading || !data ? (
                   <Skeleton className="m-4 h-14 w-[calc(100%-2rem)] bg-brand-chip" />
                 ) : pendingEssays.length > 0 ? (
                   pendingEssays.slice(0, 3).map((a) => (
-                    <div key={a.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
+                    <div key={a.id} className="flex items-center justify-between gap-3 p-3 sm:px-5 sm:py-3.5">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-brand-text">{a.user.name}</p>
-                        <p className="truncate text-xs text-brand-muted">
+                        <p className="truncate text-xs sm:text-sm font-semibold text-brand-text">{a.user.name}</p>
+                        <p className="truncate text-[11px] sm:text-xs text-brand-muted">
                           {a.quiz?.bunnyVideo?.title || a.quiz?.title || 'اختبار'}
                         </p>
                       </div>
-                      <span className="whitespace-nowrap text-xs text-brand-muted">
+                      <span className="whitespace-nowrap text-[11px] sm:text-xs text-brand-muted">
                         {formatDate(a.submittedAt ?? a.startedAt)}
                       </span>
                     </div>
                   ))
                 ) : (
-                  <p className="px-5 py-6 text-center text-xs font-semibold text-brand-muted">
+                  <p className="p-4 sm:px-5 sm:py-6 text-center text-xs font-semibold text-brand-muted">
                     لا توجد محاولات معلقة — كل شيء مصحح.
                   </p>
                 )}

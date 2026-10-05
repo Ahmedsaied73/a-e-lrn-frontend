@@ -311,27 +311,27 @@ export default function AdminCoursesPage() {
               const gradeText = c.grade ? GRADE_LABEL[c.grade] || c.grade : 'عام';
 
               return (
-                <div key={c.slug} className="overflow-hidden rounded-xl border border-brand-border bg-brand-surface shadow-sm">
+                <div key={c.slug} className="overflow-hidden rounded-xl border border-brand-border bg-brand-surface shadow-xs">
                   {/* Course Row Header */}
-                  <div className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
+                  <div className="flex w-full flex-wrap items-center justify-between gap-2.5 p-3 sm:px-5 sm:py-4">
                     <button
                       type="button"
                       onClick={() => toggleCourseAccordion(c)}
-                      className="flex flex-1 items-center justify-between gap-3 text-start outline-none"
+                      className="flex flex-1 items-center justify-between gap-2.5 sm:gap-3 text-start outline-none"
                     >
                       <div>
-                        <p className="font-bold text-brand-text">{c.title}</p>
-                        <p className="mt-0.5 text-xs text-brand-muted">
+                        <p className="text-sm sm:text-base font-bold text-brand-text">{c.title}</p>
+                        <p className="mt-0.5 text-[11px] sm:text-xs text-brand-muted">
                           {gradeText} {c.category ? `· ${c.category}` : ''} · {formatDate(c.createdAt)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3 text-xs sm:gap-5">
+                      <div className="flex items-center gap-2 sm:gap-5 text-[11px] sm:text-xs">
                         <span className="hidden text-brand-muted-strong sm:inline">
                           {studentsCount.toLocaleString('ar-EG')} طالب
                         </span>
                         <span
                           className={
-                            'rounded-full px-2.5 py-1 font-bold ' +
+                            'rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 font-bold ' +
                             (isFree ? 'bg-emerald-100 text-emerald-700' : 'bg-brand-primary/10 text-brand-primary')
                           }
                         >

@@ -300,15 +300,15 @@ export default function AdminStudentsPage() {
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-2xl border border-brand-border bg-brand-surface p-4">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-11 w-11 rounded-full bg-brand-chip" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-28 bg-brand-chip" />
-                    <Skeleton className="h-3 w-40 bg-brand-chip" />
+              <div key={i} className="rounded-xl sm:rounded-2xl border border-brand-border bg-brand-surface p-3 sm:p-4">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <Skeleton className="h-9 w-9 sm:h-11 sm:w-11 rounded-full bg-brand-chip" />
+                  <div className="flex-1 space-y-1.5 sm:space-y-2">
+                    <Skeleton className="h-3.5 sm:h-4 w-24 sm:w-28 bg-brand-chip" />
+                    <Skeleton className="h-2.5 sm:h-3 w-32 sm:w-40 bg-brand-chip" />
                   </div>
                 </div>
-                <Skeleton className="mt-4 h-2 w-full bg-brand-chip" />
+                <Skeleton className="mt-3 sm:mt-4 h-2 w-full bg-brand-chip" />
               </div>
             ))
           ) : rows.length === 0 ? (
@@ -321,19 +321,19 @@ export default function AdminStudentsPage() {
               const lastSeenText = formatLastSeen(s.lastLoginAt, s.createdAt);
 
               return (
-                <div key={s.id} className="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-sm transition hover:border-brand-primary/30">
-                  <div className="flex items-center gap-3">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-secondary/20 text-sm font-bold text-brand-secondary">
+                <div key={s.id} className="rounded-xl sm:rounded-2xl border border-brand-border bg-brand-surface p-3 sm:p-4 shadow-xs transition hover:border-brand-primary/30">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <span className="grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-brand-secondary/20 text-xs sm:text-sm font-bold text-brand-secondary">
                       {s.name.slice(0, 1) || 'ط'}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-brand-text">{s.name}</p>
-                      <p className="truncate text-xs text-brand-muted">{s.email}</p>
+                      <p className="truncate text-xs sm:text-sm font-bold text-brand-text">{s.name}</p>
+                      <p className="truncate text-[11px] sm:text-xs text-brand-muted">{s.email}</p>
                       {s.phoneNumber && (
-                        <p className="truncate text-[11px] text-brand-muted-strong" dir="ltr">{s.phoneNumber}</p>
+                        <p className="truncate text-[10px] sm:text-[11px] text-brand-muted-strong" dir="ltr">{s.phoneNumber}</p>
                       )}
                     </div>
-                    <span className="whitespace-nowrap rounded-full bg-brand-chip px-2.5 py-1 text-xs font-semibold text-brand-muted-strong">
+                    <span className="whitespace-nowrap rounded-full bg-brand-chip px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-semibold text-brand-muted-strong">
                       {gradeText}
                     </span>
                   </div>
