@@ -240,11 +240,11 @@ export default function AdminStudentsPage() {
   return (
     <>
       <PageTitle title={adminTitle('الطلاب')} />
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
+      <main className="mx-auto max-w-5xl px-3 py-4 sm:px-8 sm:py-8">
         {/* Header matching design */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-extrabold text-brand-text">الطلاب</h1>
+            <h1 className="text-lg font-extrabold sm:text-xl text-brand-text">الطلاب</h1>
             <p className="mt-1 text-sm text-brand-muted">
               {total.toLocaleString('ar-EG')} طالب مسجل على المنصة
             </p>

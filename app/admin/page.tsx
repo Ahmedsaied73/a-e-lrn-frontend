@@ -28,7 +28,7 @@ function HighlightSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
       <div className="h-1 w-full bg-brand-chip" aria-hidden="true" />
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         <Skeleton className="h-3 w-24 bg-brand-chip" />
         <Skeleton className="mt-2.5 h-8 w-20 bg-brand-chip" />
         <Skeleton className="mt-2 h-3 w-32 bg-brand-chip" />
@@ -79,7 +79,7 @@ export default function AdminOverviewPage() {
       <PageTitle title={adminTitle('نظرة عامة')} />
       <div className="mx-auto max-w-5xl px-4 py-7 sm:px-8 sm:py-9">
         <div>
-          <h1 className="text-2xl font-extrabold text-brand-text">
+          <h1 className="text-xl font-extrabold sm:text-2xl text-brand-text">
             {greeting} <span aria-hidden="true">👋</span>
           </h1>
           <p className="mt-1.5 text-sm text-brand-muted">دي حالة منصتك النهاردة — بالبنط العريض، مفيش حاجة محتاجة قلق.</p>
@@ -96,9 +96,9 @@ export default function AdminOverviewPage() {
             <>
               <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
                 <div className="h-1 w-full bg-emerald-500" aria-hidden="true" />
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   <p className="text-xs font-semibold text-brand-muted">طلابك بيكبروا</p>
-                  <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-brand-text">
+                  <p className="mt-1.5 text-2xl font-extrabold sm:text-3xl tabular-nums text-brand-text">
                     {formatCount(data.counts.students)}
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-brand-muted-strong">
@@ -110,9 +110,9 @@ export default function AdminOverviewPage() {
               </div>
               <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
                 <div className="h-1 w-full bg-emerald-500" aria-hidden="true" />
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   <p className="text-xs font-semibold text-brand-muted">الفيديوهات الجاهزة للعرض</p>
-                  <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-brand-text">
+                  <p className="mt-1.5 text-2xl font-extrabold sm:text-3xl tabular-nums text-brand-text">
                     {formatCount(readyVideos)}/{formatCount(totalVideos)}
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-brand-muted-strong">
@@ -126,9 +126,9 @@ export default function AdminOverviewPage() {
               </div>
               <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
                 <div className="h-1 w-full bg-brand-accent" aria-hidden="true" />
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   <p className="text-xs font-semibold text-brand-muted">بانتظار تصحيحك</p>
-                  <p className="mt-1.5 text-3xl font-extrabold tabular-nums text-brand-text">
+                  <p className="mt-1.5 text-2xl font-extrabold sm:text-3xl tabular-nums text-brand-text">
                     {formatCount(gradingCount)} محاولات
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-brand-muted-strong">

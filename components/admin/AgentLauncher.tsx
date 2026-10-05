@@ -65,7 +65,7 @@ export function AgentLauncher() {
         onClick={() => setOpen((v) => !v)}
         aria-label="المساعد الإداري"
         className={
-          "fixed bottom-6 end-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-white shadow-lg transition hover:scale-105 sm:end-6 " +
+          "fixed bottom-4 end-3 z-50 flex h-12 w-12 sm:bottom-6 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-white shadow-lg transition hover:scale-105 sm:end-6 " +
           (open ? "" : "agent-fab-pulse")
         }
       >

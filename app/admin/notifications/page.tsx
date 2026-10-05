@@ -88,14 +88,14 @@ export default function AdminNotificationsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-8 space-y-6">
+    <div className="mx-auto max-w-5xl px-3 py-4 sm:px-8 sm:py-8 space-y-6">
       <PageTitle title={adminTitle('إشعارات الطلاب')} />
       <div>
-        <h1 className="text-xl font-extrabold text-brand-text">إشعارات الطلاب</h1>
+        <h1 className="text-lg font-extrabold sm:text-xl text-brand-text">إشعارات الطلاب</h1>
         <p className="mt-1 text-sm text-brand-muted">إرسال إشعار داخل المنصة لشريحة من الطلاب.</p>
       </div>
 
-      <form onSubmit={(e) => void handleSend(e)} className="rounded-2xl border border-brand-border bg-brand-surface p-6">
+      <form onSubmit={(e) => void handleSend(e)} className="rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="sm:col-span-2 text-sm font-semibold text-brand-text">العنوان *
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثال: تم نشر محاضرة جديدة" className="mt-1 w-full rounded-xl border border-brand-border bg-brand-surface px-4 py-2 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-primary outline-none" />

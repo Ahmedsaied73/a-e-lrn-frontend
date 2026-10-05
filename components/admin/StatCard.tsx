@@ -34,7 +34,7 @@ export function StatCard({ label, value, icon: Icon, hint, tone = 'default', loa
           {loading ? (
             <Skeleton className="mt-2 h-8 w-16 bg-muted" />
           ) : (
-            <p className={cn('mt-1 text-2xl font-bold tabular-nums', valueByTone[tone])}>{value}</p>
+            <p className={cn('mt-1 text-xl font-bold sm:text-2xl tabular-nums', valueByTone[tone])}>{value}</p>
           )}
           {hint && !loading && <p className="mt-1 truncate text-xs text-on-surface-variant/70">{hint}</p>}
         </div>

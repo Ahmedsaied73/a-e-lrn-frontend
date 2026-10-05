@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminSidebar mobileOpen={mobileNavOpen} onCloseMobile={() => setMobileNavOpen(false)} />
       <div className="min-w-0 flex-1 overflow-x-hidden">
         {/* Literal design mobile header: sticky top-0 z-30 hamburger + title + theme toggle */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-brand-border bg-brand-surface px-4 py-3 lg:hidden">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-brand-border bg-brand-surface px-3 py-2 sm:px-4 sm:py-3 lg:hidden">
           <div className="flex items-center gap-3">
             <button
               type="button"

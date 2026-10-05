@@ -159,10 +159,10 @@ export default function AdminGradingPage() {
   return (
     <>
       <PageTitle title={adminTitle('تصحيح المقالي')} />
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+      <main className="mx-auto max-w-6xl px-3 py-4 sm:px-8 sm:py-8">
         {/* Header matching design */}
         <div className="mb-6">
-          <h1 className="text-xl font-extrabold text-brand-text">صندوق تصحيح المقالي</h1>
+          <h1 className="text-lg font-extrabold sm:text-xl text-brand-text">صندوق تصحيح المقالي</h1>
           <p className="mt-1 text-sm text-brand-muted">
             {pendingCount.toLocaleString('ar-EG')} محاولة بانتظار الاعتماد — الذكاء الاصطناعي يقترح درجة أولية توفّر عليك وقت القراءة.
           </p>
