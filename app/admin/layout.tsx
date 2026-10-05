@@ -20,12 +20,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.replace('/login');
       return;
     }
-    if (user && user.role !== 'ADMIN') {
+    if (!user || user.role !== 'ADMIN') {
       router.replace('/');
     }
   }, [initialized, isAuthenticated, user, router]);
 
-  if (!initialized || !isAuthenticated || (user && user.role !== 'ADMIN')) {
+  if (!initialized || !isAuthenticated || !user || user.role !== 'ADMIN') {
     return (
       <main className="mx-auto max-w-5xl px-4 py-16 text-center text-muted-foreground">
         جارٍ التحقق من الصلاحيات...

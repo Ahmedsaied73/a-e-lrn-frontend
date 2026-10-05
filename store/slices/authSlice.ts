@@ -76,5 +76,8 @@ export const { loginStart, loginSuccess, loginFailure, guestSessionChecked, logo
 export const selectAuth = (state: RootState) => state.auth;
 export const selectUser = (state: RootState) => state.auth.user;
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
+export const selectInitialized = (state: RootState) => state.auth.initialized;
+export const selectIsAdmin = (state: RootState) =>
+  Boolean(state.auth.initialized && state.auth.isAuthenticated && state.auth.user?.role === 'ADMIN');
 
 export default authSlice.reducer;

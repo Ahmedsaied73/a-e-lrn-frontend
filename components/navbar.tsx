@@ -3,10 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { User, LogOut, Menu, X, BookOpen, Trophy, CreditCard, HelpCircle } from "lucide-react";
+import { User, LogOut, Menu, X, BookOpen, Trophy, CreditCard, HelpCircle, ShieldCheck } from "lucide-react";
 import { logoutUser } from "@/services/authService";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectIsAuthenticated, selectUser, logout } from "@/store/slices/authSlice";
+import { selectIsAuthenticated, selectUser, selectIsAdmin, logout } from "@/store/slices/authSlice";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -34,6 +34,7 @@ export function Navbar() {
   // the moment login/logout dispatch to the store, no remount needed.
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const user = useAppSelector(selectUser);
+  const isAdmin = useAppSelector(selectIsAdmin);
   const dispatch = useAppDispatch();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -117,7 +118,18 @@ export function Navbar() {
         )}
 
         {/* ── Left Controls ── */}
-        <div className="relative z-10 flex items-center gap-2.5" dir="rtl">
+        <div className="relative z-10 flex items-center gap-2 sm:gap-2.5" dir="rtl">
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-brand-primary/30 bg-brand-primary/10 px-2.5 py-1.5 sm:px-3 text-xs sm:text-sm font-bold text-brand-primary shadow-xs transition hover:bg-brand-primary hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40 active:scale-95"
+              aria-label="لوحة التحكم"
+              title="لوحة التحكم"
+            >
+              <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="hidden sm:inline">لوحة التحكم</span>
+            </Link>
+          )}
           <ThemeToggle />
           {isAuthenticated ? (
             <>
@@ -147,6 +159,18 @@ export function Navbar() {
                         {user?.email}
                       </p>
                     </div>
+                    {isAdmin && (
+                      <div className="px-1 pb-1 mb-1 border-b border-brand-border">
+                        <Link
+                          href="/admin"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2 rounded-lg bg-brand-primary/10 px-3 py-2 text-sm font-bold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors"
+                        >
+                          <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                          <span>لوحة التحكم</span>
+                        </Link>
+                      </div>
+                    )}
                     <div className="my-1 h-px bg-brand-chip" />
                     <div className="py-1">
                       {PROFILE_LINKS.map((item) => {
@@ -224,6 +248,19 @@ export function Navbar() {
               <p className="text-[12px] text-brand-muted truncate" dir="ltr">{user?.email}</p>
             </div>
           </div>
+
+          {isAdmin && (
+            <div className="mb-2 pb-2 border-b border-brand-border">
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 rounded-lg bg-brand-primary/10 px-3 py-2.5 text-sm font-bold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors"
+              >
+                <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>لوحة التحكم (الإدارة)</span>
+              </Link>
+            </div>
+          )}
 
           <div className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
