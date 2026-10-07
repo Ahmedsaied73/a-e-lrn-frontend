@@ -24,6 +24,7 @@ import {
 import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 import { clearUserCache } from '@/lib/user-cache';
 import { clearUserEntries, clearShared } from '@/lib/data-cache';
+import { getCachedDeviceId } from '@/lib/fingerprint';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -54,9 +55,14 @@ interface RequestOptions {
 }
 
 function buildHeaders(): Record<string, string> {
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+  const deviceId = getCachedDeviceId();
+  if (deviceId) {
+    headers['X-Device-Id'] = deviceId;
+  }
+  return headers;
 }
 
 /**

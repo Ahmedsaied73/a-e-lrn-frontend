@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Pencil, Plus, Trash2, BookOpen, XCircle } from 'lucide-react';
+import { Pencil, Plus, Trash2, BookOpen, XCircle, Smartphone } from 'lucide-react';
 
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
+import { StudentDevicesDialog } from '@/components/admin/StudentDevicesDialog';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -93,6 +94,9 @@ export default function AdminStudentsPage() {
   const [allCourses, setAllCourses] = useState<AdminCourse[]>([]);
   const [selectedCourseSlug, setSelectedCourseSlug] = useState('');
   const [enrollBusy, setEnrollBusy] = useState(false);
+
+  // Per-student devices dialog
+  const [deviceUser, setDeviceUser] = useState<AdminUser | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -341,6 +345,16 @@ export default function AdminStudentsPage() {
                   <div className="mt-3.5 flex items-center justify-between border-t border-brand-border pt-3 text-xs text-brand-muted">
                     <span>آخر ظهور: {lastSeenText}</span>
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDeviceUser(s)}
+                        className="inline-flex items-center gap-1 font-bold text-brand-primary hover:underline"
+                        title="إدارة الأجهزة"
+                      >
+                        <Smartphone className="h-3.5 w-3.5" />
+                        الأجهزة
+                      </button>
+                      <span className="text-brand-border">•</span>
                       <button
                         type="button"
                         onClick={() => openCourseManager(s)}
@@ -636,6 +650,13 @@ export default function AdminStudentsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Student Registered Devices Dialog */}
+      <StudentDevicesDialog
+        student={deviceUser}
+        isOpen={Boolean(deviceUser)}
+        onClose={() => setDeviceUser(null)}
+      />
     </>
   );
 }

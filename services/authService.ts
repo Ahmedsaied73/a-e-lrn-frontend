@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api-client';
 import { purgeLegacyAuthStorage } from '@/utils/auth-storage';
 import { clearUserCache } from '@/lib/user-cache';
 import { clearUserEntries, clearShared } from '@/lib/data-cache';
+import { getDevicePayload } from '@/lib/fingerprint';
 import { User } from '@/types/api';
 
 interface LoginCredentials {
@@ -31,7 +32,8 @@ export const loginUser = async (credentials: LoginCredentials): Promise<{ user: 
   // Stale pre-cookie-auth localStorage keys from older builds are purged on
   // every login so localStorage never looks like it holds an auth mechanism.
   purgeLegacyAuthStorage();
-  await apiClient.post('/auth/login', credentials);
+  const device = await getDevicePayload();
+  await apiClient.post('/auth/login', { ...credentials, device });
   // New session (possibly a different user on a shared device) — drop any
   // per-user entries cached under the previous identity before refetching.
   clearUserEntries();
@@ -49,7 +51,8 @@ export const loginUser = async (credentials: LoginCredentials): Promise<{ user: 
  */
 export const registerUser = async (userData: RegisterData): Promise<{ user: User }> => {
   purgeLegacyAuthStorage();
-  await apiClient.post('/auth/register', userData);
+  const device = await getDevicePayload();
+  await apiClient.post('/auth/register', { ...userData, device });
   clearUserEntries();
   clearShared();
 

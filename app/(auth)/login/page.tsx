@@ -13,6 +13,8 @@ import { loginUser } from '@/services/authService';
 import { setCachedUser } from '@/lib/user-cache';
 import { addNotification, setGlobalLoading } from '@/store/slices/uiSlice';
 import { PAGE_TITLES } from '@/lib/page-titles';
+import { prewarmFingerprint } from '@/lib/fingerprint';
+import { DeviceLimitModal } from '@/components/auth/DeviceLimitModal';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -43,6 +45,11 @@ export default function LoginPage() {
   const isLoading = useAppSelector(state => state.ui.globalLoading);
   const notifications = useAppSelector(state => state.ui.notifications);
   const { initialized, isAuthenticated } = useAppSelector(selectAuth);
+  const [showDeviceLimitModal, setShowDeviceLimitModal] = useState(false);
+
+  useEffect(() => {
+    prewarmFingerprint();
+  }, []);
 
   // Hydration guard (credential-leak fix): the SSR HTML contains a native
   // <form> with named fields but no attached onSubmit until React hydrates.
@@ -113,6 +120,16 @@ export default function LoginPage() {
 
     } catch (err: unknown) {
       console.error('Login error:', err);
+
+      const errorCode =
+        (err as { body?: { code?: string }; code?: string })?.body?.code ||
+        (err as { body?: { code?: string }; code?: string })?.code;
+
+      if (errorCode === 'DEVICE_LIMIT_EXCEEDED') {
+        setShowDeviceLimitModal(true);
+        dispatch(setGlobalLoading(false));
+        return;
+      }
 
       // Show error notification
       dispatch(addNotification({
@@ -212,6 +229,10 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    <DeviceLimitModal
+      isOpen={showDeviceLimitModal}
+      onClose={() => setShowDeviceLimitModal(false)}
+    />
     </>
   );
 }

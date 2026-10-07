@@ -12,6 +12,7 @@ import { registerUser } from '@/services/authService';
 import { setCachedUser } from '@/lib/user-cache';
 import { addNotification, setGlobalLoading } from '@/store/slices/uiSlice';
 import { PAGE_TITLES } from '@/lib/page-titles';
+import { prewarmFingerprint } from '@/lib/fingerprint';
 
 const formSchema = z.object({
   firstName: z.string().min(2, {
@@ -80,6 +81,7 @@ export default function RegisterPage() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     setHydrated(true);
+    prewarmFingerprint();
   }, []);
 
   // Already signed in → send back home (after the app has finished checking the

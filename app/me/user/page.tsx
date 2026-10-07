@@ -13,6 +13,7 @@ import type { AchievementsData, AchievementExam } from '@/types/quiz';
 import { PageTitle } from '@/components/page-title';
 import { withTeacher } from '@/lib/site-config';
 import { PAGE_TITLES } from '@/lib/page-titles';
+import { RegisteredDevicesCard } from '@/components/profile/RegisteredDevicesCard';
 
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -188,6 +189,10 @@ export default function UserProfilePage() {
                 <p className="mt-4 text-sm text-brand-muted">لا توجد نتائج اختبارات بعد.</p>
               )}
             </section>
+          </Reveal>
+
+          <Reveal delayMs={100}>
+            <RegisteredDevicesCard />
           </Reveal>
         </div>
 

@@ -11,6 +11,7 @@ export type RoleEnum = 'STUDENT' | 'ADMIN';
 export interface AdminUser extends Pick<User, 'id' | 'slug' | 'name' | 'email' | 'grade' | 'role' | 'createdAt'> {
   lastLoginAt: string | null;
   phoneNumber?: string | null;
+  maxDevices?: number | null;
 }
 
 export interface PaginationMeta {
