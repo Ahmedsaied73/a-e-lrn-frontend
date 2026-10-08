@@ -222,6 +222,17 @@ export default function RegisterPage() {
               </div>
             )}
 
+            <p className="text-right text-xs text-brand-muted leading-relaxed">
+              بالتسجيل في المنصة، أنت توافق على{' '}
+              <Link href="/terms" target="_blank" className="font-semibold text-brand-primary underline hover:text-brand-primary/80">
+                شروط الاستخدام
+              </Link>{' '}
+              و{' '}
+              <Link href="/privacy" target="_blank" className="font-semibold text-brand-primary underline hover:text-brand-primary/80">
+                سياسة الخصوصية
+              </Link>.
+            </p>
+
             <button
               type="submit"
               disabled={isLoading || !hydrated}

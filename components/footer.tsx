@@ -159,7 +159,14 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-3 pt-6 text-[15px] text-white/40 sm:flex-row">
+        <div className="flex flex-col items-center justify-between gap-3 pt-6 text-[14px] text-white/40 sm:flex-row">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-white/60">
+            <Link href="/terms" className="transition hover:text-white">شروط الاستخدام</Link>
+            <span>•</span>
+            <Link href="/privacy" className="transition hover:text-white">سياسة الخصوصية</Link>
+            <span>•</span>
+            <Link href="/refund-policy" className="transition hover:text-white">سياسة الاسترداد</Link>
+          </div>
           <p>
             &lt; Developed By &gt;{" "}
             <a

@@ -31,6 +31,9 @@ export const PAGE_TITLES = {
   quizRun: 'الاختبار جارٍ',
   quizResult: 'نتيجة الاختبار',
   paymentResult: 'نتيجة عملية الدفع',
+  terms: 'شروط وأحكام الاستخدام',
+  privacy: 'سياسة الخصوصية وحماية البيانات',
+  refundPolicy: 'سياسة الدفع والاسترداد',
 } as const;
 
 const ADMIN_SUFFIX = 'لوحة التحكم';
