@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import type { AttemptStatus, VideoStatus } from '@/types/admin';
 
-type Status = VideoStatus | AttemptStatus | 'PENDING' | 'GRADED' | 'PLACED' | 'PAID' | 'UNPAID';
+type Status = VideoStatus | AttemptStatus | 'PENDING' | 'GRADED' | 'PLACED' | 'PAID' | 'UNPAID' | 'AVAILABLE' | 'REDEEMED' | 'REVOKED';
 
 const variantByStatus: Record<Status, string> = {
   PENDING: 'border-amber-200 bg-amber-50 text-amber-700',
@@ -17,6 +17,9 @@ const variantByStatus: Record<Status, string> = {
   PLACED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
   PAID: 'border-emerald-200 bg-emerald-50 text-emerald-700',
   UNPAID: 'border-amber-200 bg-amber-50 text-amber-700',
+  AVAILABLE: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  REDEEMED: 'border-slate-200 bg-slate-100 text-slate-700',
+  REVOKED: 'border-red-200 bg-red-50 text-red-700',
 };
 
 const labelByStatus: Record<Status, string> = {
@@ -33,6 +36,9 @@ const labelByStatus: Record<Status, string> = {
   PLACED: 'مكتمل',
   PAID: 'مدفوع',
   UNPAID: 'غير مدفوع',
+  AVAILABLE: 'متاح',
+  REDEEMED: 'مُستخدم',
+  REVOKED: 'ملغي',
 };
 
 export function StatusBadge({ status, className }: { status: Status; className?: string }) {

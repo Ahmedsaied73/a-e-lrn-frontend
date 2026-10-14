@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { User, LogOut, Menu, X, BookOpen, Trophy, CreditCard, HelpCircle, ShieldCheck } from "lucide-react";
+import { User, LogOut, Menu, X, BookOpen, Trophy, CreditCard, HelpCircle, ShieldCheck, Ticket } from "lucide-react";
 import { logoutUser } from "@/services/authService";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectIsAuthenticated, selectUser, selectIsAdmin, logout } from "@/store/slices/authSlice";
@@ -19,6 +19,7 @@ const NAV_LINKS = [
 
 const PROFILE_LINKS = [
   { href: "/me/user", label: "الملف الشخصي", icon: User },
+  { href: "/me/redeem", label: "تفعيل كود", icon: Ticket },
   { href: "/me/user/courses", label: "كورساتي", icon: BookOpen },
   { href: "/me/user/achievements", label: "إنجازاتي", icon: Trophy },
   { href: "/me/user/subscriptions", label: "الاشتراكات", icon: CreditCard },
@@ -39,6 +40,11 @@ export function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const accessCodesEnabled = user?.features?.accessCodes !== false;
+  const visibleProfileLinks = PROFILE_LINKS.filter(
+    (item) => !(item.href === '/me/redeem' && !accessCodesEnabled)
+  );
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -173,7 +179,7 @@ export function Navbar() {
                     )}
                     <div className="my-1 h-px bg-brand-chip" />
                     <div className="py-1">
-                      {PROFILE_LINKS.map((item) => {
+                      {visibleProfileLinks.map((item) => {
                         return (
                           <Link
                             key={item.href}
@@ -263,6 +269,16 @@ export function Navbar() {
           )}
 
           <div className="flex flex-col gap-1">
+            {accessCodesEnabled && (
+              <Link
+                href="/me/redeem"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 rounded-lg bg-brand-primary/10 px-3 py-2 text-sm font-bold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors"
+              >
+                <Ticket className="w-4 h-4" />
+                <span>تفعيل كود الكورس</span>
+              </Link>
+            )}
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}

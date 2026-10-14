@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Play, ArrowLeft, Shield, CreditCard } from 'lucide-react';
+import { ChevronDown, ChevronUp, Play, ArrowLeft, Shield, CreditCard, Ticket } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -13,16 +13,22 @@ import { createCheckout } from '@/services/paymentService';
 import { ApiError } from '@/lib/errors';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
+import { useAppSelector } from '@/store/hooks';
+import { selectUser } from '@/store/slices/authSlice';
 import { PageTitle } from '@/components/page-title';
 import { courseTitle, PAGE_TITLES } from '@/lib/page-titles';
+import { RedeemCodeModal } from '@/components/RedeemCodeModal';
 
 export default function Page({ params }: { params: { courseSlug: string } }) {
   const router = useRouter();
+  const user = useAppSelector(selectUser);
+  const accessCodesEnabled = user?.features?.accessCodes !== false;
   const [courseData, setCourseData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
+  const [redeemOpen, setRedeemOpen] = useState(false);
   const [openVideoSlugs, setOpenVideoSlugs] = useState<Record<string, boolean>>({});
 
   // Function to toggle a specific video dropdown
@@ -227,8 +233,32 @@ export default function Page({ params }: { params: { courseSlug: string } }) {
               courseData.price === 0 ? "انضم للكورس مجاناً" : "اشترك الآن"
             )}
           </Button>
+
+          {accessCodesEnabled && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full mt-2.5 border-emerald-600/30 text-emerald-700 hover:bg-emerald-50 py-3 text-base font-bold flex items-center justify-center gap-2"
+              onClick={() => setRedeemOpen(true)}
+            >
+              <Ticket size={18} />
+              تفعيل بكود السنتر (كارت ورقي)
+            </Button>
+          )}
         </div>
       </div>
+
+      <RedeemCodeModal
+        open={redeemOpen}
+        onOpenChange={setRedeemOpen}
+        courseSlug={params.courseSlug}
+        courseTitle={courseData?.title}
+        onSuccess={(res) => {
+          if (res.courseSlug === params.courseSlug || !res.courseSlug) {
+            setIsEnrolled(true);
+          }
+        }}
+      />
 
       {/* Course Content Section - Copy from main page */}
       <div className="flex flex-col md:flex-row gap-8">

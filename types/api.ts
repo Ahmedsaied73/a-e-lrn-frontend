@@ -53,6 +53,8 @@ export interface User {
   features?: {
     notifications?: boolean;
     aiGrader?: boolean;
+    accessCodes?: boolean;
+    payments?: boolean;
   };
 }
 

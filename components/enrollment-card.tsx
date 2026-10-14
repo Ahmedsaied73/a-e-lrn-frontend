@@ -2,14 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Ticket } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { enrollInCourse } from '@/services/courseService';
 import { createCheckout } from '@/services/paymentService';
 import { ApiError } from '@/lib/errors';
 import { toast } from 'react-hot-toast';
+import { useAppSelector } from '@/store/hooks';
+import { selectUser } from '@/store/slices/authSlice';
+import { RedeemCodeModal } from '@/components/RedeemCodeModal';
 
 interface EnrollmentCardProps {
   courseSlug: string;
+  courseTitle?: string;
   isEnrolled: boolean;
   coursePrice: string | number;
   courseDuration: string | number;
@@ -29,6 +34,7 @@ const PERKS = [
 
 export function EnrollmentCard({
   courseSlug,
+  courseTitle,
   isEnrolled,
   coursePrice,
   courseDuration,
@@ -39,7 +45,10 @@ export function EnrollmentCard({
   className,
   onEnrollSuccess,
 }: EnrollmentCardProps) {
+  const user = useAppSelector(selectUser);
+  const accessCodesEnabled = user?.features?.accessCodes !== false;
   const [loading, setLoading] = useState(false);
+  const [redeemModalOpen, setRedeemModalOpen] = useState(false);
 
   const handleEnrollment = async () => {
     if (isEnrolled) return toast.success('أنت مشترك بالفعل في هذا الكورس');
@@ -155,26 +164,54 @@ export function EnrollmentCard({
               </span>
             )
           ) : (
-            <button
-              onClick={handleEnrollment}
-              disabled={loading}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary py-3 text-sm font-semibold text-white transition hover:bg-brand-primary/90 disabled:opacity-60"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                  جاري الاشتراك...
-                </span>
-              ) : (
-                'الاشتراك في الدورة الآن'
+            <>
+              <button
+                onClick={handleEnrollment}
+                disabled={loading}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary py-3 text-sm font-semibold text-white transition hover:bg-brand-primary/90 disabled:opacity-60"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    جاري الاشتراك...
+                  </span>
+                ) : (
+                  'الاشتراك في الدورة الآن'
+                )}
+              </button>
+              {accessCodesEnabled && (
+                <button
+                  type="button"
+                  onClick={() => setRedeemModalOpen(true)}
+                  className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-brand-border bg-brand-surface py-2.5 text-xs sm:text-sm font-bold text-brand-text transition hover:border-brand-primary hover:bg-brand-hover hover:text-brand-primary"
+                >
+                  <Ticket className="h-4 w-4 text-brand-primary" />
+                  تفعيل بكود السنتر
+                </button>
               )}
-            </button>
+            </>
           )}
           <p className="mt-3 text-center text-xs text-brand-muted">
             ضمان استرجاع ١٠٠٪ خلال ٧ أيام من بدء الدراسة
           </p>
         </div>
       </div>
+
+      <RedeemCodeModal
+        open={redeemModalOpen}
+        onOpenChange={setRedeemModalOpen}
+        courseSlug={courseSlug}
+        courseTitle={courseTitle}
+        onSuccess={(res) => {
+          if (res.courseSlug === courseSlug || !res.courseSlug) {
+            if (onEnrollSuccess) {
+              onEnrollSuccess();
+            } else {
+              window.location.reload();
+            }
+          }
+        }}
+      />
     </div>
   );
 }

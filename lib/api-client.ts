@@ -40,7 +40,7 @@ export { API_BASE_URL };
 
 // POST paths whose success flips per-user derived state (enrollment rows,
 // video progress). See the invalidation hook after the !response.ok block.
-const USER_INVALIDATING_POSTS = new Set(['/progress/complete', '/enroll/']);
+const USER_INVALIDATING_POSTS = new Set(['/progress/complete', '/enroll/', '/access-codes/redeem']);
 
 // ---------------------------------------------------------------------------
 // Request builder with Credentials & Silent Refresh Interceptor
@@ -52,6 +52,8 @@ interface RequestOptions {
   full?: boolean;
   /** Send a FormData body (multipart) instead of JSON. Skips the JSON Content-Type. */
   formData?: FormData;
+  /** Return response as Blob instead of parsing JSON */
+  responseType?: 'json' | 'blob';
 }
 
 function buildHeaders(): Record<string, string> {
@@ -239,6 +241,20 @@ async function request<T>(
     throw new ConflictError(errMsg, errBody);
   }
 
+  // Return blob if requested (e.g. CSV or file downloads)
+  if (options.responseType === 'blob') {
+    if (!response.ok) {
+      const errBody = await safeParseJson(response);
+      const errObj = errBody as { error?: string; message?: string } | null;
+      throw new ApiError(
+        errObj?.error || errObj?.message || `خطأ من الخادم (status ${response.status})`,
+        response.status,
+        errBody,
+      );
+    }
+    return (await response.blob()) as unknown as T;
+  }
+
   // Parse JSON response body for all other statuses
   let resBody: unknown;
   try {
@@ -307,6 +323,11 @@ export const apiClient = {
   /** Like `get` but returns the whole `{ success, data, meta }` payload. */
   getFull<T>(path: string, options?: RequestOptions): Promise<T> {
     return request<T>('GET', path, undefined, { ...options, full: true });
+  },
+
+  /** Like `get` but returns the response as a Blob (e.g. for CSV or file downloads). */
+  getBlob(path: string, options?: RequestOptions): Promise<Blob> {
+    return request<Blob>('GET', path, undefined, { ...options, responseType: 'blob' });
   },
 
   put<T>(path: string, body: unknown, options?: RequestOptions): Promise<T> {

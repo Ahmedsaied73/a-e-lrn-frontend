@@ -258,6 +258,7 @@ export default function Page({ params }: { params: { courseSlug: string } }) {
           <div className="order-1 lg:order-2">
             <EnrollmentCard
               courseSlug={params.courseSlug}
+              courseTitle={courseData?.title}
               isEnrolled={isEnrolled}
               coursePrice={courseData.price || 'مجاني'}
               courseDuration={courseDuration}

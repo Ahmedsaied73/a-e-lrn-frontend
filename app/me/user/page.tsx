@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Ticket } from 'lucide-react';
 import { Reveal } from '@/components/reveal';
 import { EditProfileModal } from '@/components/edit-profile-modal';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -106,13 +107,24 @@ export default function UserProfilePage() {
             <h1 className="text-lg font-extrabold text-brand-text">{user?.name || 'المستخدم'}</h1>
             <p className="text-sm text-brand-muted" dir="ltr">{user?.email || ''}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setEditOpen(true)}
-            className="rounded-lg border border-brand-border-strong px-4 py-2 text-sm font-semibold text-brand-muted-strong transition hover:bg-brand-hover"
-          >
-            تعديل الملف الشخصي
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {user?.features?.accessCodes !== false && (
+              <Link
+                href="/me/redeem"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary px-4 py-2 text-sm font-bold text-white shadow-xs transition hover:bg-brand-primary/90"
+              >
+                <Ticket className="h-4 w-4" />
+                تفعيل كود سنتر
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              className="rounded-lg border border-brand-border-strong px-4 py-2 text-sm font-semibold text-brand-muted-strong transition hover:bg-brand-hover"
+            >
+              تعديل الملف الشخصي
+            </button>
+          </div>
         </div>
       </Reveal>
 

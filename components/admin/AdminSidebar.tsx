@@ -15,6 +15,7 @@ import {
   LogOut,
   Bell,
   Sparkles,
+  Ticket,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,7 +24,7 @@ import { selectUser } from '@/store/slices/authSlice';
 import { logoutUser } from '@/services/authService';
 import { ThemeToggle } from '@/components/theme-toggle';
 
-const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; feature?: 'notifications' | 'aiGrader' }[] }[] = [
+const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; feature?: 'notifications' | 'aiGrader' | 'accessCodes' }[] }[] = [
   {
     label: 'عام',
     items: [{ href: '/admin', label: 'نظرة عامة', icon: LayoutDashboard }],
@@ -34,6 +35,7 @@ const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: R
       { href: '/admin/students', label: 'الطلاب', icon: Users },
       { href: '/admin/courses', label: 'الدورات والفيديوهات', icon: BookOpen },
       { href: '/admin/enrollments', label: 'الاشتراكات والتسجيلات', icon: GraduationCap },
+      { href: '/admin/access-codes', label: 'أكواد التفعيل', icon: Ticket, feature: 'accessCodes' as const },
       { href: '/admin/notifications', label: 'الإشعارات', icon: Bell, feature: 'notifications' as const },
     ],
   },
